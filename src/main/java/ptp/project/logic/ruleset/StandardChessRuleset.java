@@ -1,14 +1,26 @@
 package ptp.project.logic.ruleset;
 
-import ptp.project.logic.Piece;
-import ptp.project.logic.Player;
-import ptp.project.logic.Ruleset;
-import ptp.project.logic.Square;
+import ptp.project.logic.*;
 
 import java.util.List;
 import java.util.ArrayList;
 
 public class StandardChessRuleset implements Ruleset {
+
+    @Override
+    public int getWidth() {
+        return 0;
+    }
+
+    @Override
+    public int getHeight() {
+        return 0;
+    }
+
+    @Override
+    public Square[][] getStartBoard() {
+        return new Square[0][];
+    }
 
     @Override
     public List<Square> getLegalMoves(Piece piece) {
@@ -18,12 +30,17 @@ public class StandardChessRuleset implements Ruleset {
     }
 
     @Override
+    public boolean verifyMove(Move move) {
+        return false;
+    }
+
+    @Override
     public boolean verifyMove(Square newPosition, Piece piece) {
         return false;
     }
 
     @Override
-    public Square hasEnforcedMove(Player player) {
+    public Move hasEnforcedMove(Player player) {
         return null;
     }
 

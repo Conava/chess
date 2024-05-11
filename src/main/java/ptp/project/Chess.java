@@ -7,7 +7,7 @@ public class Chess {
         System.out.println("Program started!");
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new MainFrame().setVisible(true);
+                new MainFrame();
             }
         });
     }

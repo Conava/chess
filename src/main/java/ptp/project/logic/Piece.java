@@ -39,8 +39,4 @@ public abstract class Piece {
     boolean getStatus() {
         return active;
     }
-
-    Board getBoard() {
-        return game.getBoard();
-    }
 }

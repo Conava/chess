@@ -1,44 +1,59 @@
 package ptp.project.window;
 
+import ptp.project.window.components.ContentPane;
+
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.net.URL;
 
-public class MainMenu extends JPanel {
-    private final MainFrame mainFrame;
+public class MainMenu extends ContentPane {
+    private JPanel logoPanel;
+    private JPanel buttonPanel;
 
     public MainMenu(MainFrame mainFrame) {
-        this.mainFrame = mainFrame;
+        super(mainFrame);
 
-        setLayout(new FlowLayout());
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        JButton onlineButton = new JButton("Online");
-        onlineButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mainFrame.switchToGame();
-            }
-        });
+        logoPanel = new JPanel();
+        addLogoPanelContent();
+        buttonPanel = new JPanel();
 
-        JButton offlineButton = new JButton("Offline");
-        offlineButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mainFrame.switchToGame();
-            }
-        });
+        gbc.fill = GridBagConstraints.BOTH;
 
-        JButton settingsButton = new JButton("Settings");
-        settingsButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new Settings().setVisible(true);
-            }
-        });
+        // LogoPanel occupies the two top rows
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3;
+        gbc.gridheight = 2;
+        gbc.weightx = 1;
+        gbc.weighty = 0.66; // 66% height
+        add(logoPanel, gbc);
 
-        add(onlineButton);
-        add(offlineButton);
-        add(settingsButton);
+        // Reset gridwidth and gridheight
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+
+        // ButtonPanel occupies the lowest column
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 3;
+        gbc.weighty = 0.33; // 33% height
+        add(buttonPanel, gbc);
     }
+
+    private void addLogoPanelContent() {
+    try {
+        URL url = getClass().getResource("/icon/chess-green.png");
+        ImageIcon imageIcon = new ImageIcon(url);
+        JLabel label = new JLabel(imageIcon);
+        logoPanel.add(label);
+    } catch (NullPointerException e) {
+        // If the image is not found, display a text instead
+        JLabel label = new JLabel("Error loading icon");
+        logoPanel.add(label);
+    }
+}
 }
