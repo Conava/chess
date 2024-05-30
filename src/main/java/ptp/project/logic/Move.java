@@ -5,9 +5,8 @@ public class Move {
     private final Square end;
     private Piece piece;
 
-    public Move(Piece piece, Square end) {
-        this.piece = piece;
-        this.start = piece.getPosition();
+    public Move(Square start, Square end) {
+        this.start = start;
         this.end = end;
     }
 

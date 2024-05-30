@@ -10,7 +10,7 @@ public interface Ruleset {
 
     Square[][] getStartBoard();
 
-    List<Square> getLegalMoves(Piece piece);
+    List<Square> getLegalMoves(Square square);
 
     boolean verifyMove(Move move);
 

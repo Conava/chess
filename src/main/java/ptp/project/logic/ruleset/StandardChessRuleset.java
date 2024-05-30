@@ -1,29 +1,45 @@
 package ptp.project.logic.ruleset;
 
 import ptp.project.logic.*;
+import ptp.project.logic.pieces.Rook;
 
 import java.util.List;
 import java.util.ArrayList;
 
 public class StandardChessRuleset implements Ruleset {
 
+    //height and width start at 1 and go to 8
+
     @Override
     public int getWidth() {
-        return 0;
+        return 8;
     }
 
     @Override
     public int getHeight() {
-        return 0;
+        return 8;
     }
 
     @Override
     public Square[][] getStartBoard() {
+        Square[][] startBoard = new Square[8][8];
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                startBoard[x][y] = new Square(x, y);
+            }
+        }
+
+        startBoard[1][1].setPiece(new Rook(null, null));
+
         return new Square[0][];
     }
 
     @Override
-    public List<Square> getLegalMoves(Piece piece) {
+    public List<Square> getLegalMoves(Square square) {
+
+
+
+
         List<Square> legalMoves = new ArrayList<>();
         //@TODO: Implement the logic for the legal moves of a piece
         return legalMoves;
