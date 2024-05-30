@@ -1,7 +1,6 @@
 package ptp.project.window;
 
 import ptp.project.window.components.ColorScheme;
-import ptp.project.window.components.ContentPane;
 
 import javax.swing.*;
 import java.awt.*;
