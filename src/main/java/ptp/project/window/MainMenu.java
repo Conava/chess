@@ -15,9 +15,11 @@ public class MainMenu extends ContentPane {
     private static final Logger LOGGER = Logger.getLogger(MainMenu.class.getName());
     private final JPanel logoPanel;
     private final JPanel buttonPanel;
+    private final ColorScheme colorScheme;
 
     public MainMenu(MainFrame mainFrame, ColorScheme colorScheme) {
         super(mainFrame);
+        this.colorScheme = colorScheme;
 
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -68,7 +70,7 @@ public class MainMenu extends ContentPane {
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         Dimension maxButtonSize = new Dimension(560, 100);
 
-        JButton startButton = new DefaultButton("Singleplayer");
+        JButton startButton = new DefaultButton("Singleplayer", colorScheme);
         startButton.setMaximumSize(maxButtonSize);
         startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         startButton.addActionListener(e -> mainFrame.switchToGame(0));
@@ -77,7 +79,7 @@ public class MainMenu extends ContentPane {
         // Add space
         buttonPanel.add(Box.createVerticalStrut(10));
 
-        JButton multiplayerButton = new DefaultButton("Multiplayer");
+        JButton multiplayerButton = new DefaultButton("Multiplayer", colorScheme);
         multiplayerButton.setMaximumSize(maxButtonSize);
         multiplayerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         multiplayerButton.addActionListener(e -> JOptionPane.showMessageDialog(mainFrame, "Multiplayer is not implemented yet."));
@@ -86,7 +88,7 @@ public class MainMenu extends ContentPane {
         // Add space
         buttonPanel.add(Box.createVerticalStrut(10));
 
-        JButton settingsButton = new DefaultButton("Settings");
+        JButton settingsButton = new DefaultButton("Settings", colorScheme);
         settingsButton.setMaximumSize(maxButtonSize);
         settingsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         settingsButton.addActionListener(e -> JOptionPane.showMessageDialog(mainFrame, "Settings is not implemented yet."));
@@ -95,7 +97,7 @@ public class MainMenu extends ContentPane {
         // Add space
         buttonPanel.add(Box.createVerticalStrut(10));
 
-        JButton exitButton = new DefaultButton("Exit");
+        JButton exitButton = new DefaultButton("Exit", colorScheme);
         exitButton.setMaximumSize(maxButtonSize);
         exitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         exitButton.addActionListener(e -> System.exit(0));

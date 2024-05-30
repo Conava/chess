@@ -27,7 +27,7 @@ public class MainFrame extends JFrame {
                 new Color(0x2b2d30), // Background color
                 new Color(0xECF0F1), // Font color
                 new Color(0x1e1f22), // Button color
-                new Color(0x27AE60) // Accent color
+                new Color(0x3c3f41) // Accent color
         );
     }
 
