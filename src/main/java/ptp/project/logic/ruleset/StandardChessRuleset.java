@@ -1,7 +1,7 @@
 package ptp.project.logic.ruleset;
 
 import ptp.project.logic.*;
-import ptp.project.logic.pieces.Rook;
+import ptp.project.logic.pieces.*;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class StandardChessRuleset implements Ruleset {
     }
 
     @Override
-    public Square[][] getStartBoard() {
+    public Square[][] getStartBoard(Player player1, Player player2) {
         Square[][] startBoard = new Square[8][8];
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
@@ -29,7 +29,33 @@ public class StandardChessRuleset implements Ruleset {
             }
         }
 
-        startBoard[1][1].setPiece(new Rook(null, null));
+        startBoard[0][0].setPiece(new Rook(player1));
+        startBoard[1][0].setPiece(new Knight(player1));
+        startBoard[2][0].setPiece(new Bishop(player1));
+        startBoard[3][0].setPiece(new Queen(player1));
+        startBoard[4][0].setPiece(new King(player1));
+        startBoard[5][0].setPiece(new Bishop(player1));
+        startBoard[6][0].setPiece(new Knight(player1));
+        startBoard[7][0].setPiece(new Rook(player1));
+
+        for (int x = 0; x < 8; x++) {
+            startBoard[x][1].setPiece(new Pawn(player1));
+        }
+
+        startBoard[0][7].setPiece(new Rook(player2));
+        startBoard[1][7].setPiece(new Knight(player2));
+        startBoard[2][7].setPiece(new Bishop(player2));
+        startBoard[3][7].setPiece(new Queen(player2));
+        startBoard[4][7].setPiece(new King(player2));
+        startBoard[5][7].setPiece(new Bishop(player2));
+        startBoard[6][7].setPiece(new Knight(player2));
+        startBoard[7][7].setPiece(new Rook(player2));
+
+        for (int x = 0; x < 8; x++) {
+            startBoard[x][6].setPiece(new Pawn(player2));
+        }
+
+
 
         return new Square[0][];
     }

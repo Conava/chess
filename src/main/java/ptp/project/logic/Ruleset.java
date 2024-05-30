@@ -8,7 +8,7 @@ public interface Ruleset {
 
     int getHeight();
 
-    Square[][] getStartBoard();
+    Square[][] getStartBoard(Player player1, Player player2);
 
     List<Square> getLegalMoves(Square square);
 

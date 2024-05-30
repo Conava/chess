@@ -6,7 +6,7 @@ import ptp.project.logic.Player;
 import ptp.project.logic.Square;
 
 public class Rook extends Piece {
-    public Rook(Player player, Game game) {
+    public Rook(Player player) {
         super(player);
     }
 }
