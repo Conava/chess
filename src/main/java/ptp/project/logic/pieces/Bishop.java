@@ -6,7 +6,7 @@ import ptp.project.logic.Player;
 import ptp.project.logic.Square;
 
 public class Bishop extends Piece {
-    public Bishop(Player player, Square position, Game game) {
-        super(player, position, game);
+    public Bishop(Player player, Game game) {
+        super(player, game);
     }
 }
