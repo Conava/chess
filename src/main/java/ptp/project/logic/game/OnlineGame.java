@@ -31,11 +31,6 @@ public class OnlineGame implements Game {
     }
 
     @Override
-    public List<Square> getLegalMoves(Piece piece) {
-        return List.of();
-    }
-
-    @Override
     public List<Square> getLegalMoves(Square position) {
         return List.of();
     }

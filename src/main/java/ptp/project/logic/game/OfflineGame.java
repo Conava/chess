@@ -1,15 +1,20 @@
 package ptp.project.logic.game;
 
 import ptp.project.logic.*;
+import ptp.project.logic.ruleset.StandardChessRuleset;
 
 import java.util.List;
 
 public class OfflineGame implements Game {
+    Player player1;
+    Player player2;
     Ruleset ruleset;
     Board board;
 
-    public OfflineGame(Ruleset ruleset) {
-        this.ruleset = ruleset;
+    public OfflineGame() {
+        player1 = new Player("Player 1", "white");
+        player2 = new Player("Player 2", "black");
+        this.ruleset = new StandardChessRuleset();
         this.board = new Board(ruleset);
     }
     @Override
@@ -35,11 +40,6 @@ public class OfflineGame implements Game {
     @Override
     public Piece getPieceAt(Square notation) {
         return null;
-    }
-
-    @Override
-    public List<Square> getLegalMoves(Piece piece) {
-        return List.of();
     }
 
     @Override

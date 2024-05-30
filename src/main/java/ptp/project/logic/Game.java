@@ -14,8 +14,6 @@ public interface Game {
 
     Piece getPieceAt(Square notation);
 
-    List<Square> getLegalMoves(Piece piece);
-
     List<Square> getLegalMoves(Square position);
 
     void movePiece(Piece piece, Square newPosition);
