@@ -1,10 +1,17 @@
-package ptp.project.game;
+package ptp.project.logic.game;
 
 import ptp.project.logic.*;
 
 import java.util.List;
 
-public class OnlineGame implements Game {
+public class OfflineGame implements Game {
+    Ruleset ruleset;
+    Board board;
+
+    public OfflineGame(Ruleset ruleset) {
+        this.ruleset = ruleset;
+        this.board = new Board(ruleset);
+    }
     @Override
     public void start() {
 

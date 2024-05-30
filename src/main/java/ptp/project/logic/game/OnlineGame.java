@@ -1,10 +1,10 @@
-package ptp.project.game;
+package ptp.project.logic.game;
 
 import ptp.project.logic.*;
 
 import java.util.List;
 
-public class OfflineGame implements Game {
+public class OnlineGame implements Game {
     @Override
     public void start() {
 

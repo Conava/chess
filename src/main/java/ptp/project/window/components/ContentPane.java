@@ -8,11 +8,11 @@ import java.awt.*;
 public abstract class ContentPane extends JPanel {
     protected final MainFrame mainFrame;
 
-    public ContentPane(MainFrame mainFrame) {
+    protected ContentPane(MainFrame mainFrame) {
         this.mainFrame = mainFrame;
     }
 
-    public void applyColorScheme(ColorScheme colorScheme) {
+    protected void applyColorScheme(ColorScheme colorScheme) {
         applyBackgroundColor(this, colorScheme.getBackgroundColor());
         applyFontColor(this, colorScheme.getFontColor());
         applyButtonColor(this, colorScheme.getButtonColor());
