@@ -23,7 +23,7 @@ public class OfflineGame implements Game {
 
     @Override
     public Board getBoard() {
-        return null;
+        return board;
     }
 
     @Override

@@ -55,14 +55,11 @@ public class StandardChessRuleset implements Ruleset {
             startBoard[x][6].setPiece(new Pawn(player2));
         }
 
-
-
         return new Square[0][];
     }
 
     @Override
     public List<Square> getLegalMoves(Square square) {
-
 
 
 

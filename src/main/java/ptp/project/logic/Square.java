@@ -5,7 +5,7 @@ public class Square {
     private int y;
     private Piece piece;
 
-    public Square(int x, int y) {
+    public Square(int y, int x) {
         this.x = x;
         this.y = y;
         this.piece = null;
@@ -23,10 +23,6 @@ public class Square {
 
     public int getY() {
         return y;
-    }
-
-    public String getCoordinates() {
-        return "(" + x + ", " + y + ")";
     }
 
     public Piece getPiece() {
