@@ -7,6 +7,6 @@ import ptp.project.logic.Square;
 
 public class Queen extends Piece {
     public Queen(Player player, Game game) {
-        super(player, game);
+        super(player);
     }
 }

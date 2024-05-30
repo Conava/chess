@@ -15,11 +15,10 @@ public class OfflineGame implements Game {
         player1 = new Player("Player 1", "white");
         player2 = new Player("Player 2", "black");
         this.ruleset = new StandardChessRuleset();
-        this.board = new Board(ruleset);
+        this.board = new Board(ruleset.getStartBoard(player1, player2));
     }
     @Override
     public void start() {
-
     }
 
     @Override

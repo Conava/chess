@@ -4,12 +4,9 @@ import java.util.List;
 
 public class Board {
     private Square[][] board;
-    private int[] size;
-    private Ruleset ruleset;
 
-    public Board(Ruleset ruleset) {
-        this.board = ruleset.getStartBoard();
-        this.size = new int[]{ruleset.getWidth(), ruleset.getHeight()};
+    public Board(Square[][] board) {
+        this.board = board;
     }
 
     public Piece getPieceAt(Square square) {
@@ -23,10 +20,6 @@ public class Board {
 
     public void move(Move move) {
         // Implement the logic to move a piece
-    }
-
-    public int[] getSize() {
-        return size;
     }
 
     public List<Piece> getPieces(Player player) {
