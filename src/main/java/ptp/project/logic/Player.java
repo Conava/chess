@@ -1,7 +1,5 @@
 package ptp.project.logic;
 
-
-//white is player 1, black is player 2
 public class Player {
     private final String name;
     private final String color;

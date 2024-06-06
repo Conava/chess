@@ -1,8 +1,10 @@
 package ptp.project.window;
 
 import ptp.project.window.components.ColorScheme;
-import ptp.project.window.components.ContentPane;
+import ptp.project.window.components.ControlPanel;
 import ptp.project.window.components.DefaultButton;
+import ptp.project.window.components.ExitButton;
+
 import java.util.logging.*;
 
 
@@ -11,20 +13,24 @@ import java.awt.*;
 import java.net.URL;
 import java.util.logging.Logger;
 
-public class MainMenu extends ContentPane {
+public class MainMenu extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(MainMenu.class.getName());
+    private final MainFrame mainFrame;
     private final JPanel logoPanel;
     private final JPanel buttonPanel;
+    private final ColorScheme colorScheme;
 
     public MainMenu(MainFrame mainFrame, ColorScheme colorScheme) {
-        super(mainFrame);
+        this.mainFrame = mainFrame;
+        this.colorScheme = colorScheme;
+        this.setBackground(colorScheme.getBackgroundColor());
 
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        logoPanel = new JPanel();
+        logoPanel = new ControlPanel();
         addLogoPanelContent();
-        buttonPanel = new JPanel();
+        buttonPanel = new ControlPanel();
         addButtonPanelContent();
 
         gbc.fill = GridBagConstraints.BOTH;
@@ -48,7 +54,6 @@ public class MainMenu extends ContentPane {
         gbc.gridwidth = 3;
         gbc.weighty = 0.5;
         add(buttonPanel, gbc);
-        this.applyColorScheme(colorScheme);
     }
 
     private void addLogoPanelContent() {
@@ -68,7 +73,7 @@ public class MainMenu extends ContentPane {
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         Dimension maxButtonSize = new Dimension(560, 100);
 
-        JButton startButton = new DefaultButton("Singleplayer");
+        JButton startButton = new DefaultButton("Lokal Spielen", colorScheme);
         startButton.setMaximumSize(maxButtonSize);
         startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         startButton.addActionListener(e -> mainFrame.switchToGame(0));
@@ -77,25 +82,25 @@ public class MainMenu extends ContentPane {
         // Add space
         buttonPanel.add(Box.createVerticalStrut(10));
 
-        JButton multiplayerButton = new DefaultButton("Multiplayer");
+        JButton multiplayerButton = new DefaultButton("Online Spielen", colorScheme);
         multiplayerButton.setMaximumSize(maxButtonSize);
         multiplayerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        multiplayerButton.addActionListener(e -> JOptionPane.showMessageDialog(mainFrame, "Multiplayer is not implemented yet."));
+        multiplayerButton.addActionListener(e -> JOptionPane.showMessageDialog(mainFrame, "Online Spiel ist noch nicht implementiert."));
         buttonPanel.add(multiplayerButton);
 
         // Add space
         buttonPanel.add(Box.createVerticalStrut(10));
 
-        JButton settingsButton = new DefaultButton("Settings");
+        JButton settingsButton = new DefaultButton("Einstellungen", colorScheme);
         settingsButton.setMaximumSize(maxButtonSize);
         settingsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        settingsButton.addActionListener(e -> JOptionPane.showMessageDialog(mainFrame, "Settings is not implemented yet."));
+        settingsButton.addActionListener(e -> JOptionPane.showMessageDialog(mainFrame, "Einstellungen sind noch nicht implementiert."));
         buttonPanel.add(settingsButton);
 
         // Add space
         buttonPanel.add(Box.createVerticalStrut(10));
 
-        JButton exitButton = new DefaultButton("Exit");
+        JButton exitButton = new ExitButton("Spiel Verlassen", colorScheme);
         exitButton.setMaximumSize(maxButtonSize);
         exitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         exitButton.addActionListener(e -> System.exit(0));

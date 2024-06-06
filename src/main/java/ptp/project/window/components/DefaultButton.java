@@ -6,29 +6,30 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class DefaultButton extends JButton {
-    private static final int ARC_WIDTH  = 15;
-    private static final int ARC_HEIGHT = 15;
-    private Color originalColor;
+    protected static final int ARC_WIDTH  = 15;
+    protected static final int ARC_HEIGHT = 15;
+    protected final ColorScheme colorScheme;
 
-    public DefaultButton(String text) {
+    public DefaultButton(String text, ColorScheme colorScheme) {
         super(text);
+        this.colorScheme = colorScheme;
         setOpaque(false);
         setContentAreaFilled(false);
         setBorderPainted(false);
-        setFont(new Font("Arial", Font.BOLD, 20));
-        setForeground(Color.WHITE);
+        setFont(colorScheme.getFont());
+        setForeground(colorScheme.getFontColor());
+        setBackground(colorScheme.getButtonColor());
         setFocusPainted(false);
 
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                originalColor = getBackground();
-                setBackground(originalColor.brighter().brighter());
+                setBackground(colorScheme.getButtonHoverColor());
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                setBackground(originalColor);
+                setBackground(colorScheme.getButtonColor());
             }
         });
     }
