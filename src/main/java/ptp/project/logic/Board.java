@@ -9,6 +9,10 @@ public class Board {
         this.board = board;
     }
 
+    public Square getSquare(int y, int x) {
+        return board[y][x];
+    }
+
     public Piece getPieceAt(Square square) {
         return square.getPiece();
     }

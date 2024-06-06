@@ -37,26 +37,18 @@ public class Square {
         return piece == null;
     }
 
-    public boolean isOccupied() {
-        return piece != null;
+    /**
+     * Checks what occupies the square
+     * @return Returns null if unoccupied
+     *         Returns Player if occupied
+     */
+    public Player isOccupiedBy() {
+        if(this.getPiece() == null) return null;
+        return this.getPiece().getPlayer();
     }
 
     public boolean isOccupiedByPlayer(Player player) {
         return piece != null && piece.getPlayer() == player;
     }
 
-    /**
-     * Returns 0 if the square is empty, 1 if the square is occupied by the player, and 2 if the square is occupied by the opponent.
-     * @param player
-     * @return 0 if the square is empty, 1 if the square is occupied by the player, and 2 if the square is occupied by the opponent.
-     */
-    public int isOccupiedBy(Player player) {
-        if (piece != null && piece.getPlayer() == player) {
-            return 1;
-        } else if (piece != null && piece.getPlayer() != player) {
-            return 2;
-        } else {
-            return 0;
-        }
-    }
 }

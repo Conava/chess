@@ -11,11 +11,11 @@ public class Player {
         this.color = color;
     }
 
-    String getName() {
+    public String getName() {
         return name;
     }
 
-    String getColor() {
+    public String getColor() {
         return color;
     }
 }

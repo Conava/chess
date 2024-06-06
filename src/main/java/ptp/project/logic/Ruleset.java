@@ -1,5 +1,7 @@
 package ptp.project.logic;
 
+import ptp.project.exceptions.IsCheckException;
+
 import java.util.List;
 
 public interface Ruleset {
@@ -10,7 +12,7 @@ public interface Ruleset {
 
     Square[][] getStartBoard(Player player1, Player player2);
 
-    List<Square> getLegalMoves(Square square);
+    List<Square> getLegalMoves(Square square, Board board) throws IsCheckException;
 
     boolean verifyMove(Move move);
 
@@ -18,5 +20,5 @@ public interface Ruleset {
 
     Move hasEnforcedMove(Player player); //@todo: Find good way to return the enforced move
 
-    boolean isCheck(Player player);
+    boolean isCheck(Board board, Player player);
 }
