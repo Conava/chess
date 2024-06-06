@@ -24,10 +24,12 @@ public class MainFrame extends JFrame {
 
     private void initializeColorScheme() {
         colorScheme = new ColorScheme(
+                new Font("Arial", Font.PLAIN, 20), // Font
                 new Color(0x2b2d30), // Background color
                 new Color(0xECF0F1), // Font color
                 new Color(0x1e1f22), // Button color
-                new Color(0x3c3f41) // Accent color
+                new Color(0x3c3f41), // Accent color
+                new Color(0xA31717)  // Exit button color
         );
     }
 
@@ -44,6 +46,13 @@ public class MainFrame extends JFrame {
         MainMenu mainMenu = new MainMenu(this, colorScheme);
         setExtendedState(JFrame.NORMAL);
         setContentPane(mainMenu);
+        validate();
+    }
+
+    public void openSettings() {
+        LOGGER.log(Level.INFO, "Opening settings");
+        Settings settings = new Settings(this, colorScheme);
+        setContentPane(settings);
         validate();
     }
 }
