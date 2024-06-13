@@ -1,6 +1,9 @@
 package ptp.project.logic.game;
 
+import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.logic.*;
+import ptp.project.logic.moves.Move;
+import ptp.project.logic.pieces.Piece;
 
 import java.util.List;
 
@@ -31,12 +34,16 @@ public class OnlineGame implements Game {
     }
 
     @Override
-    public List<Square> getLegalMoves(Square position) {
+    public List<Square> getLegalSquares(Square position) {
         return List.of();
     }
 
     @Override
-    public void movePiece(Piece piece, Square newPosition) {
+    public void movePiece(Move move) throws IllegalMoveException {
+    }
 
+    @Override
+    public List<Move> getMoveList() {
+        return null;
     }
 }

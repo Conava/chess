@@ -2,6 +2,7 @@ package ptp.project.logic.ruleset;
 
 import ptp.project.exceptions.IsCheckException;
 import ptp.project.logic.*;
+import ptp.project.logic.moves.Move;
 import ptp.project.logic.pieces.*;
 
 //import java.lang.reflect.Array;
@@ -61,26 +62,25 @@ public class StandardChessRuleset implements Ruleset {
     }
 
     @Override
-    public List<Square> getLegalMoves(Square square, Board board) throws IsCheckException {
+    public List<Square> getLegalSquares(Square square, Board board, List<Move> moves) throws IsCheckException {
         List<Square> legalMoves;
         if (square.getPiece() instanceof Rook) {
-            legalMoves = getLegalMovesRook(square, board);
+            legalMoves = getLegalSquaresRook(square, board);
         } else if (square.getPiece() instanceof Knight) {
-            legalMoves = getLegalMovesKnight(square, board);
+            legalMoves = getLegalSquaresKnight(square, board);
         } else if (square.getPiece() instanceof Bishop) {
-            legalMoves = getLegalMovesBishop(square, board);
+            legalMoves = getLegalSquaresBishop(square, board);
         } else if (square.getPiece() instanceof Queen) {
-            legalMoves = getLegalMovesBishop(square, board);
-            legalMoves.addAll(getLegalMovesRook(square, board));
+            legalMoves = getLegalSquaresBishop(square, board);
+            legalMoves.addAll(getLegalSquaresRook(square, board));
         } else if (square.getPiece() instanceof King) {
-            legalMoves = getLegalMovesKing(square, board);
+            legalMoves = getLegalSquaresKing(square, board);
         } else if (square.getPiece() instanceof Pawn) {
-            legalMoves = getLegalMovesPawn(square, board);
+            legalMoves = getLegalSquaresPawn(square, board, moves);
         } else { //space is empty
             return null;
         }
-        //@TODO: Rochade
-        //@TODO Umwandlung zuordnen zu wo moves ausgeführt werden
+        //@TODO: Check
         //@TODO TTests
         return legalMoves;
     }
@@ -88,7 +88,7 @@ public class StandardChessRuleset implements Ruleset {
     /**
      * Returns legal moves for the rook.
      */
-    private List<Square> getLegalMovesRook(Square square, Board board) throws IsCheckException {
+    private List<Square> getLegalSquaresRook(Square square, Board board) throws IsCheckException {
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
         Square possibleSquare;
@@ -142,7 +142,7 @@ public class StandardChessRuleset implements Ruleset {
     /**
      * Returns legal moves for the bishop.
      */
-    private List<Square> getLegalMovesBishop(Square square, Board board) throws IsCheckException {
+    private List<Square> getLegalSquaresBishop(Square square, Board board) throws IsCheckException {
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
         Square possibleSquare;
@@ -201,7 +201,7 @@ public class StandardChessRuleset implements Ruleset {
     /**
      * Returns legal moves for the knight.
      */
-    private List<Square> getLegalMovesKnight(Square square, Board board) throws IsCheckException {
+    private List<Square> getLegalSquaresKnight(Square square, Board board) throws IsCheckException {
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
 
@@ -236,7 +236,7 @@ public class StandardChessRuleset implements Ruleset {
     /**
      * Returns legal moves for the king.
      */
-    private List<Square> getLegalMovesKing(Square square, Board board) throws IsCheckException {
+    private List<Square> getLegalSquaresKing(Square square, Board board) throws IsCheckException {
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
 
@@ -255,13 +255,20 @@ public class StandardChessRuleset implements Ruleset {
             }
         }
 
+        if (canCastle(square, board) == 1 || canCastle(square, board) == 3) {
+            legalMoves.add(board.getSquare(6, square.getX()));
+        }
+        if (canCastle(square, board) == 2 || canCastle(square, board) == 3) {
+            legalMoves.add(board.getSquare(1, square.getX()));
+        }
+
         return legalMoves;
     }
 
     /**
      * Returns legal moves for the pawn.
      */
-    private List<Square> getLegalMovesPawn(Square square, Board board) throws IsCheckException {
+    private List<Square> getLegalSquaresPawn(Square square, Board board, List<Move> moves) throws IsCheckException {
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
         Square possibleSquare;
@@ -300,14 +307,34 @@ public class StandardChessRuleset implements Ruleset {
             }
         }
         //moving 2 squares at the start
-        if (isOnBaseRank(square, owner) && board.getSquare(square.getY(), square.getX() + direction).isOccupiedBy() == null
+        if (isOnRank(square, owner, 1) && board.getSquare(square.getY(), square.getX() + direction).isOccupiedBy() == null
                 && board.getSquare(square.getY(), square.getX() + 2 * direction).isOccupiedBy() == null) {
             legalMoves.add(board.getSquare(square.getY() + 1, square.getX() + 2 * direction));
         }
+        //en passant left
+        possibleSquare = board.getSquare(square.getY() - 1, square.getX());
+        if (isOnRank(square, owner, 5) && isValidSquare(possibleSquare)
+                && possibleSquare.getPiece() != null && possibleSquare.getPiece() instanceof Pawn pawn) {
+            if (pawn.hasMoveJustMovedTwoSquares(moves)){
+                legalMoves.add(board.getSquare(square.getY(), square.getX() + direction));
+            }
+        }
+        //en passant right
+        possibleSquare = board.getSquare(square.getY() + 1, square.getX());
+        if (isOnRank(square, owner, 5) && isValidSquare(possibleSquare)
+                && possibleSquare.getPiece() != null && possibleSquare.getPiece() instanceof Pawn pawn) {
+            if (pawn.hasMoveJustMovedTwoSquares(moves)){
+                legalMoves.add(board.getSquare(square.getY(), square.getX() + direction));
+            }
+        }
+
         return legalMoves;
     }
 
-    private boolean isValidSquare(Square square) {
+    public boolean isValidSquare(Square square) {
+        if (square == null) {
+            return false;
+        }
         return square.getY() >= 0 && square.getY() <= 7 &&
                 square.getX() >= 0 && square.getX() <= 7;
     }
@@ -321,6 +348,13 @@ public class StandardChessRuleset implements Ruleset {
         return isValidSquare(square) && !(square.isOccupiedBy() == null) && !square.isOccupiedBy().equals(player);
     }
 
+    /**
+     *
+     * @param square Square where to capture.
+     * @param player Owner of the capturing piece.
+     * @return null if not a capture
+     *         #Piece if there is a piece.
+     */
     private Piece isCapturePiece(Square square, Player player) {
         if (isCapture(square, player)) {
             return square.getPiece();
@@ -328,18 +362,26 @@ public class StandardChessRuleset implements Ruleset {
         return null;
     }
 
-    private boolean isOnBaseRank(Square square, Player player) {
+    /**
+     * How far a piece is base on Player baseline.
+     * @param square The square the piece is on.
+     * @param player The player owning the piece.
+     * @param isRank The rank the piece might be on counted from the baseline
+     * @return if the rank of the piece on the square counted from baseline and the rank match.
+     */
+    private boolean isOnRank(Square square, Player player, int isRank) {
         int rank = -1; // there should be no piece on rank -1
         if (player.getColor().equals("white")) {
-            rank = 1;
+            rank = square.getX();
         } else {
-            rank = 6;
+            rank = 7 - square.getX();
         }
-        return square.getX() == rank;
+        return isRank == rank;
     }
 
     /**
      * Checks if move is a promotion.
+     *
      * @param square Square where the piece moves to
      * @return ?isPromotion
      */
@@ -354,11 +396,11 @@ public class StandardChessRuleset implements Ruleset {
      * @return ?isCheck
      */
     @Override
-    public boolean isCheck(Board board, Player player) {
+    public boolean isCheck(Board board, Player player, List<Move> moves) {
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
                 try {
-                    getLegalMoves(board.getSquare(y, x),board);
+                    getLegalSquares(board.getSquare(y, x), board, moves);
                 } catch (IsCheckException e) {
                     return true;
                 }
@@ -366,6 +408,41 @@ public class StandardChessRuleset implements Ruleset {
         }
         return false;
     }
+
+    /**
+     * Checks what ways one can castle.
+     * @param square The square the King should be on.
+     * @param board The board the castling should happen.
+     * @return 0 for no castle
+     * 1 for only 0-0
+     * 2 for only 0-0-0
+     * 3 for both ways
+     */
+    private int canCastle(Square square, Board board) {
+        int canCastle = 0;
+        if (square.getPiece() != null && square.getPiece() instanceof King) {
+            King king = (King) square.getPiece();
+            if (!king.getHasMoved()) {
+                if (board.getSquare(7, square.getX()).getPiece() != null
+                        && board.getSquare(7, square.getX()).getPiece() instanceof Rook rook) {
+                    if (!rook.getHasMoved() && board.getSquare(6, square.getX()).isEmpty()
+                            && board.getSquare(5, square.getX()).isEmpty()) {
+                        canCastle++;
+                    }
+                }
+                if (board.getSquare(0, square.getX()).getPiece() != null
+                        && board.getSquare(0, square.getX()).getPiece() instanceof Rook rook) {
+                    if (!rook.getHasMoved() && board.getSquare(1, square.getX()).isEmpty()
+                            && board.getSquare(2, square.getX()).isEmpty()
+                            && board.getSquare(3, square.getX()).isEmpty()) {
+                        canCastle += 2;
+                    }
+                }
+            }
+        }
+        return canCastle;
+    }
+
 
     @Override
     public boolean verifyMove(Move move) {

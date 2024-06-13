@@ -1,5 +1,9 @@
 package ptp.project.logic;
 
+import ptp.project.exceptions.IllegalMoveException;
+import ptp.project.logic.moves.Move;
+import ptp.project.logic.pieces.Piece;
+
 import java.util.List;
 
 public interface Game {
@@ -14,7 +18,10 @@ public interface Game {
 
     Piece getPieceAt(Square notation);
 
-    List<Square> getLegalMoves(Square position);
+    List<Square> getLegalSquares(Square position);
 
-    void movePiece(Piece piece, Square newPosition);
+    List<Move> getMoveList();
+
+    void movePiece(Move move) throws IllegalMoveException;
 }
+//todo rochade und umwandlung  wer dran ist

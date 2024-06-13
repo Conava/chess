@@ -1,9 +1,10 @@
-package ptp.project.logic;
+package ptp.project.logic.moves;
+
+import ptp.project.logic.Square;
 
 public class Move {
     private final Square start;
     private final Square end;
-    private Piece piece;
 
     public Move(Square start, Square end) {
         this.start = start;
@@ -17,8 +18,4 @@ public class Move {
     public Square getEnd() {
         return end;
     }
-
-    public Piece getPiece() {
-        return piece;
-    }
-}//
+}//hier fehlt die rochade und die umwandlung an information

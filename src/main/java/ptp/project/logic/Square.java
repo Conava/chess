@@ -1,5 +1,7 @@
 package ptp.project.logic;
 
+import ptp.project.logic.pieces.Piece;
+
 public class Square {
     private int x;
     private int y;
