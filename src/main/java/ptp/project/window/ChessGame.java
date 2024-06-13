@@ -71,6 +71,7 @@ public class ChessGame extends JPanel {
     }
 
     private void changeActivePlayer(Player player) {
+        LOGGER.log(Level.INFO, "Changing active player to player: " + player.getName());
         if (player == game.getPlayer1()) {
             topPanel.setPlayer1(true);
             bottomPanel.setPlayer2(false);

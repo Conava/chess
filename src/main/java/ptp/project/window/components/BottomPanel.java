@@ -90,7 +90,8 @@ public class BottomPanel extends JPanel {
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); // Draw a rounded rectangle
             }
         };
-        rounded2Panel.setOpaque(false);
+        rounded2Panel.setOpaque(true);
+        rounded2Panel.setFocusable(false);
         rounded2Panel.setLayout(new BorderLayout());
         rounded2Panel.add(player2Label, BorderLayout.CENTER);
 
