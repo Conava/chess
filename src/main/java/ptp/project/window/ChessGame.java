@@ -1,6 +1,7 @@
 package ptp.project.window;
 
-import ptp.project.logic.Game;
+import ptp.project.logic.Player;
+import ptp.project.logic.game.Game;
 import ptp.project.logic.game.OfflineGame;
 import ptp.project.logic.game.OnlineGame;
 import ptp.project.window.components.*;
@@ -16,6 +17,10 @@ public class ChessGame extends JPanel {
     private final MainFrame mainFrame;
     private ColorScheme colorScheme;
 
+    private TopPanel topPanel;
+    private BottomPanel bottomPanel;
+    private SidePanel sidePanel;
+
     public ChessGame(MainFrame mainFrame, ColorScheme colorScheme, int online) {
         this.mainFrame = mainFrame;
         this.colorScheme = colorScheme;
@@ -28,27 +33,50 @@ public class ChessGame extends JPanel {
             game = new OfflineGame();
         }
         initializeGUI();
-        game.start();
+        LOGGER.log(Level.INFO, "GameWindow GUI initialized");
+        initializeGame();
+        LOGGER.log(Level.INFO, "Game started");
+
     }
 
     private void initializeGUI() {
         this.setLayout(new BorderLayout());
         // Create the top panel
-        JPanel topPanel = new TopPanel(colorScheme, mainFrame);
-        topPanel.setPreferredSize(new Dimension(this.getWidth(), 60));
-        topPanel.setBackground(colorScheme.getAccentColor()); // Change to desired color
+        topPanel = new TopPanel(colorScheme, mainFrame);
+        topPanel.setPreferredSize(new Dimension(this.getWidth(), 50));
 
         // Create the bottom panel
-        JPanel bottomPanel = new BottomPanel(colorScheme, mainFrame);
-        bottomPanel.setPreferredSize(new Dimension(this.getWidth(), 60));
+        bottomPanel = new BottomPanel(colorScheme, mainFrame);
+        bottomPanel.setPreferredSize(new Dimension(this.getWidth(), 50));
 
         // Create the side panel
-        JPanel sidePanel = new SidePanel(colorScheme, mainFrame);
+        sidePanel = new SidePanel(colorScheme, mainFrame);
         sidePanel.setPreferredSize(new Dimension(300, sidePanel.getPreferredSize().height));
 
         // Add the panels to the frame
         this.add(topPanel, BorderLayout.NORTH);
         this.add(bottomPanel, BorderLayout.SOUTH);
         this.add(sidePanel, BorderLayout.EAST);
+    }
+
+    private void initializeGame() {
+        game.start();
+        topPanel.setPlayer1Name(game.getPlayer1().getName());
+        bottomPanel.setPlayer2Name(game.getPlayer2().getName());
+        changeActivePlayer(game.getCurrentPlayer());
+    }
+
+    public void update() {
+
+    }
+
+    private void changeActivePlayer(Player player) {
+        if (player == game.getPlayer1()) {
+            topPanel.setPlayer1(true);
+            bottomPanel.setPlayer2(false);
+        } else {
+            topPanel.setPlayer1(false);
+            bottomPanel.setPlayer2(true);
+        }
     }
 }

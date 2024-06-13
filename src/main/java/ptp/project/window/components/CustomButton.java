@@ -5,12 +5,12 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class DefaultButton extends JButton {
+public class CustomButton extends JButton {
     protected static final int ARC_WIDTH  = 15;
     protected static final int ARC_HEIGHT = 15;
     protected final ColorScheme colorScheme;
 
-    public DefaultButton(String text, ColorScheme colorScheme) {
+    public CustomButton(String text, ColorScheme colorScheme) {
         super(text);
         this.colorScheme = colorScheme;
         setOpaque(false);

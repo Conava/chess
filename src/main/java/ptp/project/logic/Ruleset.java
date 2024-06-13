@@ -4,6 +4,8 @@ import ptp.project.exceptions.IsCheckException;
 import ptp.project.logic.moves.Move;
 import ptp.project.logic.pieces.Piece;
 
+import ptp.project.logic.pieces.Piece;
+
 import java.util.List;
 
 public interface Ruleset {

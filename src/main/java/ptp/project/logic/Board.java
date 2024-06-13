@@ -7,6 +7,8 @@ import ptp.project.logic.moves.PromotionMove;
 import ptp.project.logic.pieces.King;
 import ptp.project.logic.pieces.Piece;
 
+import ptp.project.logic.pieces.Piece;
+
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;

@@ -1,4 +1,10 @@
-package ptp.project.logic;
+package ptp.project.logic.game;
+
+import ptp.project.logic.Board;
+import ptp.project.logic.Player;
+import ptp.project.logic.Ruleset;
+import ptp.project.logic.Square;
+import ptp.project.logic.pieces.Piece;
 
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.logic.moves.Move;
@@ -13,6 +19,10 @@ public interface Game {
     Board getBoard();
 
     Player getCurrentPlayer();
+
+    Player getPlayer1();
+
+    Player getPlayer2();
 
     Ruleset getRuleset();
 

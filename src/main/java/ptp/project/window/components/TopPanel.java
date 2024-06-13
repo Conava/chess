@@ -12,13 +12,17 @@ public class TopPanel extends JPanel {
     private JPanel leftContainer;
     private JPanel rightContainer;
 
+    private JLabel player1Label;
+    private JPanel rounded1Panel;
+    private JLabel status1Label;
+    private JLabel free1Label;
+
     public TopPanel(ColorScheme colorScheme, MainFrame mainFrame) {
         this.colorScheme = colorScheme;
         this.mainFrame = mainFrame;
-        this.setBackground(colorScheme.getAccentColor());
+        this.setBackground(colorScheme.getDarkerBackgroundColor());
         initializeLayout();
         addComponents();
-
         setOpaque(true);
     }
 
@@ -53,8 +57,11 @@ public class TopPanel extends JPanel {
     private void addComponents() {
         //Create 3 JPanels in the leftContainer to hold our content
         JPanel leftPanel1 = new ControlPanel();
+        leftPanel1.setLayout(new BorderLayout());
         JPanel leftPanel2 = new ControlPanel();
+        leftPanel2.setLayout(new BorderLayout());
         JPanel leftPanel3 = new ControlPanel();
+        leftPanel3.setLayout(new BorderLayout());
 
         //Add the 3 JPanels to the leftContainer
         leftContainer.add(leftPanel1);
@@ -62,21 +69,49 @@ public class TopPanel extends JPanel {
         leftContainer.add(leftPanel3);
 
         //Add the content to the leftPanel1
-        JLabel titleLabel = new DefaultLabel("Schach", colorScheme);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        titleLabel.setForeground(colorScheme.getFontColor());
-        leftPanel1.add(titleLabel);
+        status1Label = new CustomLabel("", colorScheme);
+        status1Label.setFont(colorScheme.getFont());
+        status1Label.setHorizontalAlignment(SwingConstants.CENTER);
+        status1Label.setForeground(colorScheme.getFontColor());
+        leftPanel1.add(status1Label);
 
         //Add the content to the leftPanel2
-        JLabel playerLabel = new DefaultLabel("Player 1", colorScheme);
-        playerLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        playerLabel.setForeground(colorScheme.getFontColor());
-        leftPanel2.add(playerLabel);
+        player1Label = new CustomLabel("Spieler 1", colorScheme);
+        player1Label.setFont(colorScheme.getFont());
+        player1Label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        player1Label.setHorizontalAlignment(SwingConstants.CENTER);
+        player1Label.setHorizontalTextPosition(SwingConstants.CENTER);
+        player1Label.setHorizontalAlignment(SwingConstants.CENTER);
+        player1Label.setForeground(colorScheme.getFontColor());
+        rounded1Panel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(colorScheme.getAccentColor()); // Set the color of the square
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); // Draw a rounded rectangle
+            }
+        };
+        rounded1Panel.setOpaque(false);
+        rounded1Panel.setLayout(new BorderLayout());
+        rounded1Panel.add(player1Label, BorderLayout.CENTER);
+
+        leftPanel2.add(rounded1Panel);
 
         //Add the content to the leftPanel3
-        JLabel testLabel = new DefaultLabel("Test Label", colorScheme);
-        testLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        testLabel.setForeground(colorScheme.getFontColor());
-        leftPanel3.add(testLabel);
+        free1Label = new CustomLabel("", colorScheme);
+        free1Label.setFont(colorScheme.getFont());
+        free1Label.setHorizontalAlignment(SwingConstants.CENTER);
+        free1Label.setForeground(colorScheme.getFontColor());
+        leftPanel3.add(free1Label);
+    }
+
+    public void setPlayer1(boolean active) {
+        rounded1Panel.setOpaque(active);
+    }
+    //change player name
+    public void setPlayer1Name(String name) {
+        player1Label.setText(name);
     }
 }

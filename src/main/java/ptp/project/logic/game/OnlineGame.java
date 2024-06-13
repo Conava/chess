@@ -24,6 +24,16 @@ public class OnlineGame implements Game {
     }
 
     @Override
+    public Player getPlayer1() {
+        return null;
+    }
+
+    @Override
+    public Player getPlayer2() {
+        return null;
+    }
+
+    @Override
     public Ruleset getRuleset() {
         return null;
     }

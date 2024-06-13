@@ -1,11 +1,6 @@
 package ptp.project.window;
 
-import ptp.project.window.components.ColorScheme;
-import ptp.project.window.components.ControlPanel;
-import ptp.project.window.components.DefaultButton;
-import ptp.project.window.components.ExitButton;
-
-import java.util.logging.*;
+import ptp.project.window.components.*;
 
 
 import javax.swing.*;
@@ -73,7 +68,7 @@ public class MainMenu extends JPanel {
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         Dimension maxButtonSize = new Dimension(560, 100);
 
-        JButton startButton = new DefaultButton("Lokal Spielen", colorScheme);
+        JButton startButton = new CustomButton("Lokal Spielen", colorScheme);
         startButton.setMaximumSize(maxButtonSize);
         startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         startButton.addActionListener(e -> mainFrame.switchToGame(0));
@@ -82,19 +77,19 @@ public class MainMenu extends JPanel {
         // Add space
         buttonPanel.add(Box.createVerticalStrut(10));
 
-        JButton multiplayerButton = new DefaultButton("Online Spielen", colorScheme);
+        JButton multiplayerButton = new CustomButton("Online Spielen", colorScheme);
         multiplayerButton.setMaximumSize(maxButtonSize);
         multiplayerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        multiplayerButton.addActionListener(e -> JOptionPane.showMessageDialog(mainFrame, "Online Spiel ist noch nicht implementiert."));
+        multiplayerButton.addActionListener(e -> new MessageWindow(mainFrame, "Online spielen ist noch nicht verfügbar", "Fehler", colorScheme).setVisible(true));
         buttonPanel.add(multiplayerButton);
 
         // Add space
         buttonPanel.add(Box.createVerticalStrut(10));
 
-        JButton settingsButton = new DefaultButton("Einstellungen", colorScheme);
+        JButton settingsButton = new CustomButton("Einstellungen", colorScheme);
         settingsButton.setMaximumSize(maxButtonSize);
         settingsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        settingsButton.addActionListener(e -> JOptionPane.showMessageDialog(mainFrame, "Einstellungen sind noch nicht implementiert."));
+        settingsButton.addActionListener(e -> mainFrame.openSettings());
         buttonPanel.add(settingsButton);
 
         // Add space

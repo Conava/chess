@@ -1,6 +1,8 @@
 package ptp.project.window;
 
 import ptp.project.window.components.ColorScheme;
+
+import java.awt.geom.RoundRectangle2D;
 import java.util.logging.*;
 
 import javax.swing.*;
@@ -26,15 +28,19 @@ public class MainFrame extends JFrame {
         colorScheme = new ColorScheme(
                 new Font("Arial", Font.PLAIN, 20), // Font
                 new Color(0x2b2d30), // Background color
+                new Color(0x3B3F42), // Brighter background color
+                new Color(0x27272B), // Darker background color
                 new Color(0xECF0F1), // Font color
                 new Color(0x1e1f22), // Button color
-                new Color(0x3c3f41), // Accent color
+                new Color(0x31709A), // Accent color
                 new Color(0xA31717)  // Exit button color
         );
+        LOGGER.log(Level.INFO, "Color scheme initialized");
     }
 
     public void switchToGame(int online) {
         LOGGER.log(Level.INFO, "Switching to game");
+        this.setMinimumSize(new Dimension(1000, 800));
         ChessGame chessGame = new ChessGame(this, colorScheme, online);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setContentPane(chessGame);
@@ -43,16 +49,18 @@ public class MainFrame extends JFrame {
 
     public void switchToMenu() {
         LOGGER.log(Level.INFO, "Switching to menu");
-        MainMenu mainMenu = new MainMenu(this, colorScheme);
+        this.setMinimumSize(new Dimension(600, 600));
         setExtendedState(JFrame.NORMAL);
+        this.setSize(600, 600);
+        MainMenu mainMenu = new MainMenu(this, colorScheme);
         setContentPane(mainMenu);
         validate();
     }
 
     public void openSettings() {
         LOGGER.log(Level.INFO, "Opening settings");
+        //Open a new settings window
         Settings settings = new Settings(this, colorScheme);
-        setContentPane(settings);
         validate();
     }
 }

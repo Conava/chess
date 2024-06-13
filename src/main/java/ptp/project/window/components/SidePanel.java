@@ -11,7 +11,7 @@ public class SidePanel extends JPanel {
     public SidePanel(ColorScheme colorScheme, MainFrame mainFrame) {
         this.colorScheme = colorScheme;
         this.mainFrame = mainFrame;
-        this.setBackground(colorScheme.getAccentColor());
+        this.setBackground(colorScheme.getDarkerBackgroundColor());
 
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(true);
