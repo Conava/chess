@@ -77,7 +77,7 @@ public class TopPanel extends JPanel {
         status1Label.setFont(colorScheme.getFont());
         status1Label.setHorizontalAlignment(SwingConstants.CENTER);
         status1Label.setForeground(colorScheme.getFontColor());
-        leftPanel1.add(status1Label);
+        leftPanel1.add(status1Label, BorderLayout.EAST);
 
         //Add the content to the leftPanel2
         player1Label = new CustomLabel("Spieler 1", colorScheme);
@@ -103,7 +103,16 @@ public class TopPanel extends JPanel {
         rounded1Panel.setLayout(new BorderLayout());
         rounded1Panel.add(player1Label, BorderLayout.CENTER);
 
+        JPanel leftPlaceholder = new JPanel();
+        JPanel rightPlaceholder = new JPanel();
+        Dimension placeholderSize = new Dimension(100, this.getHeight());
+        leftPlaceholder.setPreferredSize(placeholderSize);
+        rightPlaceholder.setPreferredSize(placeholderSize);
+        leftPlaceholder.setOpaque(false);
+        rightPlaceholder.setOpaque(false);
+        leftPanel2.add(leftPlaceholder, BorderLayout.WEST);
         leftPanel2.add(rounded1Panel);
+        leftPanel2.add(rightPlaceholder, BorderLayout.EAST);
 
         //Add the content to the leftPanel3
         free1Label = new CustomLabel("", colorScheme);

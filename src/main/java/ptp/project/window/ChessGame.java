@@ -15,7 +15,7 @@ public class ChessGame extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(ChessGame.class.getName());
     private final Game game;
     private final MainFrame mainFrame;
-    private ColorScheme colorScheme;
+    private final ColorScheme colorScheme;
 
     private TopPanel topPanel;
     private BottomPanel bottomPanel;

@@ -34,7 +34,7 @@ public class Settings extends JDialog {
 
         // Create a message label with a smaller font
         //todo: change message to settings
-        JLabel messageLabel = new JLabel("Einstellungen noch nicht implementiert");
+        JLabel messageLabel = new JLabel("Einstellungen sind noch nicht implementiert");
         messageLabel.setFont(colorScheme.getFont().deriveFont(colorScheme.getFont().getSize2D() - 2));
         messageLabel.setHorizontalAlignment(JLabel.CENTER);
         messageLabel.setForeground(colorScheme.getFontColor());

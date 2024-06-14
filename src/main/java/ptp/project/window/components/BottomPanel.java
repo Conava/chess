@@ -77,7 +77,7 @@ public class BottomPanel extends JPanel {
         status2Label.setFont(colorScheme.getFont());
         status2Label.setHorizontalAlignment(SwingConstants.CENTER);
         status2Label.setForeground(colorScheme.getFontColor());
-        leftPanel1.add(status2Label);
+        leftPanel1.add(status2Label, BorderLayout.EAST);
 
         //Add the content to the leftPanel2
         player2Label = new CustomLabel("Spieler 2", colorScheme);
@@ -100,7 +100,20 @@ public class BottomPanel extends JPanel {
         rounded2Panel.setLayout(new BorderLayout());
         rounded2Panel.add(player2Label, BorderLayout.CENTER);
 
+        JPanel leftPlaceholder = new JPanel();
+        JPanel rightPlaceholder = new JPanel();
+        Dimension placeholderSize = new Dimension(100, this.getHeight());
+        leftPlaceholder.setPreferredSize(placeholderSize);
+        rightPlaceholder.setPreferredSize(placeholderSize);
+        leftPlaceholder.setOpaque(false);
+        rightPlaceholder.setOpaque(false);
+        leftPanel2.add(leftPlaceholder, BorderLayout.WEST);
         leftPanel2.add(rounded2Panel);
+        leftPanel2.add(rightPlaceholder, BorderLayout.EAST);
+
+        leftPanel2.add(leftPlaceholder, BorderLayout.WEST);
+        leftPanel2.add(rounded2Panel);
+        leftPanel2.add(rightPlaceholder, BorderLayout.EAST);
 
         //Add the content to the leftPanel3
         free2Label = new CustomLabel("", colorScheme);
