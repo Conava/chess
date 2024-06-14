@@ -113,7 +113,7 @@ public class MainMenu extends JPanel {
 
         addButtonToPanel(buttonPanel, LOCAL_PLAY_BUTTON_TEXT, maxButtonSize, e -> mainFrame.switchToGame(0));
         addButtonToPanel(buttonPanel, ONLINE_PLAY_BUTTON_TEXT, maxButtonSize, e -> new MessageWindow(mainFrame, ONLINE_PLAY_ERROR_MESSAGE, ONLINE_PLAY_ERROR_TITLE, colorScheme).setVisible(true));
-        addButtonToPanel(buttonPanel, SETTINGS_BUTTON_TEXT, maxButtonSize, e -> mainFrame.openSettings());
+        addButtonToPanel(buttonPanel, SETTINGS_BUTTON_TEXT, maxButtonSize, e -> mainFrame.openSettingsWindow());
         addButtonToPanel(buttonPanel, EXIT_BUTTON_TEXT, maxButtonSize, e -> System.exit(0));
     }
 

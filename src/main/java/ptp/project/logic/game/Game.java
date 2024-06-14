@@ -8,7 +8,6 @@ import ptp.project.logic.pieces.Piece;
 
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.logic.moves.Move;
-import ptp.project.logic.pieces.Piece;
 
 import java.util.List;
 
@@ -20,9 +19,9 @@ public interface Game {
 
     Player getCurrentPlayer();
 
-    Player getPlayer1();
+    Player getPlayerWhite();
 
-    Player getPlayer2();
+    Player getPlayerBlack();
 
     Ruleset getRuleset();
 

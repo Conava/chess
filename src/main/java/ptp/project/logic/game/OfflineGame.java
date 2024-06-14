@@ -46,12 +46,12 @@ public class OfflineGame implements Game {
     }
 
     @Override
-    public Player getPlayer1() {
+    public Player getPlayerWhite() {
         return player1;
     }
 
     @Override
-    public Player getPlayer2() {
+    public Player getPlayerBlack() {
         return player2;
     }
 

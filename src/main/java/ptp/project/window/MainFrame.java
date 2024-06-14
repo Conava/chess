@@ -20,19 +20,22 @@ public class MainFrame extends JFrame {
     private static final int GAME_WINDOW_WIDTH = 1000;
     private static final int GAME_WINDOW_HEIGHT = 800;
 
-    private ColorScheme colorScheme;
+    private final ColorScheme colorScheme;
     private ChessGame chessGame;
 
     /**
      * Constructor for MainFrame.
      * Initializes the frame with default settings, initializes the color scheme, and switches to the MainMenu.
      */
-    public MainFrame() {
+    public MainFrame(ColorScheme colorScheme) {
+        this.colorScheme = colorScheme;
         initializeWindow();
-        initializeColorScheme();
         switchToMenu();
     }
 
+    /**
+     * Initializes the main frame with default settings.
+     */
     private void initializeWindow() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT);
@@ -40,23 +43,6 @@ public class MainFrame extends JFrame {
         setLocationRelativeTo(null);
         setVisible(true);
         LOGGER.log(Level.INFO, "MainFrame initialized");
-    }
-
-    /**
-     * Initializes the color scheme with colors and the default font. Gets applied to all components.
-     */
-    private void initializeColorScheme() {
-        colorScheme = new ColorScheme(
-                new Font("Arial", Font.PLAIN, 20), // Font
-                new Color(0x2b2d30), // Background color
-                new Color(0x3B3F42), // Brighter background color
-                new Color(0x27272B), // Darker background color
-                new Color(0xECF0F1), // Font color
-                new Color(0x1e1f22), // Button color
-                new Color(0x31709A), // Accent color
-                new Color(0xA31717)  // Exit button color
-        );
-        LOGGER.log(Level.INFO, "Color scheme initialized");
     }
 
     /**
@@ -91,7 +77,7 @@ public class MainFrame extends JFrame {
     /**
      * Opens the settings window.
      */
-    public void openSettings() {
+    public void openSettingsWindow() {
         LOGGER.log(Level.INFO, "Opening settings");
         new Settings(this, "Einstellungen", colorScheme);
         validate();

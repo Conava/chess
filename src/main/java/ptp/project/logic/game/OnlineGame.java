@@ -24,12 +24,12 @@ public class OnlineGame implements Game {
     }
 
     @Override
-    public Player getPlayer1() {
+    public Player getPlayerWhite() {
         return null;
     }
 
     @Override
-    public Player getPlayer2() {
+    public Player getPlayerBlack() {
         return null;
     }
 
