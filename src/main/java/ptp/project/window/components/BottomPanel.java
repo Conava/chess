@@ -4,8 +4,11 @@ import ptp.project.window.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BottomPanel extends JPanel {
+    private static final Logger LOGGER = Logger.getLogger(BottomPanel.class.getName());
     private final ColorScheme colorScheme;
     private final MainFrame mainFrame;
 
@@ -14,6 +17,7 @@ public class BottomPanel extends JPanel {
 
     private JLabel player2Label;
     private JPanel rounded2Panel;
+    private boolean active = false;
     private JLabel status2Label;
     private JLabel free2Label;
 
@@ -84,10 +88,12 @@ public class BottomPanel extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setColor(colorScheme.getAccentColor()); // Set the color of the square
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); // Draw a rounded rectangle
+                if(active) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setColor(colorScheme.getAccentColor()); // Set the color of the square
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); // Draw a rounded rectangle
+                }
             }
         };
         rounded2Panel.setOpaque(false);
@@ -116,7 +122,10 @@ public class BottomPanel extends JPanel {
     }
 
     public void setPlayer2(boolean active) {
-        rounded2Panel.setOpaque(active);
+        this.active = active;
+        rounded2Panel.repaint();
+        status2Label.setText(active ? "Am Zug" : "Warten");
+        LOGGER.log(Level.INFO, "Player 1 is active: " + active);
     }
     //set player name
     public void setPlayer2Name(String name) {

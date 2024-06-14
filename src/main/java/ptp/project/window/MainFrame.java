@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 public class MainFrame extends JFrame {
     private static final Logger LOGGER = Logger.getLogger(MainFrame.class.getName());
     private ColorScheme colorScheme;
+    private ChessGame chessGame;
 
     public MainFrame() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -41,7 +42,7 @@ public class MainFrame extends JFrame {
     public void switchToGame(int online) {
         LOGGER.log(Level.INFO, "Switching to game");
         this.setMinimumSize(new Dimension(1000, 800));
-        ChessGame chessGame = new ChessGame(this, colorScheme, online);
+        chessGame = new ChessGame(this, colorScheme, online);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setContentPane(chessGame);
         validate();
@@ -60,7 +61,12 @@ public class MainFrame extends JFrame {
     public void openSettings() {
         LOGGER.log(Level.INFO, "Opening settings");
         //Open a new settings window
-        Settings settings = new Settings(this, colorScheme);
+        new Settings(this, "Einstellungen", colorScheme);
         validate();
+    }
+
+    public void demo() {
+        LOGGER.log(Level.INFO, "Executing demo");
+        chessGame.demo();
     }
 }

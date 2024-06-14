@@ -4,8 +4,11 @@ import ptp.project.window.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TopPanel extends JPanel {
+    private static final Logger LOGGER = Logger.getLogger(TopPanel.class.getName());
     private final ColorScheme colorScheme;
     private final MainFrame mainFrame;
 
@@ -14,6 +17,7 @@ public class TopPanel extends JPanel {
 
     private JLabel player1Label;
     private JPanel rounded1Panel;
+    private boolean active = false;
     private JLabel status1Label;
     private JLabel free1Label;
 
@@ -87,10 +91,12 @@ public class TopPanel extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setColor(colorScheme.getAccentColor()); // Set the color of the square
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); // Draw a rounded rectangle
+                if (active) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setColor(colorScheme.getAccentColor()); // Set the color of the square
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); // Draw a rounded rectangle
+                }
             }
         };
         rounded1Panel.setOpaque(false);
@@ -105,11 +111,22 @@ public class TopPanel extends JPanel {
         free1Label.setHorizontalAlignment(SwingConstants.CENTER);
         free1Label.setForeground(colorScheme.getFontColor());
         leftPanel3.add(free1Label);
+
+        // In the TopPanel class
+        JButton demoButton = new CustomButton("Demo", colorScheme);
+        demoButton.addActionListener(e -> {
+            mainFrame.demo();
+        });
+        rightContainer.add(demoButton);
     }
 
     public void setPlayer1(boolean active) {
-        rounded1Panel.setOpaque(active);
+        this.active = active;
+        rounded1Panel.repaint();
+        status1Label.setText(active ? "Am Zug" : "Warten");
+        LOGGER.log(Level.INFO, "Player 1 is active: " + active);
     }
+
     //change player name
     public void setPlayer1Name(String name) {
         player1Label.setText(name);

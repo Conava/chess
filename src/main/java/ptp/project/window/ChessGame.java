@@ -63,14 +63,21 @@ public class ChessGame extends JPanel {
         game.start();
         topPanel.setPlayer1Name(game.getPlayer1().getName());
         bottomPanel.setPlayer2Name(game.getPlayer2().getName());
-        changeActivePlayer(game.getCurrentPlayer());
+        updateActivePlayerHighlight(game.getCurrentPlayer());
     }
 
     public void update() {
-
+        updateActivePlayerHighlight(game.getCurrentPlayer());
     }
 
-    private void changeActivePlayer(Player player) {
+    /**
+     * Method for testing only
+     */
+    public void demo() {
+        updateActivePlayerHighlight(game.getPlayer2());
+    }
+
+    private void updateActivePlayerHighlight(Player player) {
         if (player == game.getPlayer1()) {
             topPanel.setPlayer1(true);
             bottomPanel.setPlayer2(false);
