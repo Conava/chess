@@ -15,6 +15,11 @@ import java.util.logging.*;
  */
 public class MainFrame extends JFrame {
     private static final Logger LOGGER = Logger.getLogger(MainFrame.class.getName());
+    private static final int MINIMUM_WINDOW_WIDTH = 600;
+    private static final int MINIMUM_WINDOW_HEIGHT = 600;
+    private static final int GAME_WINDOW_WIDTH = 1000;
+    private static final int GAME_WINDOW_HEIGHT = 800;
+
     private ColorScheme colorScheme;
     private ChessGame chessGame;
 
@@ -23,11 +28,15 @@ public class MainFrame extends JFrame {
      * Initializes the frame with default settings, initializes the color scheme, and switches to the MainMenu.
      */
     public MainFrame() {
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(600, 600);
-        setTitle("Chess");
+        initializeWindow();
         initializeColorScheme();
         switchToMenu();
+    }
+
+    private void initializeWindow() {
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT);
+        setTitle("ptp-do09 Schachspiel");
         setLocationRelativeTo(null);
         setVisible(true);
         LOGGER.log(Level.INFO, "MainFrame initialized");
@@ -56,7 +65,7 @@ public class MainFrame extends JFrame {
      */
     public void switchToGame(int online) {
         LOGGER.log(Level.INFO, "Switching to game with online status " + online);
-        this.setMinimumSize(new Dimension(1000, 800));
+        this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
         chessGame = new ChessGame(this, colorScheme, online);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setContentPane(chessGame);
@@ -69,9 +78,9 @@ public class MainFrame extends JFrame {
      */
     public void switchToMenu() {
         LOGGER.log(Level.INFO, "Switching to menu");
-        this.setMinimumSize(new Dimension(600, 600));
+        this.setMinimumSize(new Dimension(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT));
         setExtendedState(JFrame.NORMAL);
-        this.setSize(600, 600);
+        this.setSize(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT);
         MainMenu mainMenu = new MainMenu(this, colorScheme);
         chessGame = null;
         setContentPane(mainMenu);
@@ -84,7 +93,6 @@ public class MainFrame extends JFrame {
      */
     public void openSettings() {
         LOGGER.log(Level.INFO, "Opening settings");
-        //Open a new settings window
         new Settings(this, "Einstellungen", colorScheme);
         validate();
         LOGGER.log(Level.INFO, "Opened settings successfully");

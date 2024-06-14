@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.net.URL;
+import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.logging.*;
 
@@ -80,7 +81,7 @@ public class MainMenu extends JPanel {
     private void addContentToLogoPanel(JPanel logoPanel) {
         try {
             URL url = getClass().getResource(CHESS_ICON_PATH);
-            ImageIcon imageIcon = new ImageIcon(url);
+            ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(url));
             JLabel label = new JLabel(imageIcon);
             logoPanel.add(label);
         } catch (NullPointerException e) {
