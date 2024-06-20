@@ -3,7 +3,6 @@ package ptp.project;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.logic.Board;
 import ptp.project.logic.Player;
-import ptp.project.logic.Ruleset;
 import ptp.project.logic.Square;
 import ptp.project.logic.game.Game;
 import ptp.project.logic.game.OfflineGame;
@@ -52,7 +51,7 @@ public class Chess {
                 new Color(0x31709A), // Accent color
                 new Color(0xA31717)  // Exit button color
         );
-        mainFrame = new MainFrame(colorScheme);
+        mainFrame = new MainFrame(this, colorScheme);
     }
 
     /**
@@ -139,14 +138,6 @@ public class Chess {
     }
 
     /**
-     * Returns the ruleset of the game.
-     * @return The ruleset of the game
-     */
-    public Ruleset getRuleset() {
-        return game.getRuleset();
-    }
-
-    /**
      * Returns the piece at a given position.
      * @param position The position of the piece
      * @return The piece at the given position
@@ -183,10 +174,11 @@ public class Chess {
     /**
      * Moves a piece in the game.
      *
-     * @param move the move to be made
+     * @param start the starting position of the players piece
+     * @param end the end position of the players piece
      * @throws IllegalMoveException if the move is not allowed
      */
-    public void movePiece(Move move) throws IllegalMoveException {
-        game.movePiece(move);
+    public void movePiece(Square start, Square end) throws IllegalMoveException {
+        game.movePiece(start, end);
     }
 }

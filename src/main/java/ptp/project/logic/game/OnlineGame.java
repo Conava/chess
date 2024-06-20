@@ -7,7 +7,7 @@ import ptp.project.logic.pieces.Piece;
 
 import java.util.List;
 
-public class OnlineGame implements Game {
+public class OnlineGame extends Observable implements Game {
     @Override
     public void start() {
 

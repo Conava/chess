@@ -1,5 +1,6 @@
 package ptp.project.window;
 
+import ptp.project.Chess;
 import ptp.project.window.components.ColorScheme;
 
 import javax.swing.*;
@@ -22,13 +23,15 @@ public class MainFrame extends JFrame {
 
     private final ColorScheme colorScheme;
     private ChessGame chessGame;
+    private final Chess chess;
 
     /**
      * Constructor for MainFrame.
      * Initializes the frame with default settings, initializes the color scheme, and switches to the MainMenu.
      */
-    public MainFrame(ColorScheme colorScheme) {
+    public MainFrame(Chess chess, ColorScheme colorScheme) {
         this.colorScheme = colorScheme;
+        this.chess = chess;
         initializeWindow();
         switchToMenu();
     }
@@ -52,7 +55,7 @@ public class MainFrame extends JFrame {
     public void switchToGame(int online) {
         LOGGER.log(Level.INFO, "Switching to game with online status " + online);
         this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
-        chessGame = new ChessGame(this, colorScheme, online);
+        chessGame = new ChessGame(this, chess, colorScheme, online);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setContentPane(chessGame);
         validate();

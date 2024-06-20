@@ -7,15 +7,12 @@ import java.awt.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class BottomPanel extends JPanel {
+public class BottomPanel extends ControlPanel {
     private static final Logger LOGGER = Logger.getLogger(BottomPanel.class.getName());
     private final ColorScheme colorScheme;
     private final MainFrame mainFrame;
 
-    private JPanel leftContainer;
-    private JPanel rightContainer;
-
-    private JLabel player2Label;
+    private JLabel whiteLabel;
     private JPanel rounded2Panel;
     private boolean active = false;
     private JLabel status2Label;
@@ -25,65 +22,36 @@ public class BottomPanel extends JPanel {
         this.colorScheme = colorScheme;
         this.mainFrame = mainFrame;
         this.setBackground(colorScheme.getDarkerBackgroundColor());
-        initializeLayout();
         addComponents();
-        this.setOpaque(true);
-    }
-
-    private void initializeLayout() {
-        setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        // Create the left container
-        leftContainer = new ControlPanel();
-        leftContainer.setLayout(new GridLayout(1, 3));
-
-        // Add the left container to the panel
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
-        gbc.fill = GridBagConstraints.BOTH;
-        add(leftContainer, gbc);
-
-        // Create the right container
-        rightContainer = new ControlPanel();
-        rightContainer.setPreferredSize(new Dimension(300, rightContainer.getPreferredSize().height));
-
-        // Add the right container to the panel
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.VERTICAL;
-        add(rightContainer, gbc);
     }
 
     private void addComponents() {
+        setLayout(new GridLayout(1,3));
         //Create 3 JPanels in the leftContainer to hold our content
-        JPanel leftPanel1 = new ControlPanel();
-        leftPanel1.setLayout(new BorderLayout());
-        JPanel leftPanel2 = new ControlPanel();
-        leftPanel2.setLayout(new BorderLayout());
-        JPanel leftPanel3 = new ControlPanel();
-        leftPanel3.setLayout(new BorderLayout());
+        JPanel leftPanel = new ControlPanel();
+        leftPanel.setLayout(new BorderLayout());
+        JPanel middlePanel = new ControlPanel();
+        middlePanel.setLayout(new BorderLayout());
+        JPanel rightPanel = new ControlPanel();
+        rightPanel.setLayout(new BorderLayout());
 
         //Add the 3 JPanels to the leftContainer
-        leftContainer.add(leftPanel1);
-        leftContainer.add(leftPanel2);
-        leftContainer.add(leftPanel3);
+        add(leftPanel);
+        add(middlePanel);
+        add(rightPanel);
 
         //Add the content to the leftPanel1
         status2Label = new CustomLabel("", colorScheme);
         status2Label.setFont(colorScheme.getFont());
         status2Label.setHorizontalAlignment(SwingConstants.CENTER);
         status2Label.setForeground(colorScheme.getFontColor());
-        leftPanel1.add(status2Label, BorderLayout.EAST);
+        leftPanel.add(status2Label, BorderLayout.EAST);
 
         //Add the content to the leftPanel2
-        player2Label = new CustomLabel("Spieler 2", colorScheme);
-        player2Label.setFont(colorScheme.getFont());
-        player2Label.setHorizontalAlignment(SwingConstants.CENTER);
-        player2Label.setForeground(colorScheme.getFontColor());
+        whiteLabel = new CustomLabel("Weiß", colorScheme);
+        whiteLabel.setFont(colorScheme.getFont());
+        whiteLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        whiteLabel.setForeground(colorScheme.getFontColor());
         rounded2Panel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -96,10 +64,9 @@ public class BottomPanel extends JPanel {
                 }
             }
         };
-        rounded2Panel.setOpaque(true);
-        rounded2Panel.setFocusable(false);
+        rounded2Panel.setOpaque(false);
         rounded2Panel.setLayout(new BorderLayout());
-        rounded2Panel.add(player2Label, BorderLayout.CENTER);
+        rounded2Panel.add(whiteLabel, BorderLayout.CENTER);
 
         JPanel leftPlaceholder = new JPanel();
         JPanel rightPlaceholder = new JPanel();
@@ -108,20 +75,20 @@ public class BottomPanel extends JPanel {
         rightPlaceholder.setPreferredSize(placeholderSize);
         leftPlaceholder.setOpaque(false);
         rightPlaceholder.setOpaque(false);
-        leftPanel2.add(leftPlaceholder, BorderLayout.WEST);
-        leftPanel2.add(rounded2Panel);
-        leftPanel2.add(rightPlaceholder, BorderLayout.EAST);
+        middlePanel.add(leftPlaceholder, BorderLayout.WEST);
+        middlePanel.add(rounded2Panel);
+        middlePanel.add(rightPlaceholder, BorderLayout.EAST);
 
-        leftPanel2.add(leftPlaceholder, BorderLayout.WEST);
-        leftPanel2.add(rounded2Panel);
-        leftPanel2.add(rightPlaceholder, BorderLayout.EAST);
+        middlePanel.add(leftPlaceholder, BorderLayout.WEST);
+        middlePanel.add(rounded2Panel);
+        middlePanel.add(rightPlaceholder, BorderLayout.EAST);
 
         //Add the content to the leftPanel3
         free2Label = new CustomLabel("", colorScheme);
         free2Label.setFont(colorScheme.getFont());
         free2Label.setHorizontalAlignment(SwingConstants.CENTER);
         free2Label.setForeground(colorScheme.getFontColor());
-        leftPanel3.add(free2Label);
+        rightPanel.add(free2Label);
 
         JButton backButton = new ExitButton("Spiel Verlassen", colorScheme);
         backButton.addActionListener(e -> {
@@ -131,8 +98,7 @@ public class BottomPanel extends JPanel {
                 mainFrame.switchToMenu();
             }
         });
-        backButton.setPreferredSize(new Dimension(rightContainer.getPreferredSize().width -10, 40));
-        rightContainer.add(backButton);
+        rightPanel.add(backButton, BorderLayout.EAST);
     }
 
     public void setPlayer2(boolean active) {
@@ -143,6 +109,6 @@ public class BottomPanel extends JPanel {
     }
     //set player name
     public void setPlayer2Name(String name) {
-        player2Label.setText(name);
+        whiteLabel.setText(name);
     }
 }
