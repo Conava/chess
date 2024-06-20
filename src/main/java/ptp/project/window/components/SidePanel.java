@@ -16,4 +16,7 @@ public class SidePanel extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setOpaque(true);
     }
+
+    public void updateList() {
+    }
 }
