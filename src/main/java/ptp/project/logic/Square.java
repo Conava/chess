@@ -3,8 +3,8 @@ package ptp.project.logic;
 import ptp.project.logic.pieces.Piece;
 
 public class Square {
-    private int x;
-    private int y;
+    private final int x;
+    private final int y;
     private Piece piece;
 
     public Square(int y, int x) {
@@ -48,9 +48,4 @@ public class Square {
         if(this.getPiece() == null) return null;
         return this.getPiece().getPlayer();
     }
-
-    public boolean isOccupiedByPlayer(Player player) {
-        return piece != null && piece.getPlayer() == player;
-    }
-
 }

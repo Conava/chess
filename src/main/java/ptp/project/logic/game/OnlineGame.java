@@ -14,11 +14,6 @@ public class OnlineGame extends Observable implements Game {
     }
 
     @Override
-    public Board getBoard() {
-        return null;
-    }
-
-    @Override
     public Player getCurrentPlayer() {
         return null;
     }

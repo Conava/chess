@@ -147,14 +147,6 @@ public class Chess {
     }
 
     /**
-     * Returns the board of the game.
-     * @return The board of the game
-     */
-    public Board getBoard() {
-        return game.getBoard();
-    }
-
-    /**
      * Returns the legal squares for a Piece on a given position.
      * @param position The position of the piece
      * @return The legal squares for the given piece
