@@ -25,7 +25,7 @@ class StandardChessRulesetTest {
     }
 
     @org.junit.jupiter.api.Test
-    void getLegalSquares() {
+    void getSudoLegalSquares() {
     }
 
     @org.junit.jupiter.api.Test
