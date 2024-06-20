@@ -44,7 +44,7 @@ public class OnlineGame extends Observable implements Game {
     }
 
     @Override
-    public void movePiece(Move move) throws IllegalMoveException {
+    public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
     }
 
     @Override

@@ -29,5 +29,5 @@ public interface Game {
 
     List<Move> getMoveList();
 
-    void movePiece(Move move) throws IllegalMoveException;
+    void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException;
 }

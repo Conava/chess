@@ -74,14 +74,13 @@ public class OfflineGame extends Observable implements Game {
     }
 
     @Override
-    public void movePiece(Move move) throws IllegalMoveException {
-        Square square1 = move.getStart();
-        Square square2 = move.getEnd();
+    public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
         Player player = this.getCurrentPlayer();
+        Move move =  new Move(squareStart, squareEnd);
 
-        if (ruleset.isValidSquare(square1)) {
-            if (square1.isOccupiedBy() != null && square1.isOccupiedBy().equals(player)) {
-                if (this.getLegalSquares(square1).contains(square2)) {
+        if (ruleset.isValidSquare(squareStart)) {
+            if (squareStart.isOccupiedBy() != null && squareStart.isOccupiedBy().equals(player)) {
+                if (this.getLegalSquares(squareStart).contains(squareEnd)) {
                     board.executeMove(move);
                     moves.add(move);
                     turnCount++;
