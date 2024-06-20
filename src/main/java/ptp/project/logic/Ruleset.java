@@ -4,8 +4,6 @@ import ptp.project.exceptions.IsCheckException;
 import ptp.project.logic.moves.Move;
 import ptp.project.logic.pieces.Piece;
 
-import ptp.project.logic.pieces.Piece;
-
 import java.util.List;
 
 public interface Ruleset {
@@ -16,7 +14,7 @@ public interface Ruleset {
 
     Square[][] getStartBoard(Player player1, Player player2);
 
-    List<Square> getLegalSquares(Square square, Board board, List<Move> moves) throws IsCheckException;
+    List<Move> getLegalMoves(Square square, Board board, List<Move> moves, Player player1, Player player2);
 
     boolean isValidSquare(Square square);
 

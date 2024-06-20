@@ -24,25 +24,17 @@ public class OfflineGame extends Observable implements Game {
         this.ruleset = new StandardChessRuleset(); //current default
         this.board = new Board(ruleset.getStartBoard(player1, player2));
         this.turnCount = 0;
-        this.moves = new ArrayList<Move>();
+        this.moves = new ArrayList<>();
     }
+
     @Override
     public void start() {
 
     }
 
-    private void game() {
-
-    }
-
-    @Override
-    public Board getBoard() {
-        return board;
-    }
-
     @Override
     public Player getCurrentPlayer() {
-        return turnCount%2 == 0 ? player1 : player2;
+        return turnCount % 2 == 0 ? player1 : player2;
     }
 
     @Override
@@ -68,22 +60,28 @@ public class OfflineGame extends Observable implements Game {
     @Override
     public List<Square> getLegalSquares(Square square) {
 
-        try {
-            return ruleset.getLegalSquares(square, board, moves);
-        } catch (IsCheckException e) {
-            return null;
+        List<Square> legalSquares = new ArrayList<>();
+        if (square != null && !square.isOccupiedBy().equals(getCurrentPlayer())) {
+            return legalSquares;
         }
+        int moveAmount = ruleset.getLegalMoves(square, board, moves, player1, player2).size();
+        Move moveTemp;
+        for (int i = 0; i < moveAmount; i++) {
+            moveTemp = ruleset.getLegalMoves(square, board, moves, player1, player2).get(i);
+            legalSquares.add(moveTemp.getEnd());
+        }
+        return legalSquares;
     }
 
     @Override
-    public void movePiece(Move move) throws IllegalMoveException{
+    public void movePiece(Move move) throws IllegalMoveException {
         Square square1 = move.getStart();
         Square square2 = move.getEnd();
         Player player = this.getCurrentPlayer();
 
-        if(ruleset.isValidSquare(square1)) {
+        if (ruleset.isValidSquare(square1)) {
             if (square1.isOccupiedBy() != null && square1.isOccupiedBy().equals(player)) {
-                if(this.getLegalSquares(square1).contains(square2)){
+                if (this.getLegalSquares(square1).contains(square2)) {
                     board.executeMove(move);
                     moves.add(move);
                     turnCount++;
@@ -94,12 +92,12 @@ public class OfflineGame extends Observable implements Game {
         throw new IllegalMoveException(move);
     }
 
-    private void addMoves(Move move) {
-        moves.add(move);
-    }
-
     @Override
     public List<Move> getMoveList() {
         return moves;
+    }
+
+    private Square toBoardSquare(Square square) {
+        return board.getSquare(square.getY(), square.getX());
     }
 }

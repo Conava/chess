@@ -16,4 +16,12 @@ public class Player {
     public String getColor() {
         return color;
     }
+
+    public String getEnemyColor() {
+        if (color.equals("white")) {
+            return "black";
+        } else {
+            return "white";
+        }
+    }
 }

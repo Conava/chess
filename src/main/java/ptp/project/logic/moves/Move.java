@@ -18,4 +18,4 @@ public class Move {
     public Square getEnd() {
         return end;
     }
-}//hier fehlt die rochade und die umwandlung an information
+}

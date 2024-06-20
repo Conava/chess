@@ -15,8 +15,6 @@ public interface Game {
 
     void start();
 
-    Board getBoard();
-
     Player getCurrentPlayer();
 
     Player getPlayerWhite();
@@ -33,4 +31,3 @@ public interface Game {
 
     void movePiece(Move move) throws IllegalMoveException;
 }
-//todo rochade und umwandlung  wer dran ist
