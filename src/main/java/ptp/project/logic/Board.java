@@ -49,6 +49,10 @@ public class Board {
         square1.setPiece(null);
     }
 
+    public Board getCopy() {
+        return new Board(board);
+    }
+
     public Piece getPieceAt(Square square) {
         return square.getPiece();
     }
