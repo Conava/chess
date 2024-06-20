@@ -96,7 +96,8 @@ public class BottomPanel extends JPanel {
                 }
             }
         };
-        rounded2Panel.setOpaque(false);
+        rounded2Panel.setOpaque(true);
+        rounded2Panel.setFocusable(false);
         rounded2Panel.setLayout(new BorderLayout());
         rounded2Panel.add(player2Label, BorderLayout.CENTER);
 

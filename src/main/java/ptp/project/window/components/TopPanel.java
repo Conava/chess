@@ -100,6 +100,7 @@ public class TopPanel extends JPanel {
             }
         };
         rounded1Panel.setOpaque(false);
+        rounded1Panel.setFocusable(false);
         rounded1Panel.setLayout(new BorderLayout());
         rounded1Panel.add(player1Label, BorderLayout.CENTER);
 
