@@ -57,6 +57,7 @@ public class RulesetClassic implements Ruleset {
     public List<Move> getLegalMoves(Board board) {
         return List.of();
         //todo
+        //todo promotion
     }
 
     /**
@@ -70,6 +71,7 @@ public class RulesetClassic implements Ruleset {
      */
     @Override
     public List<Integer> getLegalSquares(int square, Board board, Player player, List<Move> moves) {
+
         return getSudoLegalSquares(square, board, player, moves);
         //todo
     }
@@ -80,7 +82,6 @@ public class RulesetClassic implements Ruleset {
         //only pieces of the given player can be moved.
         if (board.getPiece(square) == 0 || board.getPiece(square) % 2 == player.getOpponentColor()) {
             return sudoLegalSquares;
-
         }
         switch (board.getPiece(square)) {
             case 1:
@@ -131,7 +132,23 @@ public class RulesetClassic implements Ruleset {
         if (board.getPiece(square + getWidth() + 1) % 2 == player.getOpponentColor()) {
             sudoLegalSquares.add(square + getWidth() + 1);
         }
-        return sudoLegalSquares; //todo en passant
+
+        Move lastMove = moves.get(moves.size()-1);
+        if (lastMove.getPiece() == 2 && lastMove.getSquareStart()%getWidth() == 6 && lastMove.getSquareEnd() == 4) {
+            if (lastMove.getSquareStart() - 1 == square) {
+                int offset = getWidth() - 1;
+                if (!isSkippingRows(square, offset)) {
+                    sudoLegalSquares.add(square + offset);
+                }
+            }
+            if (lastMove.getSquareStart() + 1 == square) {
+                int offset = getWidth() + 1;
+                if (!isSkippingRows(square, offset)) {
+                    sudoLegalSquares.add(square + offset);
+                }
+            }
+        }
+        return sudoLegalSquares;
     }
 
     private List<Integer> getSudoLegalSquaresPawnBlack(int square, Board board, Player player, List<Move> moves) {
@@ -148,7 +165,23 @@ public class RulesetClassic implements Ruleset {
         if (board.getPiece(square - getWidth() + 1) % 2 == player.getOpponentColor()) {
             sudoLegalSquares.add(square - getWidth() + 1);
         }
-        return sudoLegalSquares; //todo en passant
+
+        Move lastMove = moves.get(moves.size()-1);
+        if (lastMove.getPiece() == 1 && lastMove.getSquareStart()%getWidth() == 1 && lastMove.getSquareEnd() == 3) {
+            if (lastMove.getSquareStart() - 1 == square) {
+                int offset = -(getWidth() - 1);
+                if (!isSkippingRows(square, offset)) {
+                    sudoLegalSquares.add(square + offset);
+                }
+            }
+            if (lastMove.getSquareStart() + 1 == square) {
+                int offset = -(getWidth() + 1);
+                if (!isSkippingRows(square, offset)) {
+                    sudoLegalSquares.add(square + offset);
+                }
+            }
+        }
+        return sudoLegalSquares;
     }
 
     private List<Integer> getSudoLegalSquaresKnight(int square, Board board, Player player) {
@@ -258,7 +291,8 @@ public class RulesetClassic implements Ruleset {
      */
     @Override
     public boolean isLegalMove(int rowStart, int colStart, int rowEnd, int colEnd, Board board) {
-        Move move = new Move(getSquare(rowStart, colStart), getSquare(rowEnd, colEnd));
+        int squareStart = getSquare(rowStart, colStart);
+        Move move = new Move(squareStart, getSquare(rowEnd, colEnd), board.getPiece(squareStart));
         return isLegalMove(move, board);
     }
 

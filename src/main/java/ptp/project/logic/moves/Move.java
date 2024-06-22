@@ -3,8 +3,9 @@ package ptp.project.logic.moves;
 public class Move {
     private final int squareStart;
     private final int squareEnd;
+    private final int piece;
     //only for promotion purposes.
-    private int piece;
+    private int piecePromotion;
     private boolean isPromotion = false;
 
     /**
@@ -13,22 +14,25 @@ public class Move {
      * @param squareStart The start square of the move.
      * @param squareEnd   The end square of the move.
      */
-    public Move(int squareStart, int squareEnd) {
+    public Move(int squareStart, int squareEnd, int piece) {
         this.squareStart = squareStart;
         this.squareEnd = squareEnd;
+        this.piece = piece;
     }
 
     /**
      * Initialize a move (only for promotion)
-     * @param squareStart Square the move starts from.
-     * @param squareEnd Square the move goes to.
-     * @param piece The piece the pawn promotes to.
+     *
+     * @param squareStart    Square the move starts from.
+     * @param squareEnd      Square the move goes to.
+     * @param piecePromotion The piece the pawn promotes to.
      */
-    public Move(int squareStart, int squareEnd, int piece) {
+    public Move(int squareStart, int squareEnd, int piece, int piecePromotion) {
         this.squareStart = squareStart;
         this.squareEnd = squareEnd;
-        this.isPromotion = true;
         this.piece = piece;
+        this.isPromotion = true;
+        this.piecePromotion = piecePromotion;
     }
 
     /**
@@ -50,15 +54,26 @@ public class Move {
     }
 
     /**
-     * Returns the desired piece to promote to.
-     * @return #Entries for values of status of the game: {@link ptp.project.logic.docs}
+     * Gets the moving piece.
+     *
+     * @return #Entries of values of squares follow this pattern: {@link ptp.project.logic.docs}
      */
-    public int getTransformationPiece() {
+    public int getPiece() {
         return piece;
     }
 
     /**
+     * Returns the desired piece to promote to.
+     *
+     * @return #Entries for values of status of the game: {@link ptp.project.logic.docs}
+     */
+    public int getTransformationPiece() {
+        return piecePromotion;
+    }
+
+    /**
      * Whether the move is a promotion move.
+     *
      * @return bool whether it is a promotion move.
      */
     public boolean isPromotion() {
@@ -69,10 +84,9 @@ public class Move {
      * Returns a notation of the move.
      *
      * @param col Amount of columns of the board.
-     * @param piece The piece to move.
      * @return Notation as string.
      */
-    public String getMoveNotation(int col, int piece) {
+    public String getMoveNotation(int col) {
         return getPieceAbbr(piece) + getSquareNotation(squareStart, col) + " - " + getSquareNotation(squareEnd, col);
     }
 
@@ -130,17 +144,18 @@ public class Move {
 
     /**
      * Gets the abbreviation of the piece.
+     *
      * @param piece #Entries of values of squares follow this pattern: {@link ptp.project.logic.docs}
      * @return The corresponding char as a string.
      */
     private String getPieceAbbr(int piece) {
         return switch (piece) {
-            case 1 ,2 -> "";
-            case 3 ,4 -> "N";
-            case 5 ,6 -> "B";
-            case 7 ,8 -> "R";
-            case 9 ,10 -> "Q";
-            case 11 ,12 -> "K";
+            case 1, 2 -> "";
+            case 3, 4 -> "N";
+            case 5, 6 -> "B";
+            case 7, 8 -> "R";
+            case 9, 10 -> "Q";
+            case 11, 12 -> "K";
             default -> "ERROR";
         };
     }

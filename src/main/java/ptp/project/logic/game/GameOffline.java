@@ -18,6 +18,10 @@ public class GameOffline extends Observable implements Game {
     int turnCounter;
     List<Move> moves;
 
+    /**
+     * Initialize an offline game.
+     * @param ruleset Ruleset used to play the game on.
+     */
     public GameOffline(Ruleset ruleset) {
         player0 = new Player("PlayerWhite", 0);
         player1 = new Player("PlayerBlack", 1);
@@ -180,7 +184,8 @@ public class GameOffline extends Observable implements Game {
      */
     @Override
     public void movePiece(int rowStart, int colStart, int rowEnd, int colEnd) throws IllegalMoveException {
-        Move move = new Move(getSquare(rowStart, colStart), getSquare(rowEnd, colEnd));
+        int squareStart = getSquare(rowStart, colStart);
+        Move move = new Move(squareStart, getSquare(rowEnd, colEnd), board.getPiece(squareStart));
         movePiece(move);
     }
 

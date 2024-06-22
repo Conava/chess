@@ -86,7 +86,7 @@ public class Board {
      */
     public void executeMove(Move move) {
         if (move.getSquareStart() >= board.length || move.getSquareEnd() >= board.length) {
-            System.out.println(move.getMoveNotation(col, getPiece(move.getSquareStart())) + " is not inside the board");
+            System.out.println(move.getMoveNotation(col) + " is not inside the board");
             return;
         }
 
@@ -120,7 +120,7 @@ public class Board {
             canCastleBlack -= 1;
         }
 
-        board[move.getSquareEnd()] = board[move.getSquareStart()];
+        board[move.getSquareEnd()] = move.getPiece();
         board[move.getSquareStart()] = 0;
     }
 }
