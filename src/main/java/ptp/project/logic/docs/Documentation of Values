@@ -1,0 +1,59 @@
+#Entries of values of squares follow this pattern: {@link ptp.project.logic.docs}
+-  0 empty
+-  1 white pawn
+-  2 black pawn
+-  3 white knight
+-  4 black knight
+-  5 white bishop
+-  6 black bishop
+-  7 white rook
+-  8 black rook
+-  9 white queen
+- 10 black queen
+- 11 white king
+- 12 black king
+- 13 square not on board
+
+#Entries for values of colors: {@link ptp.project.logic.docs}
+- 0 white
+- 1 black
+
+#Example for how a 8x8 board is numerated: {@link ptp.project.logic.docs}
+     ____ ____ ____ ____ ____ ____ ____ ____
+    | 56 | 57 | 58 | 59 | 60 | 61 | 62 | 63 |
+    |____|____|____|____|____|____|____|____|
+    | 48 | 49 | 50 | 51 | 52 | 53 | 54 | 55 |
+    |____|____|____|____|____|____|____|____|
+    | 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 |
+    |____|____|____|____|____|____|____|____|
+    | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 |
+    |____|____|____|____|____|____|____|____|
+    | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 |
+    |____|____|____|____|____|____|____|____|
+    | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 |
+    |____|____|____|____|____|____|____|____|
+    |  8 |  9 | 10 | 11 | 12 | 13 | 14 | 15 |
+    |____|____|____|____|____|____|____|____|
+    |  0 |  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+    |____|____|____|____|____|____|____|____|
+
+#Entries for values of status of the game: {@link ptp.project.logic.docs}
+-  0 there is no game.
+-  1 the game is running.
+-  2 white won by surrender
+-  3 white won by checkmate
+-  4 black won by surrender
+-  5 black won by checkmate
+-  6 draw by agreement
+-  7 draw by insufficient material
+-  8 draw by stalemate
+-  9 draw by 50 move rule
+- 10 draw by repetition
+
+#Entries for values of states of canCastle: {@link ptp.project.logic.docs}
+- 0 cannot castle
+- 1 can only castle short
+- 2 can only castle long
+- 3 can castle
+
+rows and columns start at 0

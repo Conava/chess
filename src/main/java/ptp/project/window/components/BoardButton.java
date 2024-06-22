@@ -1,6 +1,6 @@
 package ptp.project.window.components;
 
-import ptp.project.logic.Square;
+import ptp.project.logic.SquareTemp;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,8 +24,8 @@ public class BoardButton extends JButton {
         return col;
     }
 
-    public Square getSquare() {
-        return new Square(row, col);
+    public SquareTemp getSquare() {
+        return new SquareTemp(row, col);
     }
 
     public void setMarker() {

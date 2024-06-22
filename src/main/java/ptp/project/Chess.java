@@ -1,14 +1,13 @@
 package ptp.project;
 
 import ptp.project.exceptions.IllegalMoveException;
-import ptp.project.logic.Board;
-import ptp.project.logic.Player;
-import ptp.project.logic.Square;
-import ptp.project.logic.game.Game;
-import ptp.project.logic.game.OfflineGame;
-import ptp.project.logic.game.OnlineGame;
-import ptp.project.logic.moves.Move;
-import ptp.project.logic.pieces.Piece;
+import ptp.project.logic.PlayerTemp;
+import ptp.project.logic.SquareTemp;
+import ptp.project.logic.gameTemp.GameTemp;
+import ptp.project.logic.gameTemp.OfflineGameTemp;
+import ptp.project.logic.gameTemp.OnlineGameTemp;
+import ptp.project.logic.movesTemp.MoveTemp;
+import ptp.project.logic.piecesTemp.PieceTemp;
 import ptp.project.window.MainFrame;
 import ptp.project.window.components.ColorScheme;
 
@@ -24,7 +23,7 @@ import javax.swing.*;
 public class Chess {
     private static final Logger LOGGER = Logger.getLogger(Chess.class.getName());
     MainFrame mainFrame;
-    Game game;
+    GameTemp gameTemp;
 
     /**
      * Main method of the application. Starts the application.
@@ -81,60 +80,60 @@ public class Chess {
      * Returns the current game.
      * @return The current game
      */
-    public Game getGame() {
-        return game;
+    public GameTemp getGame() {
+        return gameTemp;
     }
 
     /**
      * Creates an online game.
      */
     public void createOnlineGame() {
-        game = new OnlineGame();
+        gameTemp = new OnlineGameTemp();
     }
 
     /**
      * Creates an offline game.
      */
     public void createOfflineGame() {
-        game = new OfflineGame();
+        gameTemp = new OfflineGameTemp();
     }
 
     /**
      * Starts the game.
      */
     public void startGame() {
-        game.start();
+        gameTemp.start();
     }
 
     /**
      * Ends the game.
      */
     public void endGame() {
-        game = null;
+        gameTemp = null;
     }
 
     /**
      * Returns the current player.
      * @return The current player
      */
-    public Player getCurrentPlayer() {
-        return game.getCurrentPlayer();
+    public PlayerTemp getCurrentPlayer() {
+        return gameTemp.getCurrentPlayer();
     }
 
     /**
      * Returns the white player.
      * @return The white player
      */
-    public Player getPlayerWhite() {
-        return game.getPlayerWhite();
+    public PlayerTemp getPlayerWhite() {
+        return gameTemp.getPlayerWhite();
     }
 
     /**
      * Returns the black player.
      * @return The black player
      */
-    public Player getPlayerBlack() {
-        return game.getPlayerBlack();
+    public PlayerTemp getPlayerBlack() {
+        return gameTemp.getPlayerBlack();
     }
 
     /**
@@ -142,8 +141,8 @@ public class Chess {
      * @param position The position of the piece
      * @return The piece at the given position
      */
-    public Piece getPieceAt(Square position) {
-        return game.getPieceAt(position);
+    public PieceTemp getPieceAt(SquareTemp position) {
+        return gameTemp.getPieceAt(position);
     }
 
     /**
@@ -151,16 +150,16 @@ public class Chess {
      * @param position The position of the piece
      * @return The legal squares for the given piece
      */
-    public List<Square> getLegalSquares(Square position) {
-        return game.getLegalSquares(position);
+    public List<SquareTemp> getLegalSquares(SquareTemp position) {
+        return gameTemp.getLegalSquares(position);
     }
 
     /**
      * Returns the list of moves made in the game.
      * @return The list of moves made in the game
      */
-    public List<Move> getMoveList() {
-        return game.getMoveList();
+    public List<MoveTemp> getMoveList() {
+        return gameTemp.getMoveList();
     }
 
     /**
@@ -170,7 +169,7 @@ public class Chess {
      * @param end the end position of the players piece
      * @throws IllegalMoveException if the move is not allowed
      */
-    public void movePiece(Square start, Square end) throws IllegalMoveException {
-        game.movePiece(start, end);
+    public void movePiece(SquareTemp start, SquareTemp end) throws IllegalMoveException {
+        gameTemp.movePiece(start, end);
     }
 }

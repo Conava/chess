@@ -2,7 +2,7 @@ package ptp.project.logic.ruleset;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class StandardChessRulesetTest {
+class StandardChessRulesetTempTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {

@@ -2,8 +2,8 @@ package ptp.project.window;
 
 import ptp.project.Chess;
 import ptp.project.exceptions.IllegalMoveException;
-import ptp.project.logic.Player;
-import ptp.project.logic.Square;
+import ptp.project.logic.PlayerTemp;
+import ptp.project.logic.SquareTemp;
 import ptp.project.logic.game.GameObserver;
 import ptp.project.window.components.*;
 
@@ -11,7 +11,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,7 +26,7 @@ public class ChessGame extends JPanel implements GameObserver {
     private SidePanel sidePanelRight;
     private SidePanel sidePanelLeft;
 
-    private Square clickedSquare;
+    private SquareTemp clickedSquareTemp;
 
     public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, int online) {
         this.mainFrame = mainFrame;
@@ -125,8 +124,8 @@ public class ChessGame extends JPanel implements GameObserver {
         updateActivePlayerHighlight(chess.getPlayerBlack());
     }
 
-    private void updateActivePlayerHighlight(Player player) {
-        if (player == chess.getPlayerWhite()) {
+    private void updateActivePlayerHighlight(PlayerTemp playerTemp) {
+        if (playerTemp == chess.getPlayerWhite()) {
             topPanel.setBlack(true);
             bottomPanel.setPlayer2(false);
         } else {
@@ -145,14 +144,14 @@ public class ChessGame extends JPanel implements GameObserver {
     private void checkStatus() {
     }
 
-    public void clickedOn(Square square) {
-        if (clickedSquare == null) {
-            setClickedSquare(square);
-            boardPanel.setLegalSquares(chess.getLegalSquares(square));
+    public void clickedOn(SquareTemp squareTemp) {
+        if (clickedSquareTemp == null) {
+            setClickedSquare(squareTemp);
+            boardPanel.setLegalSquares(chess.getLegalSquares(squareTemp));
         } else {
-            if (chess.getLegalSquares(clickedSquare).contains(square)) {
+            if (chess.getLegalSquares(clickedSquareTemp).contains(squareTemp)) {
                 try {
-                    chess.movePiece(clickedSquare, square);
+                    chess.movePiece(clickedSquareTemp, squareTemp);
                     setClickedSquare(null);
                     boardPanel.setLegalSquares(null);
                 } catch (IllegalMoveException e) {
@@ -160,23 +159,23 @@ public class ChessGame extends JPanel implements GameObserver {
                 }
 
             } else {
-                if (chess.getPieceAt(square) != null) {
-                    if (chess.getPieceAt(square).getPlayer() == chess.getCurrentPlayer()) {
-                        setClickedSquare(square);
-                        boardPanel.setLegalSquares(chess.getLegalSquares(square));
+                if (chess.getPieceAt(squareTemp) != null) {
+                    if (chess.getPieceAt(squareTemp).getPlayer() == chess.getCurrentPlayer()) {
+                        setClickedSquare(squareTemp);
+                        boardPanel.setLegalSquares(chess.getLegalSquares(squareTemp));
                     }
                 }
             }
         }
-        if (chess.getPieceAt(square) != null) {
-            if (chess.getPieceAt(square).getPlayer() == chess.getCurrentPlayer()) {
-                setClickedSquare(square);
-                boardPanel.setLegalSquares(chess.getLegalSquares(square));
+        if (chess.getPieceAt(squareTemp) != null) {
+            if (chess.getPieceAt(squareTemp).getPlayer() == chess.getCurrentPlayer()) {
+                setClickedSquare(squareTemp);
+                boardPanel.setLegalSquares(chess.getLegalSquares(squareTemp));
             }
         }
     }
 
-    private void setClickedSquare(Square square) {
-        clickedSquare = square;
+    private void setClickedSquare(SquareTemp squareTemp) {
+        clickedSquareTemp = squareTemp;
     }
 }

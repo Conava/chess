@@ -1,12 +1,12 @@
-package ptp.project.logic.pieces;
+package ptp.project.logic.piecesTemp;
 
-import ptp.project.logic.Player;
+import ptp.project.logic.PlayerTemp;
 
-public class Rook extends Piece {
+public class Rook extends PieceTemp {
     boolean hasMoved = false;
 
-    public Rook(Player player) {
-        super(player);
+    public Rook(PlayerTemp playerTemp) {
+        super(playerTemp);
     }
 
     public void setHasMoved() {

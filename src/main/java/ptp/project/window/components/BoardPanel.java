@@ -1,6 +1,6 @@
 package ptp.project.window.components;
 
-import ptp.project.logic.Square;
+import ptp.project.logic.SquareTemp;
 import ptp.project.window.ChessGame;
 
 import javax.swing.*;
@@ -38,11 +38,11 @@ public class BoardPanel extends JPanel {
         });
     }
 
-    public void setLegalSquares(List<Square> legalSquares) {
+    public void setLegalSquares(List<SquareTemp> legalSquareTemps) {
         for (Component component : board.getComponents()) {
             if (component instanceof BoardButton button) {
-                Square square = button.getSquare();
-                if (legalSquares.contains(square)) {
+                SquareTemp squareTemp = button.getSquare();
+                if (legalSquareTemps.contains(squareTemp)) {
                     button.setMarker();
                 }
             }
@@ -94,8 +94,8 @@ public class BoardPanel extends JPanel {
         return board;
     }
 
-    private void clickedOn(Square square) {
-        chessGame.clickedOn(square);
+    private void clickedOn(SquareTemp squareTemp) {
+        chessGame.clickedOn(squareTemp);
     }
 
     private void adjustPanelSizes() {

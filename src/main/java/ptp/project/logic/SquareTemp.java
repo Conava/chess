@@ -1,22 +1,22 @@
 package ptp.project.logic;
 
-import ptp.project.logic.pieces.Piece;
+import ptp.project.logic.piecesTemp.PieceTemp;
 
-public class Square {
+public class SquareTemp {
     private final int x;
     private final int y;
-    private Piece piece;
+    private PieceTemp pieceTemp;
 
-    public Square(int y, int x) {
+    public SquareTemp(int y, int x) {
         this.x = x;
         this.y = y;
-        this.piece = null;
+        this.pieceTemp = null;
     }
 
-    public Square(int x, int y, Piece piece) {
+    public SquareTemp(int x, int y, PieceTemp pieceTemp) {
         this.x = x;
         this.y = y;
-        this.piece = piece;
+        this.pieceTemp = pieceTemp;
     }
 
     public int getX() {
@@ -27,16 +27,16 @@ public class Square {
         return y;
     }
 
-    public Piece getPiece() {
-        return piece;
+    public PieceTemp getPiece() {
+        return pieceTemp;
     }
 
-    public void setPiece(Piece piece) {
-        this.piece = piece;
+    public void setPiece(PieceTemp pieceTemp) {
+        this.pieceTemp = pieceTemp;
     }
 
     public boolean isEmpty() {
-        return piece == null;
+        return pieceTemp == null;
     }
 
     /**
@@ -44,7 +44,7 @@ public class Square {
      * @return Returns null if unoccupied
      *         Returns Player if occupied
      */
-    public Player isOccupiedBy() {
+    public PlayerTemp isOccupiedBy() {
         if(this.getPiece() == null) return null;
         return this.getPiece().getPlayer();
     }
