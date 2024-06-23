@@ -5,9 +5,9 @@ import ptp.project.logic.moves.Move;
 import java.util.List;
 
 public class Board {
-    private final int[] board;
-    private final int row;
-    private final int col;
+    private int[] board;
+    private int row;
+    private int col;
     private int canCastleWhite;
     private int canCastleBlack;
 
@@ -25,6 +25,18 @@ public class Board {
         this.col = col;
         canCastleWhite = 3;
         canCastleBlack = 3;
+    }
+
+    public Board(int row, int col, int[] boardPosition, int canCastleWhite, int canCastleBlack) {
+        if (boardPosition.length == row * col) {
+            this.board = boardPosition;
+            this.row = row;
+            this.col = col;
+            this.canCastleWhite = canCastleWhite;
+            this.canCastleBlack = canCastleBlack;
+        } else {
+            System.out.println("Board size of board position and board size do not match");
+        }
     }
 
     /**

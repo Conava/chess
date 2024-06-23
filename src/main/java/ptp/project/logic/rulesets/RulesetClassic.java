@@ -55,7 +55,8 @@ public class RulesetClassic implements Ruleset {
      */
     @Override
     public List<Move> getLegalMoves(Board board) {
-        return List.of();
+        List<Move> moves = new ArrayList<>();
+        return  moves;
         //todo
         //todo promotion
     }
@@ -71,9 +72,21 @@ public class RulesetClassic implements Ruleset {
      */
     @Override
     public List<Integer> getLegalSquares(int square, Board board, Player player, List<Move> moves) {
-
-        return getSudoLegalSquares(square, board, player, moves);
-        //todo
+        Board boardTemp = new Board(board.getRowSize(), board.getColSize(), board.getBoard(), board.getCanCastle(0), board.getCanCastle(1));
+        List<Integer> legalSquares = new ArrayList<>();
+        List <Integer> sudoLegalSquares = getSudoLegalSquares(square, board, player, moves);
+        List<Integer> sudoLegalSquaresOpponent;
+        for (Integer sudoLegalSquare : sudoLegalSquares) {
+            boardTemp.executeMove(new Move(square, sudoLegalSquare, board.getPiece(square)));
+            Player playerTemp = new Player("temp", player.getOpponentColor());
+            sudoLegalSquaresOpponent = getSudoLegalSquares(square, boardTemp, playerTemp, moves);
+            for (Integer integer : sudoLegalSquaresOpponent) {
+                if (boardTemp.getPiece(integer) >= 0 && boardTemp.getPiece(integer) <= 10) {
+                    legalSquares.add(sudoLegalSquare);
+                }
+            }
+        }
+        return legalSquares;
     }
 
     private List<Integer> getSudoLegalSquares(int square, Board board, Player player, List<Move> moves) {
