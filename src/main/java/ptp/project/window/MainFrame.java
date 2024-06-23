@@ -86,9 +86,4 @@ public class MainFrame extends JFrame {
         validate();
         LOGGER.log(Level.INFO, "Opened settings successfully");
     }
-
-    public void demo() {
-        LOGGER.log(Level.INFO, "Executing demo");
-        chessGame.demo();
-    }
 }

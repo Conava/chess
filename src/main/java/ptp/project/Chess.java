@@ -1,10 +1,10 @@
 package ptp.project;
 
 import ptp.project.exceptions.IllegalMoveException;
-import ptp.project.logic.Board;
 import ptp.project.logic.Player;
 import ptp.project.logic.Square;
 import ptp.project.logic.game.Game;
+import ptp.project.logic.game.GameObserver;
 import ptp.project.logic.game.OfflineGame;
 import ptp.project.logic.game.OnlineGame;
 import ptp.project.logic.moves.Move;
@@ -23,8 +23,8 @@ import javax.swing.*;
  */
 public class Chess {
     private static final Logger LOGGER = Logger.getLogger(Chess.class.getName());
-    MainFrame mainFrame;
-    Game game;
+    private final MainFrame mainFrame;
+    private Game game;
 
     /**
      * Main method of the application. Starts the application.
@@ -86,24 +86,30 @@ public class Chess {
     }
 
     /**
-     * Creates an online game.
-     */
-    public void createOnlineGame() {
-        game = new OnlineGame();
-    }
-
-    /**
-     * Creates an offline game.
-     */
-    public void createOfflineGame() {
-        game = new OfflineGame();
-    }
-
-    /**
      * Starts the game.
+     *
+     * @param online The online status of the game. 0 for offline, 1 for online.
      */
-    public void startGame() {
-        game.start();
+    public void startGame(int online) {
+        if (game == null) {
+            game = online == 1 ? new OnlineGame() : new OfflineGame();
+            game.start();
+            LOGGER.log(Level.INFO, "Game started");
+        } else {
+            LOGGER.log(Level.WARNING, "Game is already running");
+        }
+    }
+
+    public int getStatus() {
+        return game.getStatus();
+    }
+
+    /**
+     * Adds an observer to the game.
+     * @param observer The observer to add
+     */
+    public void addObserver(GameObserver observer) {
+        game.addObserver(observer);
     }
 
     /**
