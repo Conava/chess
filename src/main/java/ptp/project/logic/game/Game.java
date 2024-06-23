@@ -11,23 +11,23 @@ import ptp.project.logic.moves.Move;
 
 import java.util.List;
 
-public interface Game {
+public abstract class Game extends Observable {
 
-    void start();
+    public abstract void start();
 
-    Player getCurrentPlayer();
+    public abstract Player getCurrentPlayer();
 
-    Player getPlayerWhite();
+    public abstract Player getPlayerWhite();
 
-    Player getPlayerBlack();
+    public abstract Player getPlayerBlack();
 
-    Ruleset getRuleset();
+    public abstract Piece getPieceAt(Square notation);
 
-    Piece getPieceAt(Square notation);
+    public abstract List<Square> getLegalSquares(Square position);
 
-    List<Square> getLegalSquares(Square position);
+    public abstract List<Move> getMoveList();
 
-    List<Move> getMoveList();
+    public abstract void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException;
 
-    void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException;
+    public abstract int getStatus();
 }

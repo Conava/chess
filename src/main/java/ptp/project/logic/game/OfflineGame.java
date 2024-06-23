@@ -10,7 +10,7 @@ import ptp.project.logic.ruleset.StandardChessRuleset;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OfflineGame extends Observable implements Game {
+public class OfflineGame extends Game {
     Player player1;
     Player player2;
     Ruleset ruleset;
@@ -45,11 +45,6 @@ public class OfflineGame extends Observable implements Game {
     @Override
     public Player getPlayerBlack() {
         return player2;
-    }
-
-    @Override
-    public Ruleset getRuleset() {
-        return ruleset;
     }
 
     @Override

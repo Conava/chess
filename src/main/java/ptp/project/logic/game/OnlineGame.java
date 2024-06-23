@@ -7,7 +7,7 @@ import ptp.project.logic.pieces.Piece;
 
 import java.util.List;
 
-public class OnlineGame extends Observable implements Game {
+public class OnlineGame extends Game {
     @Override
     public void start() {
 
@@ -25,11 +25,6 @@ public class OnlineGame extends Observable implements Game {
 
     @Override
     public Player getPlayerBlack() {
-        return null;
-    }
-
-    @Override
-    public Ruleset getRuleset() {
         return null;
     }
 
