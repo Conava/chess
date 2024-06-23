@@ -8,14 +8,13 @@ import java.awt.geom.RoundRectangle2D;
 
 public class ConfirmDialog extends JDialog {
     private boolean confirmed = false;
-    private Color dialogBackgroundColor;
 
     public ConfirmDialog(JFrame parent, String message, String title, ColorScheme colorScheme) {
         super(parent, title, true);
         this.setSize(400, 200);
         this.setResizable(false);
         this.setUndecorated(true);
-        dialogBackgroundColor = colorScheme.getBackgroundColor().darker();
+        Color dialogBackgroundColor = colorScheme.getBackgroundColor().darker();
         this.getContentPane().setBackground(dialogBackgroundColor);
 
         this.setLayout(new BorderLayout());
