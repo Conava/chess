@@ -1,6 +1,6 @@
 package ptp.project.window.components;
 
-import ptp.project.logic.Square;
+import ptp.project.data.Square;
 import ptp.project.window.ChessGame;
 
 import javax.swing.*;

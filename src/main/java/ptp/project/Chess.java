@@ -1,14 +1,16 @@
 package ptp.project;
 
+import ptp.project.data.enums.GameState;
+import ptp.project.data.enums.RulesetOptions;
 import ptp.project.exceptions.IllegalMoveException;
-import ptp.project.logic.Player;
-import ptp.project.logic.Square;
+import ptp.project.data.Player;
+import ptp.project.data.Square;
 import ptp.project.logic.game.Game;
 import ptp.project.logic.game.GameObserver;
 import ptp.project.logic.game.OfflineGame;
 import ptp.project.logic.game.OnlineGame;
 import ptp.project.logic.moves.Move;
-import ptp.project.logic.pieces.Piece;
+import ptp.project.data.pieces.Piece;
 import ptp.project.window.MainFrame;
 import ptp.project.window.components.ColorScheme;
 
@@ -90,18 +92,22 @@ public class Chess {
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
-    public void startGame(int online) {
+    public void startGame(int online, RulesetOptions selectedRuleset) {
         if (game == null) {
-            game = online == 1 ? new OnlineGame() : new OfflineGame();
-            game.start();
+            game = online == 1 ? new OnlineGame(selectedRuleset) : new OfflineGame(selectedRuleset);
+            game.startGame();
             LOGGER.log(Level.INFO, "Game started");
         } else {
             LOGGER.log(Level.WARNING, "Game is already running");
         }
     }
 
-    public int getStatus() {
-        return game.getStatus();
+    /**
+     * Returns the state of the game.
+     * @return The state of the game
+     */
+    public GameState getState() {
+        return game.getState();
     }
 
     /**
@@ -116,7 +122,7 @@ public class Chess {
      * Ends the game.
      */
     public void endGame() {
-        game = null;
+        game.endGame();
     }
 
     /**

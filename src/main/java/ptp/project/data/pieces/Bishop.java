@@ -1,6 +1,6 @@
-package ptp.project.logic.pieces;
+package ptp.project.data.pieces;
 
-import ptp.project.logic.Player;
+import ptp.project.data.Player;
 
 public class Bishop extends Piece {
     public Bishop(Player player) {

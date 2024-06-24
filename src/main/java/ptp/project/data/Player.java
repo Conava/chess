@@ -1,4 +1,4 @@
-package ptp.project.logic;
+package ptp.project.data;
 
 public class Player {
     private final String name;

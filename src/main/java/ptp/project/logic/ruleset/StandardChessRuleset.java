@@ -1,9 +1,11 @@
 package ptp.project.logic.ruleset;
 
+import ptp.project.data.Player;
+import ptp.project.data.Square;
+import ptp.project.data.pieces.*;
 import ptp.project.exceptions.IsCheckException;
-import ptp.project.logic.*;
+import ptp.project.data.board.Board;
 import ptp.project.logic.moves.Move;
-import ptp.project.logic.pieces.*;
 
 //import java.lang.reflect.Array;
 import java.util.List;

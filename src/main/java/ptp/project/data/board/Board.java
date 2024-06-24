@@ -1,11 +1,13 @@
-package ptp.project.logic;
+package ptp.project.data.board;
 
+import ptp.project.data.Player;
+import ptp.project.data.Square;
+import ptp.project.data.pieces.King;
+import ptp.project.data.pieces.Rook;
 import ptp.project.logic.moves.CastleMove;
 import ptp.project.logic.moves.Move;
 import ptp.project.logic.moves.PromotionMove;
-
-import ptp.project.logic.pieces.*;
-import ptp.project.logic.pieces.Piece;
+import ptp.project.data.pieces.Piece;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,33 +94,7 @@ public class Board {
         }
     }
 
-    public boolean isCheck(Player player) {
-        // Implement the logic to check if a player is in check
-        return false;
-    }
-
-    public boolean isCheckmate(Player player) {
-        // Implement the logic to check if a player is in checkmate
-        return false;
-    }
-
-    public boolean isStalemate(Player player) {
-        // Implement the logic to check if a player is in stalemate
-        return false;
-    }
-
-    public boolean isDraw(Player player) {
-        // Implement the logic to check if the game is a draw
-        return false;
-    }
-
-    public boolean isGameOver(Player player) {
-        // Implement the logic to check if the game is over
-        return false;
-    }
-
-    public boolean isCapture(Move move) {
-        // Implement the logic to check if a move is a capture
-        return false;
+    public Piece getPieceAt(Square square) {
+        return board[square.getX()][square.getY()].getPiece();
     }
 }

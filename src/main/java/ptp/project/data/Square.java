@@ -1,6 +1,6 @@
-package ptp.project.logic;
+package ptp.project.data;
 
-import ptp.project.logic.pieces.Piece;
+import ptp.project.data.pieces.Piece;
 
 public class Square {
     private final int x;

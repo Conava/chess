@@ -1,6 +1,6 @@
 package ptp.project.logic.moves;
 
-import ptp.project.logic.Square;
+import ptp.project.data.Square;
 
 public class Move {
     private final Square start;

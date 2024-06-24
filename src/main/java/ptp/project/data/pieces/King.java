@@ -1,6 +1,6 @@
-package ptp.project.logic.pieces;
+package ptp.project.data.pieces;
 
-import ptp.project.logic.Player;
+import ptp.project.data.Player;
 
 public class King extends Piece {
     boolean hasMoved = false;

@@ -1,49 +1,31 @@
 package ptp.project.logic.game;
 
+import ptp.project.data.Player;
+import ptp.project.data.Square;
+import ptp.project.data.enums.RulesetOptions;
 import ptp.project.exceptions.IllegalMoveException;
-import ptp.project.logic.*;
 import ptp.project.logic.moves.Move;
-import ptp.project.logic.pieces.Piece;
+import ptp.project.data.pieces.Piece;
 
 import java.util.List;
 
 public class OnlineGame extends Game {
-    @Override
-    public void start() {
+    Player localPlayer;
 
+    public OnlineGame(RulesetOptions selectedRuleset) {
+        super(selectedRuleset);
+        localPlayer = player0;        //remotePlayer is always player1
     }
 
     @Override
-    public Player getCurrentPlayer() {
-        return null;
+    public void startGame() {
     }
 
     @Override
-    public Player getPlayerWhite() {
-        return null;
-    }
-
-    @Override
-    public Player getPlayerBlack() {
-        return null;
-    }
-
-    @Override
-    public Piece getPieceAt(Square notation) {
-        return null;
-    }
-
-    @Override
-    public List<Square> getLegalSquares(Square position) {
-        return List.of();
+    public void endGame() {
     }
 
     @Override
     public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
-    }
-
-    @Override
-    public List<Move> getMoveList() {
-        return null;
     }
 }

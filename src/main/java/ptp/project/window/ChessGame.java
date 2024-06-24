@@ -1,9 +1,11 @@
 package ptp.project.window;
 
 import ptp.project.Chess;
+import ptp.project.data.enums.GameState;
+import ptp.project.data.enums.RulesetOptions;
 import ptp.project.exceptions.IllegalMoveException;
-import ptp.project.logic.Player;
-import ptp.project.logic.Square;
+import ptp.project.data.Player;
+import ptp.project.data.Square;
 import ptp.project.logic.game.GameObserver;
 import ptp.project.window.components.*;
 
@@ -131,7 +133,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
     private void initializeGame(int online) {
-        chess.startGame(online);
+        chess.startGame(online, RulesetOptions.STANDARD);
         LOGGER.log(Level.INFO, "Game started");
         chess.addObserver(this);
 
@@ -165,17 +167,17 @@ public class ChessGame extends JPanel implements GameObserver {
 
     @Override
     public void update() {
-        int status = checkStatus();
+        GameState state = checkState();
 
-        if (status == 0) {
+        if (state == GameState.NO_GAME) {
             LOGGER.log(Level.WARNING, "No Game found\nSwitching to Menu");
             mainFrame.switchToMenu();
-        } else if (status == 1) {
+        } else if (state == GameState.RUNNING) {
             updateActivePlayerHighlight(chess.getCurrentPlayer());
             updateBoard();
             updateList();
         } else {
-            displayGameEndMessage(status);
+            displayGameEndMessage(state);
         }
     }
 
@@ -184,8 +186,8 @@ public class ChessGame extends JPanel implements GameObserver {
      *
      * @return The status of the game as described in the Game class
      */
-    private int checkStatus() {
-        return chess.getStatus();
+    private GameState checkState() {
+        return chess.getState();
     }
 
     /**
@@ -220,43 +222,29 @@ public class ChessGame extends JPanel implements GameObserver {
     /**
      * Displays a message when the game ends.
      *
-     * @param status The status of the game as described in the Game class
+     * @param state The status of the game as described in the Game class
      */
-    private void displayGameEndMessage(int status) {
+    private void displayGameEndMessage(GameState state) {
         LOGGER.log(Level.INFO, "Game ended!");
-        if (status < 4 && status > 1) {
-            LOGGER.log(Level.INFO, chess.getPlayerWhite() + " (White) won");
-            ConfirmDialog dialog = new ConfirmDialog(mainFrame, chess.getPlayerWhite() + " (Weiß) hat gewonnen!\n"
-                    + (status == 2 ? "Der Gegner hat aufgegeben!" : "Schachmatt" + "\n\nZurück zum Menü?"),
-                    "Game Over", colorScheme);
-            dialog.setVisible(true);
-            if (dialog.isConfirmed()) {
-                mainFrame.switchToMenu();
-            }
-        } else if (status < 6) {
-            LOGGER.log(Level.INFO, chess.getPlayerBlack() + " (Black) won");
-            ConfirmDialog dialog = new ConfirmDialog(mainFrame, chess.getPlayerBlack() + " (Schwarz) hat gewonnen!\n"
-                    + (status == 4 ? "Der Gegner hat aufgegeben!" : "Schachmatt" + "\n\nZurück zum Menü?"),
-                    "Game Over", colorScheme);
-            dialog.setVisible(true);
-            if (dialog.isConfirmed()) {
-                mainFrame.switchToMenu();
-            }
-        } else {
-            LOGGER.log(Level.INFO, "Draw!");
-            String reason = switch (status) {
-                case 6 -> "Vereinbarung";
-                case 7 -> "Unzureichendes Material";
-                case 8 -> "Patt";
-                case 9 -> "50 Züge Regel";
-                default -> "Dreifache Stellungswiederholung";
-            };
-            ConfirmDialog dialog = new ConfirmDialog(mainFrame, "Unentschieden!\n" + reason + "\n\nZurück zum Menü?",
-                    "Game Over", colorScheme);
-            dialog.setVisible(true);
-            if (dialog.isConfirmed()) {
-                mainFrame.switchToMenu();
-            }
+        Player winner = switch (state) {
+            case WHITE_WON_BY_CHECKMATE,
+                 WHITE_WON_BY_RESIGNATION,
+                 WHITE_WON_BY_TIMEOUT -> chess.getPlayerWhite();
+            case BLACK_WON_BY_CHECKMATE,
+                 BLACK_WON_BY_RESIGNATION,
+                 BLACK_WON_BY_TIMEOUT -> chess.getPlayerBlack();
+            case DRAW_BY_STALEMATE,
+                 DRAW_BY_INSUFFICIENT_MATERIAL,
+                 DRAW_BY_THREEFOLD_REPETITION,
+                 DRAW_BY_FIFTY_MOVE_RULE -> null;
+            default -> null;
+        };
+        String title = (winner != null) ? winner.getName() + " gewinnt" : "Unentschieden";
+
+        ConfirmDialog dialog = new ConfirmDialog(mainFrame, state.getMessage() + "\n\nZurück zum Menü?", title, colorScheme);
+        dialog.setVisible(true);
+        if (dialog.isConfirmed()) {
+            mainFrame.switchToMenu();
         }
     }
 

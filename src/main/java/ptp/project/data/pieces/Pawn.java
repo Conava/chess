@@ -1,6 +1,6 @@
-package ptp.project.logic.pieces;
+package ptp.project.data.pieces;
 
-import ptp.project.logic.*;
+import ptp.project.data.Player;
 import ptp.project.logic.moves.Move;
 
 import java.util.List;

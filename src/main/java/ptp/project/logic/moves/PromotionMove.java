@@ -1,7 +1,7 @@
 package ptp.project.logic.moves;
 
-import ptp.project.logic.Square;
-import ptp.project.logic.pieces.Piece;
+import ptp.project.data.Square;
+import ptp.project.data.pieces.Piece;
 
 public class PromotionMove extends Move {
     public final Piece targetPiece;
