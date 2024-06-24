@@ -50,10 +50,4 @@
 -  9 draw by 50 move rule
 - 10 draw by repetition
 
-#Entries for values of states of canCastle: {@link ptp.project.logic.docs}
-- 0 cannot castle
-- 1 can only castle short
-- 2 can only castle long
-- 3 can castle
-
 rows and columns start at 0

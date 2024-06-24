@@ -1,6 +1,7 @@
 package ptp.project.logic.rulesets;
 
 import ptp.project.logic.board.Board;
+import ptp.project.logic.enums.CastleOptions;
 import ptp.project.logic.moves.Move;
 import ptp.project.logic.player.Player;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 public class RulesetClassic implements Ruleset {
 
+    //todo isCheckMethod for interface
     /**
      * Gets the height of the board.
      *
@@ -265,14 +267,14 @@ public class RulesetClassic implements Ruleset {
         }
 
         //castling long
-        if (sudoLegalSquares.contains(getGoalSquare(square, -1)) && board.getCanCastle(player.getColor()) >= 2) {
+        if (sudoLegalSquares.contains(getGoalSquare(square, -1)) && (board.getCanCastle(player.getColor()) == CastleOptions.SHORT_AND_LONG || board.getCanCastle(player.getColor()) == CastleOptions.LONG)) {
             if (board.getPiece(getGoalSquare(square, -2)) == 0 || board.getPiece(getGoalSquare(square, -2)) % 2 == player.getOpponentColor()) {
                 sudoLegalSquares.add(getGoalSquare(square, -2));
             }
         }
 
         //castling short
-        if (sudoLegalSquares.contains(getGoalSquare(square, 1)) && board.getCanCastle(player.getColor()) % 2 == 1) {
+        if (sudoLegalSquares.contains(getGoalSquare(square, 1)) && (board.getCanCastle(player.getColor()) == CastleOptions.SHORT_AND_LONG || board.getCanCastle(player.getColor()) == CastleOptions.SHORT)) {
             if (board.getPiece(getGoalSquare(square, 2)) == 0 || board.getPiece(getGoalSquare(square, 2)) % 2 == player.getOpponentColor()) {
                 sudoLegalSquares.add(getGoalSquare(square, 2));
             }

@@ -1,5 +1,6 @@
 package ptp.project.logic.board;
 
+import ptp.project.logic.enums.CastleOptions;
 import ptp.project.logic.moves.Move;
 
 import java.util.List;
@@ -8,8 +9,8 @@ public class Board {
     private int[] board;
     private int row;
     private int col;
-    private int canCastleWhite;
-    private int canCastleBlack;
+    private CastleOptions castleOptionsWhite;
+    private CastleOptions castleOptionsBlack;
 
     List<Move> moves;
 
@@ -23,17 +24,17 @@ public class Board {
         board = new int[row * col];
         this.row = row;
         this.col = col;
-        canCastleWhite = 3;
-        canCastleBlack = 3;
+        castleOptionsWhite = CastleOptions.SHORT_AND_LONG;
+        castleOptionsBlack = CastleOptions.SHORT_AND_LONG;
     }
 
-    public Board(int row, int col, int[] boardPosition, int canCastleWhite, int canCastleBlack) {
+    public Board(int row, int col, int[] boardPosition, CastleOptions canCastleWhite, CastleOptions canCastleBlack) {
         if (boardPosition.length == row * col) {
             this.board = boardPosition;
             this.row = row;
             this.col = col;
-            this.canCastleWhite = canCastleWhite;
-            this.canCastleBlack = canCastleBlack;
+            this.castleOptionsWhite = canCastleWhite;
+            this.castleOptionsBlack = canCastleBlack;
         } else {
             System.out.println("Board size of board position and board size do not match");
         }
@@ -72,13 +73,13 @@ public class Board {
      * Whether castling is possible.
      *
      * @param color #Entries for values of colors: {@link ptp.project.logic.docs}
-     * @return #Entries for values of states of canCastleWhite: {@link ptp.project.logic.docs}
+     * @return enum of CastleOptions
      */
-    public int getCanCastle(int color) {
+    public CastleOptions getCanCastle(int color) {
         if (color == 0) {
-            return canCastleWhite;
+            return castleOptionsWhite;
         }
-        return canCastleBlack;
+        return castleOptionsBlack;
     }
 
     /**
@@ -103,33 +104,45 @@ public class Board {
         }
 
         //when the white king moves there can no longer be castling
-        if (canCastleWhite != 0 && move.getSquareStart() == 4) {
-            canCastleWhite = 0;
+        if (castleOptionsWhite != CastleOptions.NONE && move.getSquareStart() == 4) {
+            castleOptionsWhite = CastleOptions.SHORT_AND_LONG;
         }
 
         //when the left white rook moves, castling long is no longer possible.
-        if (canCastleWhite >= 2 && (move.getSquareStart() == 0 || move.getSquareEnd() == 0)) {
-            canCastleWhite -= 2;
+        if (castleOptionsWhite == CastleOptions.SHORT_AND_LONG && (move.getSquareStart() == 0 || move.getSquareEnd() == 0)) {
+            castleOptionsWhite = CastleOptions.SHORT;
+        }
+        if (castleOptionsWhite == CastleOptions.LONG && (move.getSquareStart() == 0 || move.getSquareEnd() == 0)) {
+            castleOptionsWhite = CastleOptions.NONE;
         }
 
         //when the right white rook moves, castling short is no longer possible.
-        if (canCastleWhite%2 == 1 && (move.getSquareStart() == row - 1 || move.getSquareEnd() == row - 1)) {
-            canCastleWhite -= 1;
+        if (castleOptionsWhite == CastleOptions.SHORT_AND_LONG && (move.getSquareStart() == row - 1 || move.getSquareEnd() == row - 1)) {
+            castleOptionsWhite = CastleOptions.LONG;
+        }
+        if (castleOptionsWhite == CastleOptions.SHORT && (move.getSquareStart() == row - 1 || move.getSquareEnd() == row - 1)) {
+            castleOptionsWhite = CastleOptions.NONE;
         }
 
         //when the black king moves
-        if (canCastleBlack != 0 && move.getSquareStart() == 4 + col * (row - 1)) {
-            canCastleBlack = 0;
+        if (castleOptionsBlack != CastleOptions.NONE && move.getSquareStart() == 4 + col * (row - 1)) {
+            castleOptionsBlack = CastleOptions.NONE;
         }
 
         //when the left black rook moves, castling long is no longer possible.
-        if (canCastleBlack >= 2 && (move.getSquareStart() == col * (row - 1) || move.getSquareEnd() == col * (row - 1))) {
-            canCastleBlack -= 2;
+        if (castleOptionsBlack == CastleOptions.SHORT_AND_LONG && (move.getSquareStart() == col * (row - 1) || move.getSquareEnd() == col * (row - 1))) {
+            castleOptionsBlack = CastleOptions.SHORT;
+        }
+        if (castleOptionsBlack == CastleOptions.LONG && (move.getSquareStart() == col * (row - 1) || move.getSquareEnd() == col * (row - 1))) {
+            castleOptionsBlack = CastleOptions.NONE;
         }
 
         //when the right black rook moves, castling short is no longer possible.
-        if (canCastleBlack%2 == 1 && (move.getSquareStart() == (col * row) - 1 || move.getSquareEnd() == (col * row) - 1)) {
-            canCastleBlack -= 1;
+        if (castleOptionsBlack == CastleOptions.SHORT_AND_LONG && (move.getSquareStart() == (col * row) - 1 || move.getSquareEnd() == (col * row) - 1)) {
+            castleOptionsBlack = CastleOptions.LONG;
+        }
+        if (castleOptionsBlack == CastleOptions.SHORT && (move.getSquareStart() == (col * row) - 1 || move.getSquareEnd() == (col * row) - 1)) {
+            castleOptionsBlack = CastleOptions.NONE;
         }
 
         board[move.getSquareEnd()] = move.getPiece();
