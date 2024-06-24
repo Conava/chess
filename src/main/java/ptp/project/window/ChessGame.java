@@ -245,7 +245,7 @@ public class ChessGame extends JPanel implements GameObserver {
         } else {
             LOGGER.log(Level.INFO, "Draw!");
             String reason = switch (status) {
-                case 6 -> "Einigung";
+                case 6 -> "Vereinbarung";
                 case 7 -> "Unzureichendes Material";
                 case 8 -> "Patt";
                 case 9 -> "50 Züge Regel";

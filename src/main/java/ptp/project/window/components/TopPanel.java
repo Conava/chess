@@ -89,13 +89,6 @@ public class TopPanel extends ControlPanel {
         free1Label.setHorizontalAlignment(SwingConstants.CENTER);
         free1Label.setForeground(colorScheme.getFontColor());
         rightPanel.add(free1Label);
-
-        // In the TopPanel class
-        JButton demoButton = new CustomButton("Demo", colorScheme);
-        demoButton.addActionListener(e -> {
-            mainFrame.demo();
-        });
-        rightPanel.add(demoButton, BorderLayout.EAST);
     }
 
     public void setBlack(boolean active) {
