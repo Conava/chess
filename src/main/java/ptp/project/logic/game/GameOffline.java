@@ -2,6 +2,7 @@ package ptp.project.logic.game;
 
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.logic.board.Board;
+import ptp.project.logic.enums.GameStates;
 import ptp.project.logic.moves.Move;
 import ptp.project.logic.player.Player;
 import ptp.project.logic.rulesets.Ruleset;
@@ -14,7 +15,7 @@ public class GameOffline extends Observable implements Game {
     private final Player player1;
     private final Ruleset ruleset;
     private final Board board;
-    int gameStatus;
+    GameStates gameStatus;
     int turnCounter;
     List<Move> moves;
 
@@ -27,7 +28,7 @@ public class GameOffline extends Observable implements Game {
         player1 = new Player("PlayerBlack", 1);
         this.ruleset = ruleset;
         this.board = new Board(ruleset.getWidth(), ruleset.getHeight());
-        this.gameStatus = 1;
+        this.gameStatus = GameStates.RUNNING;
         this.turnCounter = 0;
         this.moves = new ArrayList<>();
         notifyObservers();
@@ -36,10 +37,10 @@ public class GameOffline extends Observable implements Game {
     /**
      * Gets the status of the game.
      *
-     * @return #Entries for values of status of the game: {@link ptp.project.logic.docs}
+     * @return enum for GameStates
      */
     @Override
-    public int getGameStatus() {
+    public GameStates getGameStatus() {
         return gameStatus;
     }
 

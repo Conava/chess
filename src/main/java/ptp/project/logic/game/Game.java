@@ -1,6 +1,7 @@
 package ptp.project.logic.game;
 
 import ptp.project.exceptions.IllegalMoveException;
+import ptp.project.logic.enums.GameStates;
 import ptp.project.logic.moves.Move;
 import ptp.project.logic.player.Player;
 
@@ -16,9 +17,9 @@ public interface Game {
     /**
      * Gets the status of the game.
      *
-     * @return #Entries for values of status of the game: {@link ptp.project.logic.docs}
+     * @return enum for GameStates.
      */
-    int getGameStatus();
+    GameStates getGameStatus();
 
     /**
      * Gets all board positions.
