@@ -13,10 +13,10 @@ public class BottomPanel extends ControlPanel {
     private final MainFrame mainFrame;
 
     private JLabel whiteLabel;
-    private JPanel rounded2Panel;
+    private JPanel roundedWhitePanel;
     private boolean active = false;
-    private JLabel status2Label;
-    private JLabel free2Label;
+    private JLabel statusWhiteLabel;
+    private JLabel freeWhiteLabel;
 
     public BottomPanel(ColorScheme colorScheme, MainFrame mainFrame) {
         this.colorScheme = colorScheme;
@@ -41,18 +41,18 @@ public class BottomPanel extends ControlPanel {
         add(rightPanel);
 
         //Add the content to the leftPanel1
-        status2Label = new CustomLabel("", colorScheme);
-        status2Label.setFont(colorScheme.getFont());
-        status2Label.setHorizontalAlignment(SwingConstants.CENTER);
-        status2Label.setForeground(colorScheme.getFontColor());
-        leftPanel.add(status2Label, BorderLayout.EAST);
+        statusWhiteLabel = new CustomLabel("", colorScheme);
+        statusWhiteLabel.setFont(colorScheme.getFont());
+        statusWhiteLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        statusWhiteLabel.setForeground(colorScheme.getFontColor());
+        leftPanel.add(statusWhiteLabel, BorderLayout.EAST);
 
         //Add the content to the leftPanel2
         whiteLabel = new CustomLabel("Weiß", colorScheme);
         whiteLabel.setFont(colorScheme.getFont());
         whiteLabel.setHorizontalAlignment(SwingConstants.CENTER);
         whiteLabel.setForeground(colorScheme.getFontColor());
-        rounded2Panel = new JPanel() {
+        roundedWhitePanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -64,9 +64,9 @@ public class BottomPanel extends ControlPanel {
                 }
             }
         };
-        rounded2Panel.setOpaque(false);
-        rounded2Panel.setLayout(new BorderLayout());
-        rounded2Panel.add(whiteLabel, BorderLayout.CENTER);
+        roundedWhitePanel.setOpaque(false);
+        roundedWhitePanel.setLayout(new BorderLayout());
+        roundedWhitePanel.add(whiteLabel, BorderLayout.CENTER);
 
         JPanel leftPlaceholder = new JPanel();
         JPanel rightPlaceholder = new JPanel();
@@ -76,19 +76,19 @@ public class BottomPanel extends ControlPanel {
         leftPlaceholder.setOpaque(false);
         rightPlaceholder.setOpaque(false);
         middlePanel.add(leftPlaceholder, BorderLayout.WEST);
-        middlePanel.add(rounded2Panel);
+        middlePanel.add(roundedWhitePanel);
         middlePanel.add(rightPlaceholder, BorderLayout.EAST);
 
         middlePanel.add(leftPlaceholder, BorderLayout.WEST);
-        middlePanel.add(rounded2Panel);
+        middlePanel.add(roundedWhitePanel);
         middlePanel.add(rightPlaceholder, BorderLayout.EAST);
 
         //Add the content to the leftPanel3
-        free2Label = new CustomLabel("", colorScheme);
-        free2Label.setFont(colorScheme.getFont());
-        free2Label.setHorizontalAlignment(SwingConstants.CENTER);
-        free2Label.setForeground(colorScheme.getFontColor());
-        rightPanel.add(free2Label);
+        freeWhiteLabel = new CustomLabel("", colorScheme);
+        freeWhiteLabel.setFont(colorScheme.getFont());
+        freeWhiteLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        freeWhiteLabel.setForeground(colorScheme.getFontColor());
+        rightPanel.add(freeWhiteLabel);
 
         JButton backButton = new ExitButton("Spiel Verlassen", colorScheme);
         backButton.addActionListener(e -> {
@@ -101,14 +101,14 @@ public class BottomPanel extends ControlPanel {
         rightPanel.add(backButton, BorderLayout.EAST);
     }
 
-    public void setPlayer2(boolean active) {
+    public void setWhiteActive (boolean active) {
         this.active = active;
-        rounded2Panel.repaint();
-        status2Label.setText(active ? "Am Zug" : "Warten");
+        roundedWhitePanel.repaint();
+        statusWhiteLabel.setText(active ? "Am Zug" : "Warten");
         LOGGER.log(Level.INFO, "Player 1 is active: " + active);
     }
     //set player name
-    public void setPlayer2Name(String name) {
+    public void setWhiteName (String name) {
         whiteLabel.setText(name);
     }
 }

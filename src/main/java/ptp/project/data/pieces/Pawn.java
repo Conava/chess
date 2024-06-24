@@ -8,6 +8,11 @@ import java.util.List;
 public class Pawn extends Piece {
     public Pawn(Player player) {
         super(player);
+        if (player.getColor().equals("white")) {
+            iconPath = "/icon/pawn_white.png";
+        } else {
+            iconPath = "/icon/pawn_black.png";
+        }
     }
 
     public boolean hasMoveJustMovedTwoSquares(List<Move> list) {

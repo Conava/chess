@@ -7,6 +7,11 @@ public class Rook extends Piece {
 
     public Rook(Player player) {
         super(player);
+        if (player.getColor().equals("white")) {
+            iconPath = "/icon/rook_white.png";
+        } else {
+            iconPath = "/icon/rook_black.png";
+        }
     }
 
     public void setHasMoved() {

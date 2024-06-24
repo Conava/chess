@@ -17,7 +17,7 @@ import java.util.logging.*;
  */
 public class MainMenu extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(MainMenu.class.getName());
-    private static final String CHESS_ICON_PATH = "/icon/chess-green.png";
+    private static final String CHESS_ICON_PATH = "/icon/chess6.jpg";
     private static final String LOCAL_PLAY_BUTTON_TEXT = "Lokal Spielen";
     private static final String ONLINE_PLAY_BUTTON_TEXT = "Online Spielen";
     private static final String SETTINGS_BUTTON_TEXT = "Einstellungen";
@@ -26,8 +26,6 @@ public class MainMenu extends JPanel {
     private static final String ONLINE_PLAY_ERROR_TITLE = "Fehler";
 
     private final MainFrame mainFrame;
-    private JPanel logoPanel;
-    private JPanel buttonPanel;
     private final ColorScheme colorScheme;
 
     /**
@@ -49,44 +47,29 @@ public class MainMenu extends JPanel {
      * The GUI consists of a logo panel at the top and a button panel at the bottom.
      */
     public void initializeGUI() {
-        setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        logoPanel = createLogoPanel();
-        buttonPanel = createButtonPanel();
-
-        gbc.fill = GridBagConstraints.BOTH;
-
-        addLogoPanelToLayout(gbc);
-        addButtonPanelToLayout(gbc);
-    }
-
-    /**
-     * Creates the logo panel and adds it to the layout.
-     *
-     * @return JPanel The created logo panel.
-     */
-    private JPanel createLogoPanel() {
-        JPanel logoPanel = new ControlPanel();
-        addContentToLogoPanel(logoPanel);
-        return logoPanel;
-    }
-
-    /**
-     * Adds the logo to the logo panel.
-     * If the logo image is not found, a text error message is displayed instead.
-     *
-     * @param logoPanel The logo panel to which the logo is added.
-     */
-    private void addContentToLogoPanel(JPanel logoPanel) {
         try {
             URL url = getClass().getResource(CHESS_ICON_PATH);
             ImageIcon imageIcon = new ImageIcon(Objects.requireNonNull(url));
-            JLabel label = new JLabel(imageIcon);
-            logoPanel.add(label);
+
+            // Scale the image
+            Image image = imageIcon.getImage();
+            Image scaledImage = image.getScaledInstance(600, 600, Image.SCALE_SMOOTH);
+            ImageIcon scaledIcon = new ImageIcon(scaledImage);
+
+            // Set the image as background
+            JLabel background = new JLabel(scaledIcon);
+            setLayout(new BorderLayout());
+            add(background);
+            background.setLayout(new BorderLayout());
+
+            // Create and add the button panel
+            JPanel buttonPanel = createButtonPanel();
+            buttonPanel.setOpaque(false); // Make the button panel transparent
+            background.add(buttonPanel, BorderLayout.SOUTH);
+
         } catch (NullPointerException e) {
             JLabel label = new JLabel("Willkommen zum Schachspiel");
-            logoPanel.add(label);
+            add(label);
             LOGGER.log(Level.WARNING, "Error loading icon");
         }
     }
@@ -135,35 +118,8 @@ public class MainMenu extends JPanel {
         button.setMaximumSize(maxSize);
         button.setAlignmentX(Component.CENTER_ALIGNMENT);
         button.addActionListener(actionListener);
+
         panel.add(button);
         panel.add(Box.createVerticalStrut(10));
-    }
-
-    /**
-     * Adds the logo panel to the layout.
-     *
-     * @param gbc The GridBagConstraints object used for the layout.
-     */
-    private void addLogoPanelToLayout(GridBagConstraints gbc) {
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 3;
-        gbc.gridheight = 1;
-        gbc.weightx = 1;
-        gbc.weighty = 0.5;
-        add(logoPanel, gbc);
-    }
-
-    /**
-     * Adds the button panel to the layout.
-     *
-     * @param gbc The GridBagConstraints object used for the layout.
-     */
-    private void addButtonPanelToLayout(GridBagConstraints gbc) {
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 3;
-        gbc.weighty = 0.5;
-        add(buttonPanel, gbc);
     }
 }

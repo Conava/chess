@@ -13,10 +13,10 @@ public class TopPanel extends ControlPanel {
     private final MainFrame mainFrame;
 
     private JLabel blackLabel;
-    private JPanel rounded1Panel;
+    private JPanel roundedBlackPanel;
     private boolean active = false;
-    private JLabel status1Label;
-    private JLabel free1Label;
+    private JLabel statusBlackLabel;
+    private JLabel freeBlackLabel;
 
     public TopPanel(ColorScheme colorScheme, MainFrame mainFrame) {
         this.colorScheme = colorScheme;
@@ -41,11 +41,11 @@ public class TopPanel extends ControlPanel {
         add(rightPanel);
 
         //Add the content to the leftPanel1
-        status1Label = new CustomLabel("", colorScheme);
-        status1Label.setFont(colorScheme.getFont());
-        status1Label.setHorizontalAlignment(SwingConstants.CENTER);
-        status1Label.setForeground(colorScheme.getFontColor());
-        leftPanel.add(status1Label, BorderLayout.EAST);
+        statusBlackLabel = new CustomLabel("", colorScheme);
+        statusBlackLabel.setFont(colorScheme.getFont());
+        statusBlackLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        statusBlackLabel.setForeground(colorScheme.getFontColor());
+        leftPanel.add(statusBlackLabel, BorderLayout.EAST);
 
         //Add the content to the leftPanel2
         blackLabel = new CustomLabel("Schwarz", colorScheme);
@@ -55,7 +55,7 @@ public class TopPanel extends ControlPanel {
         blackLabel.setHorizontalTextPosition(SwingConstants.CENTER);
         blackLabel.setHorizontalAlignment(SwingConstants.CENTER);
         blackLabel.setForeground(colorScheme.getFontColor());
-        rounded1Panel = new JPanel() {
+        roundedBlackPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -67,10 +67,10 @@ public class TopPanel extends ControlPanel {
                 }
             }
         };
-        rounded1Panel.setOpaque(false);
-        rounded1Panel.setFocusable(false);
-        rounded1Panel.setLayout(new BorderLayout());
-        rounded1Panel.add(blackLabel, BorderLayout.CENTER);
+        roundedBlackPanel.setOpaque(false);
+        roundedBlackPanel.setFocusable(false);
+        roundedBlackPanel.setLayout(new BorderLayout());
+        roundedBlackPanel.add(blackLabel, BorderLayout.CENTER);
 
         JPanel leftPlaceholder = new JPanel();
         JPanel rightPlaceholder = new JPanel();
@@ -80,26 +80,26 @@ public class TopPanel extends ControlPanel {
         leftPlaceholder.setOpaque(false);
         rightPlaceholder.setOpaque(false);
         middlePanel.add(leftPlaceholder, BorderLayout.WEST);
-        middlePanel.add(rounded1Panel);
+        middlePanel.add(roundedBlackPanel);
         middlePanel.add(rightPlaceholder, BorderLayout.EAST);
 
         //Add the content to the leftPanel3
-        free1Label = new CustomLabel("", colorScheme);
-        free1Label.setFont(colorScheme.getFont());
-        free1Label.setHorizontalAlignment(SwingConstants.CENTER);
-        free1Label.setForeground(colorScheme.getFontColor());
-        rightPanel.add(free1Label);
+        freeBlackLabel = new CustomLabel("", colorScheme);
+        freeBlackLabel.setFont(colorScheme.getFont());
+        freeBlackLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        freeBlackLabel.setForeground(colorScheme.getFontColor());
+        rightPanel.add(freeBlackLabel);
     }
 
-    public void setBlack(boolean active) {
+    public void setBlackActive(boolean active) {
         this.active = active;
-        rounded1Panel.repaint();
-        status1Label.setText(active ? "Am Zug" : "Warten");
+        roundedBlackPanel.repaint();
+        statusBlackLabel.setText(active ? "Am Zug" : "Warten");
         LOGGER.log(Level.INFO, "Player 1 / Black has active status: " + active);
     }
 
     //change player name
-    public void setBlack(String name) {
+    public void setBlackName(String name) {
         blackLabel.setText(name);
     }
 }

@@ -48,4 +48,11 @@ public class Square {
         if(this.getPiece() == null) return null;
         return this.getPiece().getPlayer();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (!(obj instanceof Square square)) return false;
+        return square.getX() == this.getX() && square.getY() == this.getY();
+    }
 }

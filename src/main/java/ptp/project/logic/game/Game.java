@@ -24,8 +24,8 @@ public abstract class Game extends Observable {
     protected List<Move> moves;
 
     public Game(RulesetOptions selectedRuleset) {
-        this.player0 = new Player("Player 0", "white");
-        this.player1 = new Player("Player 1", "black");
+        this.player0 = new Player("Spieler 0 (Weiß)", "white");
+        this.player1 = new Player("Spieler 1 (Schwarz)", "black");
         this.ruleset = switch (selectedRuleset) {
             case STANDARD -> new StandardChessRuleset();
             //Implement other rulesets here
@@ -70,7 +70,10 @@ public abstract class Game extends Observable {
     public List<Square> getLegalSquares(Square position) {
         List<Square> legalSquares = new ArrayList<>();
         Square square = board.getSquare(position.getY(), position.getX());
-        if (square != null && !square.isOccupiedBy().equals(getCurrentPlayer())) {
+        if (square.isOccupiedBy() == null) {
+            return legalSquares;
+        }
+        else if (!square.isOccupiedBy().equals(getCurrentPlayer())) {
             return legalSquares;
         }
         int moveAmount = ruleset.getLegalMoves(square, board, moves, player0, player1).size();

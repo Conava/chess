@@ -1,5 +1,6 @@
 package ptp.project;
 
+import ptp.project.data.board.Board;
 import ptp.project.data.enums.GameState;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.exceptions.IllegalMoveException;
@@ -110,6 +111,10 @@ public class Chess {
         return game.getState();
     }
 
+    public Board getBoard() {
+        return game.getBoard();
+    }
+
     /**
      * Adds an observer to the game.
      * @param observer The observer to add
@@ -119,10 +124,19 @@ public class Chess {
     }
 
     /**
+     * Removes an observer from the game.
+     * @param observer The observer to remove
+     */
+    public void removeObserver(GameObserver observer) {
+        game.removeObserver(observer);
+    }
+
+    /**
      * Ends the game.
      */
     public void endGame() {
         game.endGame();
+        game = null;
     }
 
     /**

@@ -1,12 +1,14 @@
 package ptp.project.window.components;
 
 import ptp.project.data.Square;
+import ptp.project.data.board.Board;
 import ptp.project.window.ChessGame;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BoardPanel extends JPanel {
@@ -15,6 +17,9 @@ public class BoardPanel extends JPanel {
     private final JPanel board;
     private JPanel leftPanel;
     private JPanel topPanel;
+
+    private final BoardButton[][] boardButtons = new BoardButton[8][8];
+    private final List<BoardButton> markedSquares = new ArrayList<>();
 
     public BoardPanel(ColorScheme colorScheme, ChessGame chessGame) {
         this.colorScheme = colorScheme;
@@ -39,12 +44,24 @@ public class BoardPanel extends JPanel {
     }
 
     public void setLegalSquares(List<Square> legalSquares) {
-        for (Component component : board.getComponents()) {
-            if (component instanceof BoardButton button) {
-                Square square = button.getSquare();
-                if (legalSquares.contains(square)) {
-                    button.setMarker();
-                }
+        unsetLegalSquares();
+        for (Square square : legalSquares) {
+            boardButtons[square.getY()-1][square.getX()-1].setMarker();
+            markedSquares.add(boardButtons[square.getY()-1][square.getX()-1]);
+        }
+    }
+
+    public void unsetLegalSquares() {
+        for (BoardButton square : markedSquares) {
+            square.removeMarker();
+        }
+        markedSquares.clear();
+    }
+
+    public void placePieces(Board gameBoard) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                boardButtons[j][i].setPieceIcon(gameBoard.getSquare(i+1, j+1).getPiece());
             }
         }
     }
@@ -86,6 +103,7 @@ public class BoardPanel extends JPanel {
                 square.addActionListener(e -> {
                     clickedOn(square.getSquare());
                 });
+                boardButtons[i][j] = square;
                 board.add(square);
             }
         }

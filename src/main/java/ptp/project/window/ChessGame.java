@@ -54,7 +54,8 @@ public class ChessGame extends JPanel implements GameObserver {
         LOGGER.log(Level.INFO, "GameWindow GUI initialized");
         initializeGame(online);
         LOGGER.log(Level.INFO, "Game started");
-
+        chess.addObserver(this);
+        update();
     }
 
     /**
@@ -137,10 +138,10 @@ public class ChessGame extends JPanel implements GameObserver {
         LOGGER.log(Level.INFO, "Game started");
         chess.addObserver(this);
 
-        Optional.ofNullable(chess.getPlayerWhite())
-                .ifPresent(player -> topPanel.setBlack(player.getName()));
         Optional.ofNullable(chess.getPlayerBlack())
-                .ifPresent(player -> bottomPanel.setPlayer2Name(player.getName()));
+                .ifPresent(player -> topPanel.setBlackName(player.getName()));
+        Optional.ofNullable(chess.getPlayerWhite())
+                .ifPresent(player -> bottomPanel.setWhiteName(player.getName()));
         updateActivePlayerHighlight(chess.getCurrentPlayer());
     }
 
@@ -167,6 +168,7 @@ public class ChessGame extends JPanel implements GameObserver {
 
     @Override
     public void update() {
+        LOGGER.log(Level.INFO, "Update Method called");
         GameState state = checkState();
 
         if (state == GameState.NO_GAME) {
@@ -197,11 +199,11 @@ public class ChessGame extends JPanel implements GameObserver {
      */
     private void updateActivePlayerHighlight(Player player) {
         if (player == chess.getPlayerWhite()) {
-            topPanel.setBlack(true);
-            bottomPanel.setPlayer2(false);
+            topPanel.setBlackActive(false);
+            bottomPanel.setWhiteActive(true);
         } else {
-            topPanel.setBlack(false);
-            bottomPanel.setPlayer2(true);
+            topPanel.setBlackActive(true);
+            bottomPanel.setWhiteActive(false);
         }
     }
 
@@ -209,7 +211,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * Updates the board UI.
      */
     private void updateBoard() {
-        //todo: Show the game status on the board UI
+        boardPanel.placePieces(chess.getBoard());
     }
 
     /**

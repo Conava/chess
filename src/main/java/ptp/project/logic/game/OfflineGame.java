@@ -2,6 +2,7 @@ package ptp.project.logic.game;
 
 import ptp.project.data.Player;
 import ptp.project.data.Square;
+import ptp.project.data.enums.GameState;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.logic.moves.Move;
@@ -14,6 +15,7 @@ public class OfflineGame extends Game {
 
     @Override
     public void startGame() {
+        gameState = GameState.RUNNING;
     }
 
     @Override
