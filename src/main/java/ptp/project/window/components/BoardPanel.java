@@ -14,7 +14,6 @@ import java.util.List;
 public class BoardPanel extends JPanel {
     private final ColorScheme colorScheme;
     private final ChessGame chessGame;
-    private final JPanel board;
     private JPanel leftPanel;
     private JPanel topPanel;
 
@@ -30,15 +29,12 @@ public class BoardPanel extends JPanel {
         setOpaque(false);
 
         addBoardLabels();
-        board = addBoard();
+        JPanel board = addBoard();
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 super.componentResized(e);
                 adjustPanelSizes();
-                System.out.println("Top Panel Size: " + topPanel.getSize());
-                System.out.println("Left Panel Size: " + leftPanel.getSize());
-                System.out.println("Board Size: " + board.getSize());
             }
         });
     }
@@ -91,26 +87,25 @@ public class BoardPanel extends JPanel {
         add(topPanel, BorderLayout.NORTH);
     }
 
-    private JPanel addBoard() {
-        JPanel board = new JPanel(new GridLayout(8, 8));
-        board.setOpaque(true);
+private JPanel addBoard() {
+    JPanel board = new JPanel(new GridLayout(8, 8));
+    board.setOpaque(true);
 
-        // Create the board squares
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                BoardButton square = new BoardButton(i, j, colorScheme);
-                square.setBorder(null);
-                square.addActionListener(e -> {
-                    clickedOn(square.getSquare());
-                });
-                boardButtons[i][j] = square;
-                board.add(square);
-            }
+    // Create the board squares
+    for (int i = 7; i >= 0; i--) {
+        for (int j = 0; j < 8; j++) {
+            BoardButton bardSquare = new BoardButton(i+1, j+1, colorScheme);
+            bardSquare.setBorder(null);
+            bardSquare.addActionListener(e -> {
+                clickedOn(bardSquare.getSquare());
+            });
+            boardButtons[i][j] = bardSquare;
+            board.add(bardSquare);
         }
-
-        add(board, BorderLayout.CENTER);
-        return board;
     }
+    add(board, BorderLayout.CENTER);
+    return board;
+}
 
     private void clickedOn(Square square) {
         chessGame.clickedOn(square);

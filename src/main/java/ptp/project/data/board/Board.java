@@ -62,14 +62,14 @@ public class Board {
     }
 
     public void recountPieces() {
-        for (int y = 0; y < board.length; y++) {
-            for (int x = 0; x < board[y].length; x++) {
-                if (board[y][x].isOccupiedBy() == null) {
+        for (Square[] squares : board) {
+            for (Square square : squares) {
+                if (square.isOccupiedBy() == null) {
                     continue;
-                } else if (board[y][x].getPiece().getPlayer().getColor().equals("white")) {//white
-                    piecesWhite.add(board[y][x]);
+                } else if (square.getPiece().getPlayer().getColor().equals("white")) {//white
+                    piecesWhite.add(square);
                 } else {
-                    piecesBlack.add(board[y][x]);
+                    piecesBlack.add(square);
                 }
             }
         }

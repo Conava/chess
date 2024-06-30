@@ -70,29 +70,6 @@ public class Chess {
     }
 
     /**
-     * Switches the content pane to the game panel.
-     *
-     * @param online The online status of the game. 0 for offline, 1 for online.
-     */
-    public void switchToGame(int online) {
-        mainFrame.switchToGame(online);
-    }
-
-    /**
-     * Switches the content pane to the main menu.
-     */
-    public void switchToMenu() {
-        mainFrame.switchToMenu();
-    }
-
-    /**
-     * Opens the settings window.
-     */
-    public void openSettingsWindow() {
-        mainFrame.openSettingsWindow();
-    }
-
-    /**
      * Starts the game.
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
