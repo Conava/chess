@@ -17,7 +17,7 @@ import java.util.logging.*;
  */
 public class MainMenu extends JPanel {
     private static final Logger LOGGER = Logger.getLogger(MainMenu.class.getName());
-    private static final String CHESS_ICON_PATH = "/icon/chess6.jpg";
+    private static final String CHESS_ICON_PATH = "/titleImage/chessTitleImage.jpg";
     private static final String LOCAL_PLAY_BUTTON_TEXT = "Lokal Spielen";
     private static final String ONLINE_PLAY_BUTTON_TEXT = "Online Spielen";
     private static final String SETTINGS_BUTTON_TEXT = "Einstellungen";
