@@ -35,26 +35,38 @@ public class Chess {
      * @param args Command line arguments
      */
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(Chess::new);
+        if (args.length > 0 && args[0].equals("nogui")) {
+            // Start the game without GUI
+            SwingUtilities.invokeLater(() -> new Chess(false));
+        } else {
+            // Start the game with GUI
+            SwingUtilities.invokeLater(() -> new Chess(true));
+        }
     }
 
     /**
-     * Constructor for the Chess class.
-     * Initializes the main frame and sets the color scheme.
+     * Constructor of the Chess class. Starts the application with or without GUI.
+     *
+     * @param gui True if the application should start with GUI, false otherwise
      */
-    public Chess() {
-        LOGGER.log(Level.INFO, "Chess application started");
-        ColorScheme colorScheme = new ColorScheme(
-                new Font("Arial", Font.PLAIN, 20), // Font
-                new Color(0x2b2d30), // Background color
-                new Color(0x3B3F42), // Brighter background color
-                new Color(0x27272B), // Darker background color
-                new Color(0xECF0F1), // Font color
-                new Color(0x1e1f22), // Button color
-                new Color(0x31709A), // Accent color
-                new Color(0xA31717)  // Exit button color
-        );
-        mainFrame = new MainFrame(this, colorScheme);
+    public Chess(boolean gui) {
+        if (gui) {
+            LOGGER.log(Level.INFO, "Chess application started");
+            ColorScheme colorScheme = new ColorScheme(
+                    new Font("Arial", Font.PLAIN, 20), // Font
+                    new Color(0x2b2d30), // Background color
+                    new Color(0x3B3F42), // Brighter background color
+                    new Color(0x27272B), // Darker background color
+                    new Color(0xECF0F1), // Font color
+                    new Color(0x1e1f22), // Button color
+                    new Color(0x31709A), // Accent color
+                    new Color(0xA31717)  // Exit button color
+            );
+            mainFrame = new MainFrame(this, colorScheme);
+        } else {
+            LOGGER.log(Level.INFO, "Chess application started without GUI");
+            mainFrame = null;
+        }
     }
 
     /**
@@ -81,14 +93,6 @@ public class Chess {
     }
 
     /**
-     * Returns the current game.
-     * @return The current game
-     */
-    public Game getGame() {
-        return game;
-    }
-
-    /**
      * Starts the game.
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
@@ -105,6 +109,7 @@ public class Chess {
 
     /**
      * Returns the state of the game.
+     *
      * @return The state of the game
      */
     public GameState getState() {
@@ -117,6 +122,7 @@ public class Chess {
 
     /**
      * Adds an observer to the game.
+     *
      * @param observer The observer to add
      */
     public void addObserver(GameObserver observer) {
@@ -125,6 +131,7 @@ public class Chess {
 
     /**
      * Removes an observer from the game.
+     *
      * @param observer The observer to remove
      */
     public void removeObserver(GameObserver observer) {
@@ -141,6 +148,7 @@ public class Chess {
 
     /**
      * Returns the current player.
+     *
      * @return The current player
      */
     public Player getCurrentPlayer() {
@@ -149,6 +157,7 @@ public class Chess {
 
     /**
      * Returns the white player.
+     *
      * @return The white player
      */
     public Player getPlayerWhite() {
@@ -157,6 +166,7 @@ public class Chess {
 
     /**
      * Returns the black player.
+     *
      * @return The black player
      */
     public Player getPlayerBlack() {
@@ -165,6 +175,7 @@ public class Chess {
 
     /**
      * Returns the piece at a given position.
+     *
      * @param position The position of the piece
      * @return The piece at the given position
      */
@@ -174,6 +185,7 @@ public class Chess {
 
     /**
      * Returns the legal squares for a Piece on a given position.
+     *
      * @param position The position of the piece
      * @return The legal squares for the given piece
      */
@@ -183,6 +195,7 @@ public class Chess {
 
     /**
      * Returns the list of moves made in the game.
+     *
      * @return The list of moves made in the game
      */
     public List<Move> getMoveList() {
@@ -193,7 +206,7 @@ public class Chess {
      * Moves a piece in the game.
      *
      * @param start the starting position of the players piece
-     * @param end the end position of the players piece
+     * @param end   the end position of the players piece
      * @throws IllegalMoveException if the move is not allowed
      */
     public void movePiece(Square start, Square end) throws IllegalMoveException {

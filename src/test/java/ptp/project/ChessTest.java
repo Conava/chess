@@ -10,7 +10,7 @@ class ChessTest {
 
     @BeforeEach
     void setUp() {
-        chess = new Chess();
+        chess = new Chess(false);
     }
 
     @Test
