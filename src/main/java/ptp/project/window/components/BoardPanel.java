@@ -29,7 +29,7 @@ public class BoardPanel extends JPanel {
         setOpaque(false);
 
         addBoardLabels();
-        JPanel board = addBoard();
+        addBoard();
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -88,7 +88,7 @@ public class BoardPanel extends JPanel {
         add(topPanel, BorderLayout.NORTH);
     }
 
-private JPanel addBoard() {
+private void addBoard() {
     JPanel board = new JPanel(new GridLayout(8, 8));
     board.setOpaque(true);
 
@@ -103,7 +103,6 @@ private JPanel addBoard() {
         }
     }
     add(board, BorderLayout.CENTER);
-    return board;
 }
 
     private void clickedOn(Square square) {

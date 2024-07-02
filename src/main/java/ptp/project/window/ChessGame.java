@@ -257,7 +257,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * @param square The square that was clicked
      */
     public void clickedOn(Square square) {
-        System.out.println("Clicked on " + square.toString());
+        System.out.println("Clicked on square X: " + square.getX() + ", Y: " + square.getY());
         if (clickedSquare == null) {
             clickedSquare = square;
         } else if (clickedSquare != square && chess.getLegalSquares(clickedSquare).contains(square)) {
@@ -265,14 +265,17 @@ public class ChessGame extends JPanel implements GameObserver {
                 chess.movePiece(clickedSquare, square);
                 clickedSquare = null;
                 boardPanel.unsetLegalSquares();
+                return;
             } catch (IllegalMoveException e) {
                 LOGGER.log(Level.WARNING, "Illegal move");
+                return;
             }
+        } else {
+            clickedSquare = square;
         }
 
         Piece clickedPiece = chess.getPieceAt(square);
         if (clickedPiece != null && clickedPiece.getPlayer() == chess.getCurrentPlayer()) {
-            clickedSquare = square;
             boardPanel.setLegalSquares(chess.getLegalSquares(square));
         }
     }
