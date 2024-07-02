@@ -3,6 +3,7 @@ package ptp.project.window;
 import ptp.project.Chess;
 import ptp.project.data.enums.GameState;
 import ptp.project.data.enums.RulesetOptions;
+import ptp.project.data.pieces.Piece;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
@@ -256,9 +257,9 @@ public class ChessGame extends JPanel implements GameObserver {
      * @param square The square that was clicked
      */
     public void clickedOn(Square square) {
+        System.out.println("Clicked on " + square.toString());
         if (clickedSquare == null) {
             clickedSquare = square;
-            boardPanel.setLegalSquares(chess.getLegalSquares(square));
         } else {
             if (chess.getLegalSquares(clickedSquare).contains(square)) {
                 try {
@@ -277,11 +278,10 @@ public class ChessGame extends JPanel implements GameObserver {
                 }
             }
         }
-        if (chess.getPieceAt(square) != null) {
-            if (chess.getPieceAt(square).getPlayer() == chess.getCurrentPlayer()) {
+        Piece clickedPiece = chess.getPieceAt(square);
+        if (clickedPiece != null && clickedPiece.getPlayer() == chess.getCurrentPlayer()) {
                 clickedSquare = square;
                 boardPanel.setLegalSquares(chess.getLegalSquares(square));
-            }
         }
     }
 }

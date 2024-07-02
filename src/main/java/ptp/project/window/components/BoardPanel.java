@@ -40,10 +40,11 @@ public class BoardPanel extends JPanel {
     }
 
     public void setLegalSquares(List<Square> legalSquares) {
+        System.out.println("Setting legal squares");
         unsetLegalSquares();
         for (Square square : legalSquares) {
-            boardButtons[square.getY()-1][square.getX()-1].setMarker();
-            markedSquares.add(boardButtons[square.getY()-1][square.getX()-1]);
+            boardButtons[square.getY()][square.getX()].setMarker();
+            markedSquares.add(boardButtons[square.getY()][square.getX()]);
         }
     }
 
@@ -94,11 +95,9 @@ private JPanel addBoard() {
     // Create the board squares
     for (int i = 7; i >= 0; i--) {
         for (int j = 0; j < 8; j++) {
-            BoardButton bardSquare = new BoardButton(i+1, j+1, colorScheme);
+            BoardButton bardSquare = new BoardButton(i, j, colorScheme);
             bardSquare.setBorder(null);
-            bardSquare.addActionListener(e -> {
-                clickedOn(bardSquare.getSquare());
-            });
+            bardSquare.addActionListener(e -> clickedOn(bardSquare.getSquare()));
             boardButtons[i][j] = bardSquare;
             board.add(bardSquare);
         }
