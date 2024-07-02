@@ -260,28 +260,20 @@ public class ChessGame extends JPanel implements GameObserver {
         System.out.println("Clicked on " + square.toString());
         if (clickedSquare == null) {
             clickedSquare = square;
-        } else {
-            if (chess.getLegalSquares(clickedSquare).contains(square)) {
-                try {
-                    chess.movePiece(clickedSquare, square);
-                    clickedSquare = null;
-                    boardPanel.setLegalSquares(null);
-                } catch (IllegalMoveException e) {
-                    LOGGER.log(Level.WARNING, "Illegal move");
-                }
-            } else {
-                if (chess.getPieceAt(square) != null) {
-                    if (chess.getPieceAt(square).getPlayer() == chess.getCurrentPlayer()) {
-                        clickedSquare = square;
-                        boardPanel.setLegalSquares(chess.getLegalSquares(square));
-                    }
-                }
+        } else if (clickedSquare != square && chess.getLegalSquares(clickedSquare).contains(square)) {
+            try {
+                chess.movePiece(clickedSquare, square);
+                clickedSquare = null;
+                boardPanel.unsetLegalSquares();
+            } catch (IllegalMoveException e) {
+                LOGGER.log(Level.WARNING, "Illegal move");
             }
         }
+
         Piece clickedPiece = chess.getPieceAt(square);
         if (clickedPiece != null && clickedPiece.getPlayer() == chess.getCurrentPlayer()) {
-                clickedSquare = square;
-                boardPanel.setLegalSquares(chess.getLegalSquares(square));
+            clickedSquare = square;
+            boardPanel.setLegalSquares(chess.getLegalSquares(square));
         }
     }
 }
