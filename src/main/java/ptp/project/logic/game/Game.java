@@ -76,13 +76,7 @@ public abstract class Game extends Observable {
         else if (!square.isOccupiedBy().equals(getCurrentPlayer())) {
             return legalSquares;
         }
-        int moveAmount = ruleset.getLegalMoves(square, board, moves, player0, player1).size();
-        Move moveTemp;
-        for (int i = 0; i < moveAmount; i++) {
-            moveTemp = ruleset.getLegalMoves(square, board, moves, player0, player1).get(i);
-            legalSquares.add(moveTemp.getEnd());
-        }
-        return legalSquares;
+        return ruleset.getLegalSquares(square, board, moves, player0, player1);
     }
 
     public abstract void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException;

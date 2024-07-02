@@ -95,6 +95,16 @@ public class StandardChessRuleset implements Ruleset {
         return legalMoves;
     }
 
+    @Override
+    public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
+        List<Square> legalSquares = new ArrayList<>();
+        List<Move> legalMoves = getLegalMoves(square, board, moves, player1, player2);
+        for (Move legalMove : legalMoves) {
+            legalSquares.add(legalMove.getEnd());
+        }
+        return legalSquares;
+    }
+
     /**
      * Checks if given move is legal.
      * @param move Move to check.

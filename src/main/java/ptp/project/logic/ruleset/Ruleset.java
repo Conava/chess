@@ -18,6 +18,8 @@ public interface Ruleset {
 
     List<Move> getLegalMoves(Square square, Board board, List<Move> moves, Player player1, Player player2);
 
+    List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2);
+
     boolean isValidSquare(Square square);
 
     boolean verifyMove(Move move);
