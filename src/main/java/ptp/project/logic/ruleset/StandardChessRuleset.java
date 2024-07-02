@@ -291,6 +291,7 @@ public class StandardChessRuleset implements Ruleset {
         Square possibleSquare;
         int direction;
 
+        System.out.println("Pawn clicked. x=" + square.getY() + " y=" + square.getX() + " Owner:" + owner.getName() + " " + owner.getColor());
         if (owner.getColor().equals("white")) {
             direction = 1;
         } else {

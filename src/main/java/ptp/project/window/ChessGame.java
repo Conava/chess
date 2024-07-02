@@ -258,6 +258,8 @@ public class ChessGame extends JPanel implements GameObserver {
      */
     public void clickedOn(Square square) {
         System.out.println("Clicked on square X: " + square.getX() + ", Y: " + square.getY());
+        Optional.ofNullable(chess.getPieceAt(square))
+                .ifPresent(piece -> System.out.println("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().getColor()));
         if (clickedSquare == null) {
             clickedSquare = square;
         } else if (clickedSquare != square && chess.getLegalSquares(clickedSquare).contains(square)) {
@@ -278,5 +280,6 @@ public class ChessGame extends JPanel implements GameObserver {
         if (clickedPiece != null && clickedPiece.getPlayer() == chess.getCurrentPlayer()) {
             boardPanel.setLegalSquares(chess.getLegalSquares(square));
         }
+        System.out.println("clickedSquare after clickedOn Method: X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY());
     }
 }
