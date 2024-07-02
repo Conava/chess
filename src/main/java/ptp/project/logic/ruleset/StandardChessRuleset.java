@@ -102,6 +102,7 @@ public class StandardChessRuleset implements Ruleset {
         for (Move legalMove : legalMoves) {
             legalSquares.add(legalMove.getEnd());
         }
+        System.out.println("#LegaleZüge" + legalSquares.size());
         return legalSquares;
     }
 
@@ -296,6 +297,7 @@ public class StandardChessRuleset implements Ruleset {
             direction = -1;
         }
         //move 1 square
+        System.out.println("Check square: " + square.getY() + " " +  square.getX() + direction);
         possibleSquare = board.getSquare(square.getY(), square.getX() + direction);
         if (possibleSquare.isOccupiedBy() == null) {
             legalMoves.add(possibleSquare);
@@ -472,6 +474,16 @@ public class StandardChessRuleset implements Ruleset {
 
     private void tryArrayMoves(Square square, Board board, Player owner, List<Square> legalMoves, int[] arrY, int[] arrX) throws IsCheckException {
         for (int i = 0; i < 8; i++) {
+            System.out.println("Versucht Move");
+            if(square.getY() + arrY[i] < 0 || square.getY() + arrY[i] > 7) {
+                System.out.println("fail");
+                continue;
+            }
+            if(square.getX() + arrX[i] < 0 || square.getX() + arrX[i] > 7) {
+                System.out.println("fail");
+                continue;
+            }
+            System.out.println("Zielfeld ist legal");
             Square possibleSquare = board.getSquare(square.getY() + arrY[i], square.getX() + arrX[i]);
             if (isValidSquare(possibleSquare) && possibleSquare.isOccupiedBy() == null ||
                     isCapture(possibleSquare, owner)) {

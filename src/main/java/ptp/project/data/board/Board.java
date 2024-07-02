@@ -25,7 +25,12 @@ public class Board {
     }
 
     public Square getSquare(int y, int x) {
-        return board[y][x];
+        if (board[y][x] != null) {
+            System.out.println("Square found: " + y + " " + x);
+            return board[y][x];
+        }
+        System.out.println("Square not found");
+        return null;
     }
 
     public void executeMove(Move move) {
