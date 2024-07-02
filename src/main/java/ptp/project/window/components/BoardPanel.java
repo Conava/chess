@@ -57,7 +57,7 @@ public class BoardPanel extends JPanel {
     public void placePieces(Board gameBoard) {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                boardButtons[j][i].setPieceIcon(gameBoard.getSquare(i+1, j+1).getPiece());
+                boardButtons[j][i].setPieceIcon(gameBoard.getSquare(i, j).getPiece());
             }
         }
     }

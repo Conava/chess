@@ -25,7 +25,7 @@ public class Board {
     }
 
     public Square getSquare(int y, int x) {
-        return board[y-1][x-1];
+        return board[y][x];
     }
 
     public void executeMove(Move move) {
