@@ -1,46 +1,50 @@
 package ptp.project.logic.ruleset;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class StandardChessRulesetTest {
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void getWidth() {
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void getHeight() {
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void getStartBoard() {
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void getSudoLegalSquares() {
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void verifyMove() {
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void testVerifyMove() {
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void hasEnforcedMove() {
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     void isCheck() {
     }
 }

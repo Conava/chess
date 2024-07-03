@@ -14,6 +14,7 @@ public abstract class Piece {
     public Piece(Player player) {
         this.player = player;
     }
+
     public Player getPlayer() {
         return player;
     }

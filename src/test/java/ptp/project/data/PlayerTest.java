@@ -9,9 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class PlayerTest {
-Player player1;
-Player player2;
-Player player3;
+    Player player1;
+    Player player2;
+    Player player3;
 
 
     @BeforeEach
@@ -23,32 +23,32 @@ Player player3;
 
     @Test
     void testGetName() {
-        assertEquals(player1.getName(), "player1");
-        assertEquals(player2.getName(), "player2");
-        assertEquals(player3.getName(), "player3");
+        assertEquals("player1", player1.getName());
+        assertEquals("player2", player2.getName());
+        assertEquals("player3", player3.getName());
         player1.setName("NotPlayer1");
-        assertEquals(player1.getName(), "NotPlayer1");
+        assertEquals("NotPlayer1", player1.getName());
     }
 
     @Test
     void testSetName() {
         player1.setName("NotPlayer1");
-        assertEquals(player1.getName(), "NotPlayer1");
-        assertNotEquals(player1.getName(), "player1");
+        assertEquals("NotPlayer1", player1.getName());
+        assertNotEquals("player1", player1.getName());
         player1.setName("Player1");
-        assertEquals(player1.getName(), "Player1");
-        assertNotEquals(player1.getName(), "NotPlayer1");
-        assertNotEquals(player1.getName(), "player1");
+        assertEquals("Player1", player1.getName());
+        assertNotEquals("NotPlayer1", player1.getName());
+        assertNotEquals("player1", player1.getName());
     }
 
     @Test
     void testGetColor() {
-        assertEquals(player1.getColor(), PlayerColor.WHITE);
-        assertEquals(player2.getColor(), PlayerColor.BLACK);
-        assertEquals(player3.getColor(), PlayerColor.WHITE);
+        assertEquals(PlayerColor.WHITE, player1.getColor());
+        assertEquals(PlayerColor.BLACK, player2.getColor());
+        assertEquals(PlayerColor.WHITE, player3.getColor());
 
-        assertNotEquals(player1.getColor(), PlayerColor.BLACK);
-        assertNotEquals(player2.getColor(), PlayerColor.WHITE);
-        assertNotEquals(player3.getColor(), PlayerColor.BLACK);
+        assertNotEquals(PlayerColor.BLACK, player1.getColor());
+        assertNotEquals(PlayerColor.WHITE, player2.getColor());
+        assertNotEquals(PlayerColor.BLACK, player3.getColor());
     }
 }

@@ -16,16 +16,33 @@ public class StandardChessRuleset implements Ruleset {
 
     //height and width start at 1 and go to 8
 
+    /**
+     * Gets the width
+     *
+     * @return int of the number of the columns
+     */
     @Override
     public int getWidth() {
         return 8;
     }
 
+    /**
+     * Gets the height
+     *
+     * @return int of the amount of rows
+     */
     @Override
     public int getHeight() {
         return 8;
     }
 
+    /**
+     * Returns the start position
+     *
+     * @param player1 Player with the white pieces
+     * @param player2 Player with the black pieces
+     * @return Double array of the board.
+     */
     @Override
     public Square[][] getStartBoard(Player player1, Player player2) {
         Square[][] startBoard = new Square[8][8];
@@ -81,6 +98,7 @@ public class StandardChessRuleset implements Ruleset {
         List<Square> sudoLegalSquares;
         List<Move> sudoLegalMoves = new ArrayList<>();
         try {
+            System.out.println("Checks for legal moves " + square.getPiece());
             sudoLegalSquares = getSudoLegalSquares(square, board, moves);
         } catch (IsCheckException e) {
             System.out.println(e.getMessage());
@@ -130,20 +148,28 @@ public class StandardChessRuleset implements Ruleset {
 
     public List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) throws IsCheckException {
         List<Square> legalMoves;
-        if (square.getPiece() instanceof Rook) {
+        System.out.println("This is a: " + square.getPiece().getClass());
+        if (square.getPiece().getClass().equals(Rook.class)) {
+            System.out.println("This is a: Rook");
             legalMoves = getLegalSquaresRook(square, board);
-        } else if (square.getPiece() instanceof Knight) {
+        } else if (square.getPiece().getClass().equals(Knight.class)) {
+            System.out.println("This is a: Knight");
             legalMoves = getLegalSquaresKnight(square, board);
-        } else if (square.getPiece() instanceof Bishop) {
+        } else if (square.getPiece().getClass().equals(Bishop.class)) {
+            System.out.println("This is a: Bishop");
             legalMoves = getLegalSquaresBishop(square, board);
-        } else if (square.getPiece() instanceof Queen) {
+        } else if (square.getPiece().getClass().equals(Queen.class)) {
+            System.out.println("This is a: Queen");
             legalMoves = getLegalSquaresBishop(square, board);
             legalMoves.addAll(getLegalSquaresRook(square, board));
-        } else if (square.getPiece() instanceof King) {
+        } else if (square.getPiece().getClass().equals(King.class)) {
+            System.out.println("This is a: King");
             legalMoves = getLegalSquaresKing(square, board);
-        } else if (square.getPiece() instanceof Pawn) {
+        } else if (square.getPiece().getClass().equals(Pawn.class)) {
+            System.out.println("This is a: Pawn");
             legalMoves = getLegalSquaresPawn(square, board, moves);
         } else { //space is empty
+            System.out.println("Piece type does not match any");
             return null;
         }
         //@TODO: Check
@@ -155,52 +181,61 @@ public class StandardChessRuleset implements Ruleset {
      * Returns legal moves for the rook.
      */
     private List<Square> getLegalSquaresRook(Square square, Board board) throws IsCheckException {
+        System.out.println("Checks for rook moves");
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
         Square possibleSquare;
         //checks column down
-        for (int y = square.getY(); y >= 0; y--) {
-            possibleSquare = board.getSquare(y, square.getX());
-            if (possibleSquare.isOccupiedBy() == null || isCapture(possibleSquare, owner)) {
-                legalMoves.add(possibleSquare);
-                if (isCapturePiece(possibleSquare, owner) != null &&
-                        isCapturePiece(possibleSquare, owner) instanceof King) {
-                    throw new IsCheckException(square);
-                }
-            } else break;
+        for (int y = square.getY() - 1; y >= 0; y--) {
+            if (isInBoundsY(y) && isInBoundsX(square.getX())) {
+                possibleSquare = board.getSquare(y, square.getX());
+                if (possibleSquare.isOccupiedBy() == null || isCapture(possibleSquare, owner)) {
+                    legalMoves.add(possibleSquare);
+                    if (isCapturePiece(possibleSquare, owner) != null &&
+                            isCapturePiece(possibleSquare, owner) instanceof King) {
+                        throw new IsCheckException(square);
+                    }
+                } else break;
+            }
         }
         //checks column up
-        for (int y = square.getY(); y < 8; y++) {
-            possibleSquare = board.getSquare(y, square.getX());
-            if (possibleSquare.isOccupiedBy() == null || isCapture(possibleSquare, owner)) {
-                legalMoves.add(possibleSquare);
-                if (isCapturePiece(possibleSquare, owner) != null &&
-                        isCapturePiece(possibleSquare, owner) instanceof King) {
-                    throw new IsCheckException(square);
-                }
-            } else break;
+        for (int y = square.getY() + 1; y < 8; y++) {
+            if (isInBoundsY(y) && isInBoundsX(square.getX())) {
+                possibleSquare = board.getSquare(y, square.getX());
+                if (possibleSquare.isOccupiedBy() == null || isCapture(possibleSquare, owner)) {
+                    legalMoves.add(possibleSquare);
+                    if (isCapturePiece(possibleSquare, owner) != null &&
+                            isCapturePiece(possibleSquare, owner) instanceof King) {
+                        throw new IsCheckException(square);
+                    }
+                } else break;
+            }
         }
         //checks row left
-        for (int x = square.getX(); x >= 0; x--) {
-            possibleSquare = board.getSquare(square.getY(), x);
-            if (possibleSquare.isOccupiedBy() == null || isCapture(possibleSquare, owner)) {
-                legalMoves.add(possibleSquare);
-                if (isCapturePiece(possibleSquare, owner) != null &&
-                        isCapturePiece(possibleSquare, owner) instanceof King) {
-                    throw new IsCheckException(square);
-                }
-            } else break;
+        for (int x = square.getX() - 1; x >= 0; x--) {
+            if (isInBoundsY(square.getY()) && isInBoundsX(x)) {
+                possibleSquare = board.getSquare(square.getY(), x);
+                if (possibleSquare.isOccupiedBy() == null || isCapture(possibleSquare, owner)) {
+                    legalMoves.add(possibleSquare);
+                    if (isCapturePiece(possibleSquare, owner) != null &&
+                            isCapturePiece(possibleSquare, owner) instanceof King) {
+                        throw new IsCheckException(square);
+                    }
+                } else break;
+            }
         }
         //checks row right
-        for (int x = square.getX(); x < 8; x++) {
-            possibleSquare = board.getSquare(square.getY(), x);
-            if (possibleSquare.isOccupiedBy() == null || isCapture(possibleSquare, owner)) {
-                legalMoves.add(possibleSquare);
-                if (isCapturePiece(possibleSquare, owner) != null &&
-                        isCapturePiece(possibleSquare, owner) instanceof King) {
-                    throw new IsCheckException(square);
-                }
-            } else break;
+        for (int x = square.getX() + 1; x < 8; x++) {
+            if (isInBoundsY(square.getY()) && isInBoundsX(x)) {
+                possibleSquare = board.getSquare(square.getY(), x);
+                if (possibleSquare.isOccupiedBy() == null || isCapture(possibleSquare, owner)) {
+                    legalMoves.add(possibleSquare);
+                    if (isCapturePiece(possibleSquare, owner) != null &&
+                            isCapturePiece(possibleSquare, owner) instanceof King) {
+                        throw new IsCheckException(square);
+                    }
+                } else break;
+            }
         }
         return legalMoves;
     }
@@ -209,6 +244,7 @@ public class StandardChessRuleset implements Ruleset {
      * Returns legal moves for the bishop.
      */
     private List<Square> getLegalSquaresBishop(Square square, Board board) throws IsCheckException {
+        System.out.println("Checks for bishop moves");
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
         Square possibleSquare;
@@ -221,7 +257,7 @@ public class StandardChessRuleset implements Ruleset {
         }
         //checks diagonal up left
         for (int i = 0; i < 8; i++) {
-            if (isInBoundsY(square.getY()+ i) && isInBoundsX(square.getX() - i)) {
+            if (isInBoundsY(square.getY() + i) && isInBoundsX(square.getX() - i)) {
                 possibleSquare = board.getSquare(square.getY() + i, square.getX() - i);
                 if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
             }
@@ -248,6 +284,7 @@ public class StandardChessRuleset implements Ruleset {
      * Returns legal moves for the knight.
      */
     private List<Square> getLegalSquaresKnight(Square square, Board board) throws IsCheckException {
+        System.out.println("Checks for Knight moves");
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
 
@@ -273,6 +310,7 @@ public class StandardChessRuleset implements Ruleset {
      * Returns legal moves for the king.
      */
     private List<Square> getLegalSquaresKing(Square square, Board board) throws IsCheckException {
+        System.out.println("Checks for King moves");
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
 
@@ -281,7 +319,7 @@ public class StandardChessRuleset implements Ruleset {
 
         tryArrayMoves(square, board, owner, legalMoves, arrY, arrX);
 
-        if (square.getPiece() instanceof King king && king.getHasMoved()) {
+        if (square.getPiece() instanceof King king && !king.getHasMoved()) {
             if (canCastle(square, board) == 1 || canCastle(square, board) == 3) {
                 legalMoves.add(board.getSquare(6, square.getX()));
             }
@@ -297,6 +335,7 @@ public class StandardChessRuleset implements Ruleset {
      * Returns legal moves for the pawn.
      */
     private List<Square> getLegalSquaresPawn(Square square, Board board, List<Move> moves) throws IsCheckException {
+        System.out.println("Checks for pawn moves");
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
         Square possibleSquare;
@@ -311,7 +350,7 @@ public class StandardChessRuleset implements Ruleset {
             direction = -1;
         }
         //move 1 square
-        System.out.println("Check square: Y=" + square.getY() + " X=" + square.getX() + direction);
+        System.out.println("Check square: Y=" + square.getY() + " X=" + (square.getX() + direction));
         if (isInBoundsY(square.getY()) && isInBoundsX(square.getX() + direction)) {
             System.out.println("is in Bound");
             possibleSquare = board.getSquare(square.getY(), square.getX() + direction);
@@ -322,44 +361,63 @@ public class StandardChessRuleset implements Ruleset {
                     throw new IsCheckException(square);
                 }
             }
+        } else {
+            System.out.println("out of bounds");
         }
         //taking left
-        possibleSquare = board.getSquare(square.getY() - 1, square.getX() + direction);
-        if (isCapture(possibleSquare, owner)) {
-            legalMoves.add(possibleSquare);
-            if (isCapturePiece(possibleSquare, owner) != null &&
-                    isCapturePiece(possibleSquare, owner) instanceof King) {
-                throw new IsCheckException(square);
+        System.out.println("Check square: Y=" + (square.getY() - 1) + " X=" + (square.getX() + direction));
+        if (isInBoundsY(square.getY() - 1) && isInBoundsX(square.getX() + direction)) {
+            possibleSquare = board.getSquare(square.getY() - 1, square.getX() + direction);
+            if (isCapture(possibleSquare, owner)) {
+                legalMoves.add(possibleSquare);
+                if (isCapturePiece(possibleSquare, owner) != null &&
+                        isCapturePiece(possibleSquare, owner) instanceof King) {
+                    throw new IsCheckException(square);
+                }
             }
+        } else {
+            System.out.println("out of bounds");
         }
         //taking right
-        possibleSquare = board.getSquare(square.getY() + 1, square.getX() + direction);
-        if (isCapture(possibleSquare, owner)) {
-            legalMoves.add(possibleSquare);
-            if (isCapturePiece(possibleSquare, owner) != null &&
-                    isCapturePiece(possibleSquare, owner) instanceof King) {
-                throw new IsCheckException(square);
+        System.out.println("Check square: Y=" + (square.getY() + 1) + " X=" + (square.getX() + direction));
+        if (isInBoundsY(square.getY() + 1) && isInBoundsX(square.getX() + direction)) {
+            possibleSquare = board.getSquare(square.getY() + 1, square.getX() + direction);
+            if (isCapture(possibleSquare, owner)) {
+                legalMoves.add(possibleSquare);
+                if (isCapturePiece(possibleSquare, owner) != null &&
+                        isCapturePiece(possibleSquare, owner) instanceof King) {
+                    throw new IsCheckException(square);
+                }
+            }
+        } else {
+            System.out.println("out of bounds");
+        }
+
+        //moving 2 squares at the start
+        if (isInBoundsY(square.getY()) && isInBoundsX(square.getX() + direction)) {
+            if (isOnRank(square, owner, 1) && board.getSquare(square.getY(), square.getX() + direction).isOccupiedBy() == null
+                    && board.getSquare(square.getY(), square.getX() + 2 * direction).isOccupiedBy() == null) {
+                legalMoves.add(board.getSquare(square.getY() + 1, square.getX() + 2 * direction));
             }
         }
-        //moving 2 squares at the start
-        if (isOnRank(square, owner, 1) && board.getSquare(square.getY(), square.getX() + direction).isOccupiedBy() == null
-                && board.getSquare(square.getY(), square.getX() + 2 * direction).isOccupiedBy() == null) {
-            legalMoves.add(board.getSquare(square.getY() + 1, square.getX() + 2 * direction));
-        }
         //en passant left
-        possibleSquare = board.getSquare(square.getY() - 1, square.getX());
-        if (isOnRank(square, owner, 5) && isValidSquare(possibleSquare)
-                && possibleSquare.getPiece() != null && possibleSquare.getPiece() instanceof Pawn pawn) {
-            if (pawn.hasMoveJustMovedTwoSquares(moves)) {
-                legalMoves.add(board.getSquare(square.getY(), square.getX() + direction));
+        if (isInBoundsY(square.getY() - 1) && isInBoundsX(square.getX())) {
+            possibleSquare = board.getSquare(square.getY() - 1, square.getX());
+            if (isOnRank(square, owner, 5) && isValidSquare(possibleSquare)
+                    && possibleSquare.getPiece() != null && possibleSquare.getPiece() instanceof Pawn pawn) {
+                if (pawn.hasMoveJustMovedTwoSquares(moves)) {
+                    legalMoves.add(board.getSquare(square.getY(), square.getX() + direction));
+                }
             }
         }
         //en passant right
-        possibleSquare = board.getSquare(square.getY() + 1, square.getX());
-        if (isOnRank(square, owner, 5) && isValidSquare(possibleSquare)
-                && possibleSquare.getPiece() != null && possibleSquare.getPiece() instanceof Pawn pawn) {
-            if (pawn.hasMoveJustMovedTwoSquares(moves)) {
-                legalMoves.add(board.getSquare(square.getY(), square.getX() + direction));
+        if (isInBoundsY(square.getY() + 1) && isInBoundsX(square.getX())) {
+            possibleSquare = board.getSquare(square.getY() + 1, square.getX());
+            if (isOnRank(square, owner, 5) && isValidSquare(possibleSquare)
+                    && possibleSquare.getPiece() != null && possibleSquare.getPiece() instanceof Pawn pawn) {
+                if (pawn.hasMoveJustMovedTwoSquares(moves)) {
+                    legalMoves.add(board.getSquare(square.getY(), square.getX() + direction));
+                }
             }
         }
 
@@ -436,6 +494,7 @@ public class StandardChessRuleset implements Ruleset {
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
                 try {
+                    System.out.println("Checks for check");
                     getSudoLegalSquares(board.getSquare(y, x), board, moves);
                 } catch (IsCheckException e) {
                     return true;
@@ -493,13 +552,13 @@ public class StandardChessRuleset implements Ruleset {
 
     private void tryArrayMoves(Square square, Board board, Player owner, List<Square> legalMoves, int[] arrY, int[] arrX) throws IsCheckException {
         for (int i = 0; i < 8; i++) {
-            System.out.println("Versucht Move Y=" + square.getY() + arrY[i] + " X=" + square.getY() + arrY[i]);
-            if (square.getY() + arrY[i] < 0 || square.getY() + arrY[i] > 7) {
-                System.out.println("fail");
+            System.out.println("Versucht Move Y=" + (square.getY() + arrY[i]) + " X=" + (square.getY() + arrY[i]));
+            if ((square.getY() + arrY[i]) < 0 || (square.getY() + arrY[i]) > 7) {
+                System.out.println("failY");
                 continue;
             }
-            if (square.getX() + arrX[i] < 0 || square.getX() + arrX[i] > 7) {
-                System.out.println("fail");
+            if ((square.getX() + arrX[i]) < 0 || (square.getX() + arrX[i]) > 7) {
+                System.out.println("failX");
                 continue;
             }
             System.out.println("Zielfeld ist legal");
@@ -507,10 +566,13 @@ public class StandardChessRuleset implements Ruleset {
             if (isValidSquare(possibleSquare) && possibleSquare.isOccupiedBy() == null ||
                     isCapture(possibleSquare, owner)) {
                 legalMoves.add(possibleSquare);
+                System.out.println("added: " + (square.getY() + arrY[i]) + " " + (square.getX() + arrX[i]));
                 if (isCapturePiece(possibleSquare, owner) != null &&
                         isCapturePiece(possibleSquare, owner) instanceof King) {
                     throw new IsCheckException(square);
                 }
+            } else {
+                System.out.println("wurde aber nicht hinzugefügt" + isValidSquare(possibleSquare));
             }
         }
     }
@@ -518,6 +580,7 @@ public class StandardChessRuleset implements Ruleset {
     private List<Move> getAllSudoLegalMoves(Board board, Player player, List<Move> moves) throws IsCheckException {
         List<Move> legalMoves = new ArrayList<>();
         List<Square> squaresWithPieces = board.getPieces(player);
+        System.out.println("Gets all Sudolegal moves");
         for (Square square : squaresWithPieces) {
             List<Square> squares = getSudoLegalSquares(square, board, moves);
             for (Square square2 : squares) {
@@ -533,6 +596,11 @@ public class StandardChessRuleset implements Ruleset {
 
     private boolean isInBoundsY(int y) {
         return y >= 0 && y < 8;
+    }
+
+    private int addValues(int x, int y) {
+//todo
+        return 0;
     }
 
     private boolean verifyMove() {

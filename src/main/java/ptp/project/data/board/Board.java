@@ -27,7 +27,6 @@ public class Board {
 
     public Square getSquare(int y, int x) {
         if (board[y][x] != null) {
-            System.out.println("Square found: Y=" + y + " X=" + x);
             return board[y][x];
         }
         System.out.println("Square not found");
@@ -82,6 +81,9 @@ public class Board {
     }
 
     private void removePiece (Square square) {
+        if (square.getPiece() == null) {
+            return;
+        }
         Player player = square.getPiece().getPlayer();
         if (player.getColor().equals(PlayerColor.WHITE)) {
             piecesWhite.remove(square);
