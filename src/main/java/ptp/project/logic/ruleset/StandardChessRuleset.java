@@ -115,14 +115,27 @@ public class StandardChessRuleset implements Ruleset {
         return legalMoves;
     }
 
+    /**
+     * Provides a list of legal squares.
+     *
+     * @param square  Only moves from this square are shown
+     * @param board   Current board
+     * @param moves   List of moves already played in-game
+     * @param player1 Player to move
+     * @param player2 Player opponent
+     * @return List of LEGAL squares.
+     */
     @Override
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
         List<Square> legalSquares = new ArrayList<>();
+        //legalSquares.add(new Square(4,4));
+        ///* todo: wenn man die legalSquares auf 4,4 setzt, giben nur 4 figuren dieses feld an
         List<Move> legalMoves = getLegalMoves(square, board, moves, player1, player2);
         for (Move legalMove : legalMoves) {
             legalSquares.add(legalMove.getEnd());
         }
         System.out.println("#LegaleZüge" + legalSquares.size());
+        //*/
         return legalSquares;
     }
 
@@ -146,7 +159,7 @@ public class StandardChessRuleset implements Ruleset {
         return true;
     }
 
-    public List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) throws IsCheckException {
+    private List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) throws IsCheckException {
         List<Square> legalMoves;
         System.out.println("This is a: " + square.getPiece().getClass());
         if (square.getPiece().getClass().equals(Rook.class)) {
@@ -170,7 +183,7 @@ public class StandardChessRuleset implements Ruleset {
             legalMoves = getLegalSquaresPawn(square, board, moves);
         } else { //space is empty
             System.out.println("Piece type does not match any");
-            return null;
+            legalMoves = new ArrayList<>();
         }
         //@TODO: Check
         //@TODO TTests
@@ -424,12 +437,13 @@ public class StandardChessRuleset implements Ruleset {
         return legalMoves;
     }
 
+    /**
+     * Returns a valid square
+     * @param square Square to check
+     * @return If the square exists and is in bounds
+     */
     public boolean isValidSquare(Square square) {
-        if (square == null) {
-            return false;
-        }
-        return square.getY() >= 0 && square.getY() <= 7 &&
-                square.getX() >= 0 && square.getX() <= 7;
+        return square != null && isInBoundsY(square.getY()) && isInBoundsX(square.getX());
     }
 
     /**
@@ -584,6 +598,9 @@ public class StandardChessRuleset implements Ruleset {
         for (Square square : squaresWithPieces) {
             List<Square> squares = getSudoLegalSquares(square, board, moves);
             for (Square square2 : squares) {
+                if (square2 == null) {
+                    continue;
+                }
                 legalMoves.add(new Move(square, square2));
             }
         }
@@ -596,29 +613,5 @@ public class StandardChessRuleset implements Ruleset {
 
     private boolean isInBoundsY(int y) {
         return y >= 0 && y < 8;
-    }
-
-    private int addValues(int x, int y) {
-//todo
-        return 0;
-    }
-
-    private boolean verifyMove() {
-        return false;
-    }
-
-    @Override
-    public boolean verifyMove(Move move) {
-        return false;
-    }
-
-    @Override
-    public boolean verifyMove(Square newPosition, Piece piece) {
-        return false;
-    }
-
-    @Override
-    public Move hasEnforcedMove(Player player) {
-        return null;
     }
 }
