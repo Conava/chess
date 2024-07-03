@@ -98,7 +98,7 @@ public class StandardChessRuleset implements Ruleset {
         List<Square> sudoLegalSquares;
         List<Move> sudoLegalMoves = new ArrayList<>();
         try {
-            System.out.println("Checks for legal moves " + square.getPiece());
+            System.out.println("Checks for legal moves " + square.getPiece() + " X=" + square.getX() + " Y=" + square.getY() + " in legalMoves");
             sudoLegalSquares = getSudoLegalSquares(square, board, moves);
         } catch (IsCheckException e) {
             System.out.println(e.getMessage());
@@ -127,9 +127,10 @@ public class StandardChessRuleset implements Ruleset {
      */
     @Override
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
+        System.out.println("Checks for legal moves " + square.getPiece() + " X=" + square.getX() + " Y=" + square.getY() + " in legalSquares");
         List<Square> legalSquares = new ArrayList<>();
         //legalSquares.add(new Square(4,4));
-        ///* todo: wenn man die legalSquares auf 4,4 setzt, giben nur 4 figuren dieses feld an
+        ///* todo: wenn man die legalSquares auf 4,4 setzt, giben nur 4 figuren dieses feld an (fixed)
         List<Move> legalMoves = getLegalMoves(square, board, moves, player1, player2);
         for (Move legalMove : legalMoves) {
             legalSquares.add(legalMove.getEnd());

@@ -70,7 +70,9 @@ public abstract class Game extends Observable {
 
     public List<Square> getLegalSquares(Square position) {
         List<Square> legalSquares = new ArrayList<>();
-        Square square = board.getSquare(position.getY(), position.getX());
+        System.out.println("Checks for legal moves " + position.getPiece() + " X=" + position.getX() + " Y=" + position.getY() + " in Game from pos");
+        Square square = board.getSquare(position.getX(), position.getY()); //todo this is a temporary fix, beccause x and y before and after did not match
+        System.out.println("Checks for legal moves " + square.getPiece() + " X=" + square.getX() + " Y=" + square.getY() + "in Game after pos");
         if (square.isOccupiedBy() == null) {
             return legalSquares;
         }

@@ -3,6 +3,13 @@ package ptp.project.logic.ruleset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
+import ptp.project.data.Player;
+import ptp.project.data.Square;
+import ptp.project.data.board.Board;
+import ptp.project.data.enums.PlayerColor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,5 +53,28 @@ class StandardChessRulesetTest {
 
     @Test
     void isCheck() {
+    }
+
+    @Test
+    void testGetLegalMoves() {
+        Ruleset ruleset = new StandardChessRuleset();
+        Player playerW = new Player("pw", PlayerColor.WHITE);
+        Player playerB = new Player("pb", PlayerColor.BLACK);
+        Board board = new Board(ruleset.getStartBoard(playerW, playerB));
+        List<Square> squares;
+
+        squares = ruleset.getLegalSquares(board.getSquare(0,0), board, new ArrayList<>(), playerW, playerB);
+        if (!squares.isEmpty()) {
+            for (Square square : squares) {
+                System.out.println("X=" + square.getX() + " Y=" + square.getY());
+            }
+        } else {System.out.println("Piece has no moves");}
+
+        squares = ruleset.getLegalSquares(board.getSquare(1,0), board, new ArrayList<>(), playerW, playerB);
+        if (!squares.isEmpty()) {
+            for (Square square : squares) {
+                System.out.println("X=" + square.getX() + " Y=" + square.getY());
+            }
+        } else {System.out.println("Piece has no moves");}
     }
 }
