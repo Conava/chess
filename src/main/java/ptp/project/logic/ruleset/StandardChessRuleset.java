@@ -48,34 +48,34 @@ public class StandardChessRuleset implements Ruleset {
         Square[][] startBoard = new Square[8][8];
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
-                startBoard[x][y] = new Square(y, x);
+                startBoard[y][x] = new Square(y, x);
             }
         }
 
         startBoard[0][0].setPiece(new Rook(player1));
-        startBoard[1][0].setPiece(new Knight(player1));
-        startBoard[2][0].setPiece(new Bishop(player1));
-        startBoard[3][0].setPiece(new Queen(player1));
-        startBoard[4][0].setPiece(new King(player1));
-        startBoard[5][0].setPiece(new Bishop(player1));
-        startBoard[6][0].setPiece(new Knight(player1));
-        startBoard[7][0].setPiece(new Rook(player1));
+        startBoard[0][1].setPiece(new Knight(player1));
+        startBoard[0][2].setPiece(new Bishop(player1));
+        startBoard[0][3].setPiece(new Queen(player1));
+        startBoard[0][4].setPiece(new King(player1));
+        startBoard[0][5].setPiece(new Bishop(player1));
+        startBoard[0][6].setPiece(new Knight(player1));
+        startBoard[0][7].setPiece(new Rook(player1));
 
         for (int x = 0; x < 8; x++) {
-            startBoard[x][1].setPiece(new Pawn(player1));
+            startBoard[1][x].setPiece(new Pawn(player1));
         }
 
-        startBoard[0][7].setPiece(new Rook(player2));
-        startBoard[1][7].setPiece(new Knight(player2));
-        startBoard[2][7].setPiece(new Bishop(player2));
-        startBoard[3][7].setPiece(new Queen(player2));
-        startBoard[4][7].setPiece(new King(player2));
-        startBoard[5][7].setPiece(new Bishop(player2));
-        startBoard[6][7].setPiece(new Knight(player2));
+        startBoard[7][0].setPiece(new Rook(player2));
+        startBoard[7][1].setPiece(new Knight(player2));
+        startBoard[7][2].setPiece(new Bishop(player2));
+        startBoard[7][3].setPiece(new Queen(player2));
+        startBoard[7][4].setPiece(new King(player2));
+        startBoard[7][5].setPiece(new Bishop(player2));
+        startBoard[7][6].setPiece(new Knight(player2));
         startBoard[7][7].setPiece(new Rook(player2));
 
         for (int x = 0; x < 8; x++) {
-            startBoard[x][6].setPiece(new Pawn(player2));
+            startBoard[6][x].setPiece(new Pawn(player2));
         }
 
         return startBoard;
@@ -130,13 +130,18 @@ public class StandardChessRuleset implements Ruleset {
         System.out.println("Checks for legal moves " + square.getPiece() + " X=" + square.getX() + " Y=" + square.getY() + " in legalSquares");
         List<Square> legalSquares = new ArrayList<>();
         //legalSquares.add(new Square(4,4));
-        ///* todo: wenn man die legalSquares auf 4,4 setzt, giben nur 4 figuren dieses feld an (fixed)
+        /* todo: wenn man die legalSquares auf 4,4 setzt, giben nur 4 figuren dieses feld an (fixed)
         List<Move> legalMoves = getLegalMoves(square, board, moves, player1, player2);
         for (Move legalMove : legalMoves) {
             legalSquares.add(legalMove.getEnd());
         }
         System.out.println("#LegaleZüge" + legalSquares.size());
-        //*/
+        */
+        try {
+            legalSquares = getSudoLegalSquares(square, board, moves);
+        } catch (IsCheckException e) {
+            return legalSquares;
+        }
         return legalSquares;
     }
 
@@ -567,7 +572,8 @@ public class StandardChessRuleset implements Ruleset {
 
     private void tryArrayMoves(Square square, Board board, Player owner, List<Square> legalMoves, int[] arrY, int[] arrX) throws IsCheckException {
         for (int i = 0; i < 8; i++) {
-            System.out.println("Versucht Move Y=" + (square.getY() + arrY[i]) + " X=" + (square.getY() + arrY[i]));
+            System.out.println("offsetY=" + arrY[i] + " offsetX=" + arrX[i]);
+            //System.out.println("Versucht Move Y=" + (square.getY() + arrY[i]) + " X=" + (square.getY() + arrY[i]));
             if ((square.getY() + arrY[i]) < 0 || (square.getY() + arrY[i]) > 7) {
                 System.out.println("failY");
                 continue;
