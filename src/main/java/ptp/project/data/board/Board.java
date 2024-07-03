@@ -2,6 +2,7 @@ package ptp.project.data.board;
 
 import ptp.project.data.Player;
 import ptp.project.data.Square;
+import ptp.project.data.enums.PlayerColor;
 import ptp.project.data.pieces.King;
 import ptp.project.data.pieces.Rook;
 import ptp.project.logic.moves.CastleMove;
@@ -26,7 +27,7 @@ public class Board {
 
     public Square getSquare(int y, int x) {
         if (board[y][x] != null) {
-            System.out.println("Square found: " + y + " " + x);
+            System.out.println("Square found: Y=" + y + " X=" + x);
             return board[y][x];
         }
         System.out.println("Square not found");
@@ -71,7 +72,7 @@ public class Board {
             for (Square square : squares) {
                 if (square.isOccupiedBy() == null) {
                     continue;
-                } else if (square.getPiece().getPlayer().getColor().equals("white")) {//white
+                } else if (square.getPiece().getPlayer().getColor().equals(PlayerColor.WHITE)) {//white
                     piecesWhite.add(square);
                 } else {
                     piecesBlack.add(square);
@@ -82,7 +83,7 @@ public class Board {
 
     private void removePiece (Square square) {
         Player player = square.getPiece().getPlayer();
-        if (player.getColor().equals("white")) {
+        if (player.getColor().equals(PlayerColor.WHITE)) {
             piecesWhite.remove(square);
         } else {
             piecesBlack.remove(square);
@@ -92,7 +93,7 @@ public class Board {
     public List<Square> getPieces(Player player) {
         if (player == null) {
             return null;
-        } else if (player.getColor().equals("white")) {
+        } else if (player.getColor().equals(PlayerColor.WHITE)) {
             return piecesWhite;
         } else {
             return piecesBlack;

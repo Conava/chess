@@ -3,6 +3,7 @@ package ptp.project.logic.game;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
 import ptp.project.data.enums.GameState;
+import ptp.project.data.enums.PlayerColor;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.data.pieces.Piece;
 import ptp.project.exceptions.IllegalMoveException;
@@ -24,8 +25,8 @@ public abstract class Game extends Observable {
     protected List<Move> moves;
 
     public Game(RulesetOptions selectedRuleset) {
-        this.player0 = new Player("Spieler 0 (Weiß)", "white");
-        this.player1 = new Player("Spieler 1 (Schwarz)", "black");
+        this.player0 = new Player("Spieler 0 (Weiß)", PlayerColor.WHITE);
+        this.player1 = new Player("Spieler 1 (Schwarz)", PlayerColor.BLACK);
         this.ruleset = switch (selectedRuleset) {
             case STANDARD -> new StandardChessRuleset();
             //Implement other rulesets here

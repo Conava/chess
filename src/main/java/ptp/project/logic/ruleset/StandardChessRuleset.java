@@ -2,6 +2,7 @@ package ptp.project.logic.ruleset;
 
 import ptp.project.data.Player;
 import ptp.project.data.Square;
+import ptp.project.data.enums.PlayerColor;
 import ptp.project.data.pieces.*;
 import ptp.project.exceptions.IsCheckException;
 import ptp.project.data.board.Board;
@@ -66,9 +67,10 @@ public class StandardChessRuleset implements Ruleset {
 
     /**
      * Provides a list of legal moves.
-     * @param square Only moves from this square are shown
-     * @param board Current board
-     * @param moves List of moves already played in-game
+     *
+     * @param square  Only moves from this square are shown
+     * @param board   Current board
+     * @param moves   List of moves already played in-game
      * @param player1 Player to move
      * @param player2 Player opponent
      * @return List of LEGAL moves.
@@ -108,9 +110,10 @@ public class StandardChessRuleset implements Ruleset {
 
     /**
      * Checks if given move is legal.
-     * @param move Move to check.
-     * @param board Current board. Does not get changed.
-     * @param moves List of moves already played in-game
+     *
+     * @param move    Move to check.
+     * @param board   Current board. Does not get changed.
+     * @param moves   List of moves already played in-game
      * @param player2 Player opponent
      * @return Is the move legal?
      */
@@ -211,23 +214,31 @@ public class StandardChessRuleset implements Ruleset {
         Square possibleSquare;
         //checks diagonal down left
         for (int i = 0; i < 8; i++) {
-            possibleSquare = board.getSquare(square.getY() - i, square.getX() - i);
-            if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
+            if (isInBoundsY(square.getY() - i) && isInBoundsX(square.getX() - i)) {
+                possibleSquare = board.getSquare(square.getY() - i, square.getX() - i);
+                if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
+            }
         }
         //checks diagonal up left
         for (int i = 0; i < 8; i++) {
-            possibleSquare = board.getSquare(square.getY() + i, square.getX() - i);
-            if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
+            if (isInBoundsY(square.getY()+ i) && isInBoundsX(square.getX() - i)) {
+                possibleSquare = board.getSquare(square.getY() + i, square.getX() - i);
+                if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
+            }
         }
         //checks diagonal down right
         for (int i = 0; i < 8; i++) {
-            possibleSquare = board.getSquare(square.getY() - i, square.getX() + i);
-            if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
+            if (isInBoundsY(square.getY() - i) && isInBoundsX(square.getX() + i)) {
+                possibleSquare = board.getSquare(square.getY() - i, square.getX() + i);
+                if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
+            }
         }
         //checks diagonal down left
         for (int i = 0; i < 8; i++) {
-            possibleSquare = board.getSquare(square.getY() + i, square.getX() + i);
-            if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
+            if (isInBoundsY(square.getY() + i) && isInBoundsX(square.getX() + i)) {
+                possibleSquare = board.getSquare(square.getY() + i, square.getX() + i);
+                if (getLegalSquaresBeamHelp(square, owner, legalMoves, possibleSquare)) break;
+            }
         }
 
         return legalMoves;
@@ -292,19 +303,24 @@ public class StandardChessRuleset implements Ruleset {
         int direction;
 
         System.out.println("Pawn clicked. x=" + square.getY() + " y=" + square.getX() + " Owner:" + owner.getName() + " " + owner.getColor());
-        if (owner.getColor().equals("white")) {
+        if (owner.getColor().equals(PlayerColor.WHITE)) {
+            System.out.println("Pawn is white");
             direction = 1;
         } else {
+            System.out.println("Pawn is black");
             direction = -1;
         }
         //move 1 square
-        System.out.println("Check square: " + square.getY() + " " +  square.getX() + direction);
-        possibleSquare = board.getSquare(square.getY(), square.getX() + direction);
-        if (possibleSquare.isOccupiedBy() == null) {
-            legalMoves.add(possibleSquare);
-            if (isCapturePiece(possibleSquare, owner) != null &&
-                    isCapturePiece(possibleSquare, owner) instanceof King) {
-                throw new IsCheckException(square);
+        System.out.println("Check square: Y=" + square.getY() + " X=" + square.getX() + direction);
+        if (isInBoundsY(square.getY()) && isInBoundsX(square.getX() + direction)) {
+            System.out.println("is in Bound");
+            possibleSquare = board.getSquare(square.getY(), square.getX() + direction);
+            if (possibleSquare.isOccupiedBy() == null) {
+                legalMoves.add(possibleSquare);
+                if (isCapturePiece(possibleSquare, owner) != null &&
+                        isCapturePiece(possibleSquare, owner) instanceof King) {
+                    throw new IsCheckException(square);
+                }
             }
         }
         //taking left
@@ -334,7 +350,7 @@ public class StandardChessRuleset implements Ruleset {
         possibleSquare = board.getSquare(square.getY() - 1, square.getX());
         if (isOnRank(square, owner, 5) && isValidSquare(possibleSquare)
                 && possibleSquare.getPiece() != null && possibleSquare.getPiece() instanceof Pawn pawn) {
-            if (pawn.hasMoveJustMovedTwoSquares(moves)){
+            if (pawn.hasMoveJustMovedTwoSquares(moves)) {
                 legalMoves.add(board.getSquare(square.getY(), square.getX() + direction));
             }
         }
@@ -342,7 +358,7 @@ public class StandardChessRuleset implements Ruleset {
         possibleSquare = board.getSquare(square.getY() + 1, square.getX());
         if (isOnRank(square, owner, 5) && isValidSquare(possibleSquare)
                 && possibleSquare.getPiece() != null && possibleSquare.getPiece() instanceof Pawn pawn) {
-            if (pawn.hasMoveJustMovedTwoSquares(moves)){
+            if (pawn.hasMoveJustMovedTwoSquares(moves)) {
                 legalMoves.add(board.getSquare(square.getY(), square.getX() + direction));
             }
         }
@@ -368,11 +384,10 @@ public class StandardChessRuleset implements Ruleset {
     }
 
     /**
-     *
      * @param square Square where to capture.
      * @param player Owner of the capturing piece.
      * @return null if not a capture
-     *         #Piece if there is a piece.
+     * #Piece if there is a piece.
      */
     private Piece isCapturePiece(Square square, Player player) {
         if (isCapture(square, player)) {
@@ -383,6 +398,7 @@ public class StandardChessRuleset implements Ruleset {
 
     /**
      * How far a piece is base on Player baseline.
+     *
      * @param square The square the piece is on.
      * @param player The player owning the piece.
      * @param isRank The rank the piece might be on counted from the baseline
@@ -390,7 +406,7 @@ public class StandardChessRuleset implements Ruleset {
      */
     private boolean isOnRank(Square square, Player player, int isRank) {
         int rank = -1; // there should be no piece on rank -1
-        if (player.getColor().equals("white")) {
+        if (player.getColor().equals(PlayerColor.WHITE)) {
             rank = square.getX();
         } else {
             rank = 7 - square.getX();
@@ -401,6 +417,7 @@ public class StandardChessRuleset implements Ruleset {
     /**
      * Checks if move is a promotion.
      * Legacy
+     *
      * @param square Square where the piece moves to
      * @return ?isPromotion
      */
@@ -430,8 +447,9 @@ public class StandardChessRuleset implements Ruleset {
 
     /**
      * Checks what ways one can castle.
+     *
      * @param square The square the King should be on.
-     * @param board The board the castling should happen.
+     * @param board  The board the castling should happen.
      * @return 0 for no castle
      * 1 for only 0-0
      * 2 for only 0-0-0
@@ -475,12 +493,12 @@ public class StandardChessRuleset implements Ruleset {
 
     private void tryArrayMoves(Square square, Board board, Player owner, List<Square> legalMoves, int[] arrY, int[] arrX) throws IsCheckException {
         for (int i = 0; i < 8; i++) {
-            System.out.println("Versucht Move");
-            if(square.getY() + arrY[i] < 0 || square.getY() + arrY[i] > 7) {
+            System.out.println("Versucht Move Y=" + square.getY() + arrY[i] + " X=" + square.getY() + arrY[i]);
+            if (square.getY() + arrY[i] < 0 || square.getY() + arrY[i] > 7) {
                 System.out.println("fail");
                 continue;
             }
-            if(square.getX() + arrX[i] < 0 || square.getX() + arrX[i] > 7) {
+            if (square.getX() + arrX[i] < 0 || square.getX() + arrX[i] > 7) {
                 System.out.println("fail");
                 continue;
             }
@@ -500,13 +518,21 @@ public class StandardChessRuleset implements Ruleset {
     private List<Move> getAllSudoLegalMoves(Board board, Player player, List<Move> moves) throws IsCheckException {
         List<Move> legalMoves = new ArrayList<>();
         List<Square> squaresWithPieces = board.getPieces(player);
-            for (Square square : squaresWithPieces) {
-                List<Square> squares = getSudoLegalSquares(square, board, moves);
-                for (Square square2 : squares) {
-                    legalMoves.add(new Move(square, square2));
-                }
+        for (Square square : squaresWithPieces) {
+            List<Square> squares = getSudoLegalSquares(square, board, moves);
+            for (Square square2 : squares) {
+                legalMoves.add(new Move(square, square2));
             }
+        }
         return legalMoves;
+    }
+
+    private boolean isInBoundsX(int x) {
+        return x >= 0 && x < 8;
+    }
+
+    private boolean isInBoundsY(int y) {
+        return y >= 0 && y < 8;
     }
 
     private boolean verifyMove() {

@@ -1,10 +1,12 @@
 package ptp.project.data;
 
+import ptp.project.data.enums.PlayerColor;
+
 public class Player {
     private final String name;
-    private final String color;
+    private final PlayerColor color;
 
-    public Player(String name, String color) {
+    public Player(String name, PlayerColor color) {
         this.name = name;
         this.color = color;
     }
@@ -13,7 +15,7 @@ public class Player {
         return name;
     }
 
-    public String getColor() {
+    public PlayerColor getColor() {
         return color;
     }
 }

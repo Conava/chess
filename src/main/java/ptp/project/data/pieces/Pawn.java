@@ -1,6 +1,7 @@
 package ptp.project.data.pieces;
 
 import ptp.project.data.Player;
+import ptp.project.data.enums.PlayerColor;
 import ptp.project.logic.moves.Move;
 
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.List;
 public class Pawn extends Piece {
     public Pawn(Player player) {
         super(player);
-        if (player.getColor().equals("white")) {
+        if (player.getColor().equals(PlayerColor.WHITE)) {
             iconPath = "/icon/pawn_white.png";
         } else {
             iconPath = "/icon/pawn_black.png";
