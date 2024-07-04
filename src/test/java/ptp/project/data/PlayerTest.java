@@ -26,19 +26,6 @@ public class PlayerTest {
         assertEquals("player1", player1.name());
         assertEquals("player2", player2.name());
         assertEquals("player3", player3.name());
-        player1.setName("NotPlayer1");
-        assertEquals("NotPlayer1", player1.name());
-    }
-
-    @Test
-    void testSetName() {
-        player1.setName("NotPlayer1");
-        assertEquals("NotPlayer1", player1.name());
-        assertNotEquals("player1", player1.name());
-        player1.setName("Player1");
-        assertEquals("Player1", player1.name());
-        assertNotEquals("NotPlayer1", player1.name());
-        assertNotEquals("player1", player1.name());
     }
 
     @Test
