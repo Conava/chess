@@ -10,11 +10,9 @@ import ptp.project.data.pieces.Piece;
 import java.util.List;
 
 public class OnlineGame extends Game {
-    Player localPlayer;
 
-    public OnlineGame(RulesetOptions selectedRuleset) {
-        super(selectedRuleset);
-        localPlayer = player0;        //remotePlayer is always player1
+    public OnlineGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
+        super(selectedRuleset, playerWhiteName, playerBlackName);
     }
 
     @Override

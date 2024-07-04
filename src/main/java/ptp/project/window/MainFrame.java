@@ -1,7 +1,9 @@
 package ptp.project.window;
 
 import ptp.project.Chess;
+import ptp.project.data.enums.RulesetOptions;
 import ptp.project.window.components.ColorScheme;
+import ptp.project.window.components.InputDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,9 +55,14 @@ public class MainFrame extends JFrame {
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
     public void switchToGame(int online) {
+        InputDialog dialog = new InputDialog(this, "Spielerinformationen", colorScheme, "Name Spieler Weiß", "Name Spieler Schwarz");
+        dialog.setVisible(true);
+        String playerWhiteName = dialog.getInput1();
+        String playerBlackName = dialog.getInput2();
+        RulesetOptions selectedRuleset = dialog.getRulesetSelection();
         LOGGER.log(Level.INFO, "Switching to game with online status " + online);
         this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
-        chessGame = new ChessGame(this, chess, colorScheme, online);
+        chessGame = new ChessGame(this, chess, colorScheme, online, selectedRuleset, playerWhiteName, playerBlackName);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setContentPane(chessGame);
         validate();

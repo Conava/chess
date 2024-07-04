@@ -24,9 +24,12 @@ public abstract class Game extends Observable {
     protected int turnCount; //even turn count means white to move
     protected List<Move> moves;
 
-    public Game(RulesetOptions selectedRuleset) {
-        this.player0 = new Player("Spieler 0 (Weiß)", PlayerColor.WHITE);
-        this.player1 = new Player("Spieler 1 (Schwarz)", PlayerColor.BLACK);
+    public Game(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
+        String playerWhiteNameFinal = playerWhiteName.isBlank() ? "Spieler 0 (Weiß)" : playerWhiteName;
+        String playerBlackNameFinal = playerBlackName.isBlank() ? "Spieler 1 (Schwarz)" : playerBlackName;
+
+        this.player0 = new Player(playerWhiteNameFinal, PlayerColor.WHITE);
+        this.player1 = new Player(playerBlackNameFinal, PlayerColor.BLACK);
         this.ruleset = switch (selectedRuleset) {
             case STANDARD -> new StandardChessRuleset();
             //Implement other rulesets here
@@ -71,7 +74,7 @@ public abstract class Game extends Observable {
     public List<Square> getLegalSquares(Square position) {
         List<Square> legalSquares = new ArrayList<>();
         Square square = board.getSquare(position.getY(), position.getX());
-        System.out.println("Checks legal moves for " + square.getPiece().getClass() + " X=" + square.getX() + " Y=" + square.getY() + " in Game from boardSquare");
+        //System.out.println("Checks legal moves for " + square.getPiece().getClass() + " X=" + square.getX() + " Y=" + square.getY() + " in Game from boardSquare");
         if (square.isOccupiedBy() == null) {
             return legalSquares;
         }

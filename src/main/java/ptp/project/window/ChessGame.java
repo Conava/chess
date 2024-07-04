@@ -45,7 +45,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * @param colorScheme The color scheme
      * @param online      The online status of the game. 0 for offline, 1 for online.
      */
-    public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, int online) {
+    public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, int online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName) {
         this.mainFrame = mainFrame;
         this.chess = chess;
         this.colorScheme = colorScheme;
@@ -53,7 +53,7 @@ public class ChessGame extends JPanel implements GameObserver {
 
         initializeGUI();
         LOGGER.log(Level.INFO, "GameWindow GUI initialized");
-        initializeGame(online);
+        initializeGame(online, rulesetOptions, playerWhiteName, playerBlackName);
         LOGGER.log(Level.INFO, "Game started");
         chess.addObserver(this);
         update();
@@ -134,8 +134,8 @@ public class ChessGame extends JPanel implements GameObserver {
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
-    private void initializeGame(int online) {
-        chess.startGame(online, RulesetOptions.STANDARD);
+    private void initializeGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
+        chess.startGame(online, selectedRuleset, playerWhiteName, playerBlackName);
         LOGGER.log(Level.INFO, "Game started");
         chess.addObserver(this);
 

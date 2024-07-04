@@ -9,8 +9,8 @@ import ptp.project.logic.moves.Move;
 
 public class OfflineGame extends Game {
 
-    public OfflineGame(RulesetOptions selectedRuleset) {
-        super(selectedRuleset);
+    public OfflineGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
+        super(selectedRuleset, playerWhiteName, playerBlackName);
     }
 
     @Override
@@ -24,16 +24,21 @@ public class OfflineGame extends Game {
 
     @Override
     public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
+        Square squareStartBoard = toBoardSquare(squareStart);
+        Square squareEndBoard = toBoardSquare(squareEnd);
+
         Player player = this.getCurrentPlayer();
-        Move move =  new Move(squareStart, squareEnd);
+        Player startSquarePlayer = squareStartBoard.isOccupiedBy();
+        Move move =  new Move(squareStartBoard, squareEndBoard);
 
         if (ruleset.isValidSquare(squareStart)) {
-            if (squareStart.isOccupiedBy() != null && squareStart.isOccupiedBy().equals(player)) {
-                if (this.getLegalSquares(squareStart).contains(squareEnd)) {
+            if (squareStartBoard.isOccupiedBy() != null && startSquarePlayer == player) {
+                if (this.getLegalSquares(squareStartBoard).contains(squareEndBoard)) {
                     board.executeMove(move);
                     moves.add(move);
                     turnCount++;
-                    return; //update here
+                    notifyObservers();
+                    return;
                 }
             }
         }

@@ -60,7 +60,8 @@ public class Chess {
                     new Color(0xECF0F1), // Font color
                     new Color(0x1e1f22), // Button color
                     new Color(0x31709A), // Accent color
-                    new Color(0xA31717)  // Exit button color
+                    new Color(0xA31717),  // Exit button color
+                    new Color(0x2b2d30)  // Border color
             );
             mainFrame = new MainFrame(this, colorScheme);
         } else {
@@ -74,9 +75,9 @@ public class Chess {
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
-    public void startGame(int online, RulesetOptions selectedRuleset) {
+    public void startGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
         if (game == null) {
-            game = online == 1 ? new OnlineGame(selectedRuleset) : new OfflineGame(selectedRuleset);
+            game = online == 1 ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName) : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
             game.startGame();
             LOGGER.log(Level.INFO, "Game started");
         } else {
