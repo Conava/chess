@@ -23,32 +23,32 @@ public class PlayerTest {
 
     @Test
     void testGetName() {
-        assertEquals("player1", player1.getName());
-        assertEquals("player2", player2.getName());
-        assertEquals("player3", player3.getName());
+        assertEquals("player1", player1.name());
+        assertEquals("player2", player2.name());
+        assertEquals("player3", player3.name());
         player1.setName("NotPlayer1");
-        assertEquals("NotPlayer1", player1.getName());
+        assertEquals("NotPlayer1", player1.name());
     }
 
     @Test
     void testSetName() {
         player1.setName("NotPlayer1");
-        assertEquals("NotPlayer1", player1.getName());
-        assertNotEquals("player1", player1.getName());
+        assertEquals("NotPlayer1", player1.name());
+        assertNotEquals("player1", player1.name());
         player1.setName("Player1");
-        assertEquals("Player1", player1.getName());
-        assertNotEquals("NotPlayer1", player1.getName());
-        assertNotEquals("player1", player1.getName());
+        assertEquals("Player1", player1.name());
+        assertNotEquals("NotPlayer1", player1.name());
+        assertNotEquals("player1", player1.name());
     }
 
     @Test
     void testGetColor() {
-        assertEquals(PlayerColor.WHITE, player1.getColor());
-        assertEquals(PlayerColor.BLACK, player2.getColor());
-        assertEquals(PlayerColor.WHITE, player3.getColor());
+        assertEquals(PlayerColor.WHITE, player1.color());
+        assertEquals(PlayerColor.BLACK, player2.color());
+        assertEquals(PlayerColor.WHITE, player3.color());
 
-        assertNotEquals(PlayerColor.BLACK, player1.getColor());
-        assertNotEquals(PlayerColor.WHITE, player2.getColor());
-        assertNotEquals(PlayerColor.BLACK, player3.getColor());
+        assertNotEquals(PlayerColor.BLACK, player1.color());
+        assertNotEquals(PlayerColor.WHITE, player2.color());
+        assertNotEquals(PlayerColor.BLACK, player3.color());
     }
 }

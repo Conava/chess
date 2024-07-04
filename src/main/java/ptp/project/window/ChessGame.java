@@ -140,9 +140,9 @@ public class ChessGame extends JPanel implements GameObserver {
         chess.addObserver(this);
 
         Optional.ofNullable(chess.getPlayerBlack())
-                .ifPresent(player -> topPanel.setBlackName(player.getName()));
+                .ifPresent(player -> topPanel.setBlackName(player.name()));
         Optional.ofNullable(chess.getPlayerWhite())
-                .ifPresent(player -> bottomPanel.setWhiteName(player.getName()));
+                .ifPresent(player -> bottomPanel.setWhiteName(player.name()));
         updateActivePlayerHighlight(chess.getCurrentPlayer());
     }
 
@@ -242,7 +242,7 @@ public class ChessGame extends JPanel implements GameObserver {
                  DRAW_BY_FIFTY_MOVE_RULE -> null;
             default -> null;
         };
-        String title = (winner != null) ? winner.getName() + " gewinnt" : "Unentschieden";
+        String title = (winner != null) ? winner.name() + " gewinnt" : "Unentschieden";
 
         ConfirmDialog dialog = new ConfirmDialog(mainFrame, state.getMessage() + "\n\nZurück zum Menü?", title, colorScheme);
         dialog.setVisible(true);
@@ -259,7 +259,7 @@ public class ChessGame extends JPanel implements GameObserver {
     public void clickedOn(Square square) {
         System.out.println("Clicked on square X: " + square.getX() + ", Y: " + square.getY());
         Optional.ofNullable(chess.getPieceAt(square))
-                .ifPresent(piece -> System.out.println("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().getColor()));
+                .ifPresent(piece -> System.out.println("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().color()));
         if (clickedSquare == null) {
             clickedSquare = square;
         } else if (clickedSquare != square && chess.getLegalSquares(clickedSquare).contains(square)) {

@@ -8,7 +8,7 @@ public class King extends Piece {
 
     public King(Player player) {
         super(player);
-        if (player.getColor().equals(PlayerColor.WHITE)) {
+        if (player.color().equals(PlayerColor.WHITE)) {
             iconPath = "/icon/king_white.png";
         } else {
             iconPath = "/icon/king_black.png";
