@@ -82,7 +82,6 @@ public class MainFrame extends JFrame {
         setExtendedState(JFrame.NORMAL);
         this.setSize(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT);
         MainMenu mainMenu = new MainMenu(this, colorScheme);
-        chessGame = null;
         setContentPane(mainMenu);
         validate();
         LOGGER.log(Level.INFO, "Loaded main menu successfully");

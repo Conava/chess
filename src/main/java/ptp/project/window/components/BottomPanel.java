@@ -1,5 +1,6 @@
 package ptp.project.window.components;
 
+import ptp.project.Chess;
 import ptp.project.window.MainFrame;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ public class BottomPanel extends ControlPanel {
     private static final Logger LOGGER = Logger.getLogger(BottomPanel.class.getName());
     private final ColorScheme colorScheme;
     private final MainFrame mainFrame;
+    private final Chess chess;
 
     private JLabel whiteLabel;
     private JPanel roundedWhitePanel;
@@ -18,9 +20,10 @@ public class BottomPanel extends ControlPanel {
     private JLabel statusWhiteLabel;
     private JLabel freeWhiteLabel;
 
-    public BottomPanel(ColorScheme colorScheme, MainFrame mainFrame) {
+    public BottomPanel(ColorScheme colorScheme, MainFrame mainFrame, Chess chess) {
         this.colorScheme = colorScheme;
         this.mainFrame = mainFrame;
+        this.chess = chess;
         this.setBackground(colorScheme.getDarkerBackgroundColor());
         addComponents();
     }
@@ -95,6 +98,7 @@ public class BottomPanel extends ControlPanel {
             ConfirmDialog confirmDialog = new ConfirmDialog(mainFrame, "Spiel beenden?", "Verlassen bestätigen", colorScheme);
             confirmDialog.setVisible(true);
             if (confirmDialog.isConfirmed()) {
+                chess.endGame();
                 mainFrame.switchToMenu();
             }
         });

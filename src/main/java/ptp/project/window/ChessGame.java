@@ -102,7 +102,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * @return The initialized bottom panel
      */
     private BottomPanel initializeBottomPanel() {
-        BottomPanel bottomPanel = new BottomPanel(colorScheme, mainFrame);
+        BottomPanel bottomPanel = new BottomPanel(colorScheme, mainFrame, chess);
         bottomPanel.setPreferredSize(new Dimension(this.getWidth(), 50));
         return bottomPanel;
     }
@@ -247,6 +247,7 @@ public class ChessGame extends JPanel implements GameObserver {
         ConfirmDialog dialog = new ConfirmDialog(mainFrame, state.getMessage() + "\n\nZurück zum Menü?", title, colorScheme);
         dialog.setVisible(true);
         if (dialog.isConfirmed()) {
+            chess.endGame();
             mainFrame.switchToMenu();
         }
     }
