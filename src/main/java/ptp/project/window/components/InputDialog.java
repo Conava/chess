@@ -7,9 +7,9 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class InputDialog extends JDialog {
-    private CustomTextField textField1;
-    private CustomTextField textField2;
-    private CustomComboBox<RulesetOptions> comboBox;
+    private final CustomTextField textField1;
+    private final CustomTextField textField2;
+    private final CustomComboBox<RulesetOptions> comboBox;
     private boolean confirmed = false;
     private String input1, input2;
     private RulesetOptions selection;
@@ -19,43 +19,41 @@ public class InputDialog extends JDialog {
         setSize(420, 300);
         setResizable(false);
         setUndecorated(true);
-        getContentPane().setBackground(colorScheme.getBackgroundColor().darker());
+        getContentPane().setBackground(colorScheme.getDarkerBackgroundColor());
         setLayout(new BorderLayout());
         setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 30, 30));
         setLocationRelativeTo(null);
 
         JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        contentPanel.setBackground(colorScheme.getBackgroundColor().darker());
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20));
+        contentPanel.setBackground(colorScheme.getDarkerBackgroundColor());
 
         JPanel topLabelPanel = new JPanel(new BorderLayout());
-        topLabelPanel.setBackground(colorScheme.getBackgroundColor().darker());
+        topLabelPanel.setBackground(colorScheme.getDarkerBackgroundColor());
         CustomLabel titleLabel = new CustomLabel(title, colorScheme);
-        titleLabel.setFont(new Font(titleLabel.getFont().getName(), Font.BOLD, 20)); // Increase font size
+        titleLabel.setFont(new Font(titleLabel.getFont().getName(), Font.BOLD, 26)); // Increase font size
         topLabelPanel.add(titleLabel, BorderLayout.CENTER);
         topLabelPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, colorScheme.getBorderColor())); // Add border
         contentPanel.add(topLabelPanel, BorderLayout.NORTH);
 
-        JPanel inputPanel = new JPanel();
+        JPanel inputPanel = new ControlPanel();
         inputPanel.setLayout(new GridLayout(3, 2, 10, 10));
-        inputPanel.setBackground(colorScheme.getBackgroundColor().darker());
-
         inputPanel.add(new CustomLabel(label1, colorScheme));
-        textField1 = new CustomTextField();
+        textField1 = new CustomTextField(colorScheme);
         inputPanel.add(textField1);
 
         inputPanel.add(new CustomLabel(label2, colorScheme));
-        textField2 = new CustomTextField();
+        textField2 = new CustomTextField(colorScheme);
         inputPanel.add(textField2);
 
-        comboBox = new CustomComboBox<>(RulesetOptions.values());
+        comboBox = new CustomComboBox<>(RulesetOptions.values(), colorScheme);
         comboBox.setSelectedItem(RulesetOptions.STANDARD);
         inputPanel.add(new CustomLabel("Ruleset:", colorScheme));
         inputPanel.add(comboBox);
 
         contentPanel.add(inputPanel, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel();
+        JPanel buttonPanel = new ControlPanel();
         buttonPanel.setBackground(colorScheme.getBackgroundColor().darker());
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER)); // Center the buttons
         JButton okButton = new CustomButton("OK", colorScheme);
@@ -71,8 +69,8 @@ public class InputDialog extends JDialog {
 
         cancelButton.addActionListener(e -> dispose());
 
-        buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
+        buttonPanel.add(okButton);
         contentPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         add(contentPanel);

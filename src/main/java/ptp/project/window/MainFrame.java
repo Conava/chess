@@ -57,16 +57,20 @@ public class MainFrame extends JFrame {
     public void switchToGame(int online) {
         InputDialog dialog = new InputDialog(this, "Spielerinformationen", colorScheme, "Name Spieler Weiß", "Name Spieler Schwarz");
         dialog.setVisible(true);
-        String playerWhiteName = dialog.getInput1();
-        String playerBlackName = dialog.getInput2();
-        RulesetOptions selectedRuleset = dialog.getRulesetSelection();
-        LOGGER.log(Level.INFO, "Switching to game with online status " + online);
-        this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
-        chessGame = new ChessGame(this, chess, colorScheme, online, selectedRuleset, playerWhiteName, playerBlackName);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setContentPane(chessGame);
-        validate();
-        LOGGER.log(Level.INFO, "Loaded game window successfully");
+        if(dialog.isConfirmed())
+        {
+            String playerWhiteName = dialog.getInput1();
+            String playerBlackName = dialog.getInput2();
+            RulesetOptions selectedRuleset = dialog.getRulesetSelection();
+            LOGGER.log(Level.INFO, "Switching to game with online status " + online);
+            this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
+            chessGame = new ChessGame(this, chess, colorScheme, online, selectedRuleset, playerWhiteName, playerBlackName);
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+            setContentPane(chessGame);
+            validate();
+            LOGGER.log(Level.INFO, "Loaded game window successfully");
+        }
+        LOGGER.log(Level.INFO, "Switching to game aborted");
     }
 
     /**
