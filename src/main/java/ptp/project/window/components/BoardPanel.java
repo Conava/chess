@@ -110,12 +110,12 @@ private void addBoard() {
     }
 
     private void adjustPanelSizes() {
-        Dimension topPanelSize = topPanel.getPreferredSize();
-        topPanelSize.height = topPanelSize.height + (this.getHeight() - topPanelSize.height) % 8;
+        Dimension topPanelSize = new Dimension(topPanel.getPreferredSize().width, 24);
+        topPanelSize.height += (this.getHeight() - topPanelSize.height) % 8;
         topPanel.setPreferredSize(topPanelSize);
 
-        Dimension leftPanelSize = leftPanel.getPreferredSize();
-        leftPanelSize.width = leftPanelSize.width + (this.getWidth() - leftPanelSize.width) % 8;
+        Dimension leftPanelSize = new Dimension(18 , leftPanel.getPreferredSize().height);
+        leftPanelSize.width += (this.getWidth() - leftPanelSize.width) % 8;
         leftPanel.setPreferredSize(leftPanelSize);
 
         this.revalidate();
