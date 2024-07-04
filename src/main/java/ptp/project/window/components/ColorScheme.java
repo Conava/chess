@@ -15,8 +15,9 @@ public class ColorScheme {
     private final Color exitButtonColor;
     private final Color exitButtonHoverColor;
     private final Color borderColor;
+    private final Color boardDotColor;
 
-    public ColorScheme(Font defaultFont, Color backgroundColor, Color brighterBackgroundColor, Color darkerBackgroundColor, Color fontColor,  Color buttonColor, Color accentColor, Color exitButtonColor, Color borderColor) {
+    public ColorScheme(Font defaultFont, Color backgroundColor, Color brighterBackgroundColor, Color darkerBackgroundColor, Color fontColor,  Color buttonColor, Color accentColor, Color exitButtonColor, Color borderColor, Color boardDotColor) {
         this.defaultFont = defaultFont;
         this.backgroundColor = backgroundColor;
         this.brighterBackgroundColor = brighterBackgroundColor;
@@ -28,6 +29,7 @@ public class ColorScheme {
         this.exitButtonColor = exitButtonColor;
         this.exitButtonHoverColor = exitButtonColor.brighter().brighter().brighter();
         this.borderColor = borderColor;
+        this.boardDotColor = boardDotColor;
     }
 
     public Color getButtonColor() {
@@ -72,5 +74,9 @@ public class ColorScheme {
 
     public Color getBorderColor() {
         return borderColor;
+    }
+
+    public Color getBoardDotColor() {
+        return boardDotColor;
     }
 }

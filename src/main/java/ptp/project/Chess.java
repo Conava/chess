@@ -61,7 +61,8 @@ public class Chess {
                     new Color(0x1e1f22), // Button color
                     new Color(0x31709A), // Accent color
                     new Color(0xA31717),  // Exit button color
-                    new Color(0x2b2d30)  // Border color
+                    new Color(0x2b2d30),  // Border color
+                    new Color(0x762D9A) // Board dot color
             );
             mainFrame = new MainFrame(this, colorScheme);
         } else {
