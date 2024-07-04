@@ -388,8 +388,8 @@ public class StandardChessRuleset implements Ruleset {
         }
         //taking left
         System.out.println("Check square: Y=" + (square.getY() - 1) + " X=" + (square.getX() + direction));
-        if (isInBoundsY(square.getY() - 1) && isInBoundsX(square.getX() + direction)) {
-            possibleSquare = board.getSquare(square.getY() - 1, square.getX() + direction);
+        if (isInBoundsY(square.getY() + direction) && isInBoundsX(square.getX() - 1)) {
+            possibleSquare = board.getSquare(square.getY() + direction, square.getX() - 1);
             if (isCapture(possibleSquare, owner)) {
                 legalMoves.add(possibleSquare);
                 if (isCapturePiece(possibleSquare, owner) != null &&
