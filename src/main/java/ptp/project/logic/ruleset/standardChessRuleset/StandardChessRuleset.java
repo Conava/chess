@@ -1,4 +1,4 @@
-package ptp.project.logic.ruleset;
+package ptp.project.logic.ruleset.standardChessRuleset;
 
 import ptp.project.data.Player;
 import ptp.project.data.Square;
@@ -7,17 +7,19 @@ import ptp.project.data.pieces.*;
 import ptp.project.exceptions.IsCheckException;
 import ptp.project.data.board.Board;
 import ptp.project.logic.moves.Move;
+import ptp.project.logic.ruleset.Ruleset;
 
 //import java.lang.reflect.Array;
 import java.util.List;
 import java.util.ArrayList;
 
+/**
+ * Standard chess ruleset.
+ * Delivers the starting board and the legal moves for the pieces.
+ */
 public class StandardChessRuleset implements Ruleset {
-
-    //height and width start at 1 and go to 8
-
     /**
-     * Gets the width
+     * Gets the width of the chess board
      *
      * @return int of the number of the columns
      */
@@ -27,7 +29,7 @@ public class StandardChessRuleset implements Ruleset {
     }
 
     /**
-     * Gets the height
+     * Gets the height of the chess board
      *
      * @return int of the amount of rows
      */
@@ -41,7 +43,7 @@ public class StandardChessRuleset implements Ruleset {
      *
      * @param player1 Player with the white pieces
      * @param player2 Player with the black pieces
-     * @return Double array of the board.
+     * @return Double array of the board. Starting with y as the first position.
      */
     @Override
     public Square[][] getStartBoard(Player player1, Player player2) {
@@ -139,7 +141,9 @@ public class StandardChessRuleset implements Ruleset {
         */
         try {
             legalSquares = getSudoLegalSquares(square, board, moves);
+            System.out.println("sudoLegalSquares try block executed successfully with " + legalSquares.size() + " legal squares");
         } catch (IsCheckException e) {
+            System.out.println("legalSquares try block failed, returning empty list");
             return legalSquares;
         }
         return legalSquares;
@@ -167,7 +171,6 @@ public class StandardChessRuleset implements Ruleset {
 
     private List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) throws IsCheckException {
         List<Square> legalMoves;
-        System.out.println("This is a: " + square.getPiece().getClass());
         if (square.getPiece().getClass().equals(Rook.class)) {
             System.out.println("This is a: Rook");
             legalMoves = getLegalSquaresRook(square, board);
@@ -187,6 +190,7 @@ public class StandardChessRuleset implements Ruleset {
         } else if (square.getPiece().getClass().equals(Pawn.class)) {
             System.out.println("This is a: Pawn");
             legalMoves = getLegalSquaresPawn(square, board, moves);
+            System.out.println("Pawn legal moves: " + legalMoves.size() + " " + legalMoves);
         } else { //space is empty
             System.out.println("Piece type does not match any");
             legalMoves = new ArrayList<>();
@@ -360,7 +364,6 @@ public class StandardChessRuleset implements Ruleset {
         Square possibleSquare;
         int direction;
 
-        System.out.println("Pawn clicked. x=" + square.getY() + " y=" + square.getX() + " Owner:" + owner.getName() + " " + owner.getColor());
         if (owner.getColor().equals(PlayerColor.WHITE)) {
             System.out.println("Pawn is white");
             direction = 1;
@@ -369,10 +372,10 @@ public class StandardChessRuleset implements Ruleset {
             direction = -1;
         }
         //move 1 square
-        System.out.println("Check square: Y=" + square.getY() + " X=" + (square.getX() + direction));
-        if (isInBoundsY(square.getY()) && isInBoundsX(square.getX() + direction)) {
+        System.out.println("Check square: Y=" + (square.getY() + direction) + " X=" + (square.getX()));
+        if (isInBoundsY(square.getY() + direction) && isInBoundsX(square.getX())) {
             System.out.println("is in Bound");
-            possibleSquare = board.getSquare(square.getY(), square.getX() + direction);
+            possibleSquare = board.getSquare(square.getY() + direction, square.getX());
             if (possibleSquare.isOccupiedBy() == null) {
                 legalMoves.add(possibleSquare);
                 if (isCapturePiece(possibleSquare, owner) != null &&
@@ -413,10 +416,11 @@ public class StandardChessRuleset implements Ruleset {
         }
 
         //moving 2 squares at the start
-        if (isInBoundsY(square.getY()) && isInBoundsX(square.getX() + direction)) {
-            if (isOnRank(square, owner, 1) && board.getSquare(square.getY(), square.getX() + direction).isOccupiedBy() == null
-                    && board.getSquare(square.getY(), square.getX() + 2 * direction).isOccupiedBy() == null) {
-                legalMoves.add(board.getSquare(square.getY() + 1, square.getX() + 2 * direction));
+        if (isInBoundsY(square.getY() + direction) && isInBoundsX(square.getX())) {
+            System.out.println(isOnRank(square, owner, 1));
+            if (isOnRank(square, owner, 1) && board.getSquare(square.getY() + direction, square.getX()).isOccupiedBy() == null
+                    && board.getSquare(square.getY() + 2 * direction, square.getX()).isOccupiedBy() == null) {
+                legalMoves.add(board.getSquare(square.getY() + 2 * direction, square.getX()));
             }
         }
         //en passant left
@@ -484,11 +488,14 @@ public class StandardChessRuleset implements Ruleset {
      */
     private boolean isOnRank(Square square, Player player, int isRank) {
         int rank = -1; // there should be no piece on rank -1
-        if (player.getColor().equals(PlayerColor.WHITE)) {
-            rank = square.getX();
+        if (player.getColor() == PlayerColor.WHITE) {
+            System.out.println("Player is white");
+            rank = square.getY();
         } else {
-            rank = 7 - square.getX();
+            System.out.println("Player is black");
+            rank = 7 - square.getY();
         }
+        System.out.println("Rank: " + rank + " isRank: " + isRank);
         return isRank == rank;
     }
 

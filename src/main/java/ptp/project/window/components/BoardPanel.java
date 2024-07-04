@@ -40,7 +40,7 @@ public class BoardPanel extends JPanel {
     }
 
     public void setLegalSquares(List<Square> legalSquares) {
-        System.out.println("Setting legal squares");
+        System.out.println("Setting legal squares with size: " + legalSquares.size());
         unsetLegalSquares();
         for (Square square : legalSquares) {
             boardButtons[square.getY()][square.getX()].setMarker();
@@ -56,9 +56,9 @@ public class BoardPanel extends JPanel {
     }
 
     public void placePieces(Board gameBoard) {
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                boardButtons[j][i].setPieceIcon(gameBoard.getSquare(i, j).getPiece());
+        for (BoardButton[] boardButton : boardButtons) {
+            for (BoardButton button : boardButton) {
+                button.setPieceIcon(gameBoard.getPieceAt(button.getSquare()));
             }
         }
     }
@@ -93,12 +93,12 @@ private void addBoard() {
     board.setOpaque(true);
 
     // Create the board squares
-    for (int i = 7; i >= 0; i--) {
-        for (int j = 0; j < 8; j++) {
-            BoardButton bardSquare = new BoardButton(i, j, colorScheme);
+    for (int x = 7; x >= 0; x--) {
+        for (int y = 0; y < 8; y++) {
+            BoardButton bardSquare = new BoardButton(x, y, colorScheme);
             bardSquare.setBorder(null);
             bardSquare.addActionListener(e -> clickedOn(bardSquare.getSquare()));
-            boardButtons[i][j] = bardSquare;
+            boardButtons[x][y] = bardSquare;
             board.add(bardSquare);
         }
     }

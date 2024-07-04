@@ -7,11 +7,10 @@ import ptp.project.data.Player;
 import ptp.project.data.Square;
 import ptp.project.data.board.Board;
 import ptp.project.data.enums.PlayerColor;
+import ptp.project.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class StandardChessRulesetTest {
 

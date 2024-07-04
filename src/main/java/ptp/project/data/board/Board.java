@@ -103,6 +103,6 @@ public class Board {
     }
 
     public Piece getPieceAt(Square square) {
-        return board[square.getX()][square.getY()].getPiece();
+        return board[square.getY()][square.getX()].getPiece();
     }
 }

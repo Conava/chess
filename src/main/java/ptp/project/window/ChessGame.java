@@ -264,6 +264,7 @@ public class ChessGame extends JPanel implements GameObserver {
             clickedSquare = square;
         } else if (clickedSquare != square && chess.getLegalSquares(clickedSquare).contains(square)) {
             try {
+                System.out.println("Moving piece from X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY() + " to X: " + square.getX() + ", Y: " + square.getY());
                 chess.movePiece(clickedSquare, square);
                 clickedSquare = null;
                 boardPanel.unsetLegalSquares();

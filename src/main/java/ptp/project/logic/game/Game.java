@@ -10,7 +10,7 @@ import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.data.board.Board;
 import ptp.project.logic.moves.Move;
 import ptp.project.logic.ruleset.Ruleset;
-import ptp.project.logic.ruleset.StandardChessRuleset;
+import ptp.project.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,15 +70,15 @@ public abstract class Game extends Observable {
 
     public List<Square> getLegalSquares(Square position) {
         List<Square> legalSquares = new ArrayList<>();
-        System.out.println("Checks for legal moves " + position.getPiece() + " X=" + position.getX() + " Y=" + position.getY() + " in Game from pos");
-        Square square = board.getSquare(position.getX(), position.getY()); //todo this is a temporary fix, beccause x and y before and after did not match
-        System.out.println("Checks for legal moves " + square.getPiece() + " X=" + square.getX() + " Y=" + square.getY() + "in Game after pos");
+        Square square = board.getSquare(position.getY(), position.getX());
+        System.out.println("Checks legal moves for " + square.getPiece().getClass() + " X=" + square.getX() + " Y=" + square.getY() + " in Game from boardSquare");
         if (square.isOccupiedBy() == null) {
             return legalSquares;
         }
         else if (!square.isOccupiedBy().equals(getCurrentPlayer())) {
             return legalSquares;
         }
+        System.out.println("Querying ruleset for legal moves");
         return ruleset.getLegalSquares(square, board, moves, player0, player1);
     }
 
