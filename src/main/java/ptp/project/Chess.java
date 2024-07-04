@@ -177,7 +177,7 @@ public class Chess {
      *
      * @return The list of moves made in the game
      */
-    public List<Move> getMoveList() {
+    public List<String> getMoveList() {
         return game.getMoveList();
     }
 

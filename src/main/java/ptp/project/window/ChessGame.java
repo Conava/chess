@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,6 +69,7 @@ public class ChessGame extends JPanel implements GameObserver {
         bottomPanel = initializeBottomPanel();
         boardPanel = initializeBoardPanel();
         sidePanelRight = initializeSidePanel();
+        sidePanelRight.activateList();
         sidePanelLeft = initializeSidePanel();
 
         this.add(topPanel, BorderLayout.NORTH);
@@ -219,7 +221,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * Updates the list of previous moves.
      */
     private void updateList() {
-        sidePanelRight.updateList();
+        sidePanelRight.updateList(chess.getMoveList());
     }
 
     /**
@@ -264,6 +266,7 @@ public class ChessGame extends JPanel implements GameObserver {
         if (clickedSquare == null) {
             clickedSquare = square;
         } else if (clickedSquare != square && chess.getLegalSquares(clickedSquare).contains(square)) {
+            List<Square> list = chess.getLegalSquares(clickedSquare);
             try {
                 System.out.println("Moving piece from X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY() + " to X: " + square.getX() + ", Y: " + square.getY());
                 chess.movePiece(clickedSquare, square);

@@ -59,8 +59,16 @@ public abstract class Game extends Observable {
         return gameState;
     }
 
-    public List<Move> getMoveList() {
-        return moves;
+    public List<String> getMoveList() {
+        return getMovesAsStrings();
+    }
+
+    private List<String>getMovesAsStrings() {
+        List<String> moveList = new ArrayList<>();
+        for (Move move : moves) {
+            moveList.add(move.toString());
+        }
+        return moveList;
     }
 
     public Piece getPieceAt(Square position) {
@@ -84,6 +92,7 @@ public abstract class Game extends Observable {
         System.out.println("Querying ruleset for legal moves");
         return ruleset.getLegalSquares(square, board, moves, player0, player1);
     }
+
 
     public abstract void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException;
 }
