@@ -14,8 +14,19 @@ import java.util.List;
 
 class StandardChessRulesetTest {
 
+    Ruleset ruleset;
+    Player playerW;
+    Player playerB;
+    Board board;
+    List<Square> squares;
+    List<Square> squaresExpected;
+
     @BeforeEach
     void setUp() {
+        ruleset = new StandardChessRuleset();
+        playerW = new Player("pw", PlayerColor.WHITE);
+        playerB = new Player("pb", PlayerColor.BLACK);
+        board = new Board(ruleset.getStartBoard(playerW, playerB));
     }
 
     @AfterEach
@@ -56,24 +67,44 @@ class StandardChessRulesetTest {
 
     @Test
     void testGetLegalMoves() {
-        Ruleset ruleset = new StandardChessRuleset();
-        Player playerW = new Player("pw", PlayerColor.WHITE);
-        Player playerB = new Player("pb", PlayerColor.BLACK);
-        Board board = new Board(ruleset.getStartBoard(playerW, playerB));
-        List<Square> squares;
+        squaresExpected = new ArrayList<>();
+        squares = ruleset.getLegalSquares(board.getSquare(0, 0), board, new ArrayList<>(), playerW, playerB);
+        assertTrue(squares.isEmpty());
 
-        squares = ruleset.getLegalSquares(board.getSquare(0,0), board, new ArrayList<>(), playerW, playerB);
-        if (!squares.isEmpty()) {
-            for (Square square : squares) {
-                System.out.println("X=" + square.getX() + " Y=" + square.getY());
-            }
-        } else {System.out.println("Piece has no moves");}
+        squares = ruleset.getLegalSquares(board.getSquare(1, 0), board, new ArrayList<>(), playerW, playerB);
+        assertNotNull(squares);
+        squaresExpected.add(board.getSquare(0, 2));
+        squaresExpected.add(board.getSquare(2, 2));
+        System.out.println(squares);
+        System.out.println(squaresExpected);
+        assertTrue(compareLists(squares, squaresExpected));
+    }
 
-        squares = ruleset.getLegalSquares(board.getSquare(1,0), board, new ArrayList<>(), playerW, playerB);
-        if (!squares.isEmpty()) {
+    @Test
+    void testGetBoard() {
+
+    }
+
+    private boolean compareLists(List<Square> squares, List<Square> squaresExpected) {
+        if (squares.isEmpty() && squaresExpected.isEmpty()) {
+            return true;
+        }
+        if (squares.isEmpty() || squaresExpected.isEmpty()) {
+            return false;
+        }
+        for (Square squareExpected : squaresExpected) {
+            Square tempSquare = null;
+            boolean squaresFound = false;
             for (Square square : squares) {
-                System.out.println("X=" + square.getX() + " Y=" + square.getY());
+                if (square.equals(squareExpected)) {
+                    tempSquare = square;
+                }
             }
-        } else {System.out.println("Piece has no moves");}
+            if (tempSquare == null) {
+                return false;
+            }
+            squares.remove(tempSquare);
+        }
+        return squares.isEmpty();
     }
 }
