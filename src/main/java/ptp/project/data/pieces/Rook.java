@@ -8,7 +8,7 @@ public class Rook extends Piece {
 
     public Rook(Player player) {
         super(player);
-        if (player.getColor().equals(PlayerColor.WHITE)) {
+        if (player.color().equals(PlayerColor.WHITE)) {
             iconPath = "/icon/rook_white.png";
         } else {
             iconPath = "/icon/rook_black.png";

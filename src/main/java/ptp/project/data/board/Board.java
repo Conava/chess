@@ -71,7 +71,7 @@ public class Board {
             for (Square square : squares) {
                 if (square.isOccupiedBy() == null) {
                     continue;
-                } else if (square.getPiece().getPlayer().getColor().equals(PlayerColor.WHITE)) {//white
+                } else if (square.getPiece().getPlayer().color().equals(PlayerColor.WHITE)) {//white
                     piecesWhite.add(square);
                 } else {
                     piecesBlack.add(square);
@@ -85,7 +85,7 @@ public class Board {
             return;
         }
         Player player = square.getPiece().getPlayer();
-        if (player.getColor().equals(PlayerColor.WHITE)) {
+        if (player.color().equals(PlayerColor.WHITE)) {
             piecesWhite.remove(square);
         } else {
             piecesBlack.remove(square);
@@ -95,7 +95,7 @@ public class Board {
     public List<Square> getPieces(Player player) {
         if (player == null) {
             return null;
-        } else if (player.getColor().equals(PlayerColor.WHITE)) {
+        } else if (player.color().equals(PlayerColor.WHITE)) {
             return piecesWhite;
         } else {
             return piecesBlack;

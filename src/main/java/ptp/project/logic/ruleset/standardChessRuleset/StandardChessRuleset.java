@@ -364,7 +364,7 @@ public class StandardChessRuleset implements Ruleset {
         Square possibleSquare;
         int direction;
 
-        if (owner.getColor().equals(PlayerColor.WHITE)) {
+        if (owner.color().equals(PlayerColor.WHITE)) {
             System.out.println("Pawn is white");
             direction = 1;
         } else {
@@ -488,7 +488,7 @@ public class StandardChessRuleset implements Ruleset {
      */
     private boolean isOnRank(Square square, Player player, int isRank) {
         int rank = -1; // there should be no piece on rank -1
-        if (player.getColor() == PlayerColor.WHITE) {
+        if (player.color() == PlayerColor.WHITE) {
             System.out.println("Player is white");
             rank = square.getY();
         } else {
