@@ -1,10 +1,11 @@
-package ptp.project.window.components;
+package ptp.project.window;
+
+import ptp.project.window.components.ColorScheme;
+import ptp.project.window.components.CustomButton;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.RoundRectangle2D;
 
 public class MessageWindow extends JDialog {

@@ -19,7 +19,6 @@ public class SidePanel extends JPanel {
     }
 
     public void activateList() {
-        // Title label
         CustomLabel titleLabel = new CustomLabel("Spielzüge", colorScheme);
         titleLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, titleLabel.getPreferredSize().height));
         titleLabel.setHorizontalAlignment(JLabel.CENTER);

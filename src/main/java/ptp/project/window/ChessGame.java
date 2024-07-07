@@ -1,6 +1,7 @@
 package ptp.project.window;
 
 import ptp.project.Chess;
+import ptp.project.data.board.Board;
 import ptp.project.data.enums.GameState;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.data.pieces.Piece;
@@ -8,6 +9,7 @@ import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
 import ptp.project.logic.game.GameObserver;
+import ptp.project.logic.moves.Move;
 import ptp.project.window.components.*;
 
 import javax.swing.*;
@@ -35,7 +37,10 @@ public class ChessGame extends JPanel implements GameObserver {
     private SidePanel sidePanelRight;
     private SidePanel sidePanelLeft;
 
-    private Square clickedSquare;
+    private Board localBoard; // Keep a local copy of the board to improve responsiveness of the UI
+
+    private Square selectedSquare;
+    private List<Square> legalSquaresForSelectedPiece;
 
     /**
      * Constructor for ChessGame.
@@ -146,6 +151,8 @@ public class ChessGame extends JPanel implements GameObserver {
         Optional.ofNullable(chess.getPlayerWhite())
                 .ifPresent(player -> bottomPanel.setWhiteName(player.name()));
         updateActivePlayerHighlight(chess.getCurrentPlayer());
+
+        localBoard = chess.getBoard();
     }
 
     /**
@@ -179,11 +186,23 @@ public class ChessGame extends JPanel implements GameObserver {
             mainFrame.switchToMenu();
         } else if (state == GameState.RUNNING) {
             updateActivePlayerHighlight(chess.getCurrentPlayer());
-            updateBoard();
+            asyncCheckAndUpdateBoard();
             updateList();
         } else {
             displayGameEndMessage(state);
         }
+    }
+
+    private void asyncCheckAndUpdateBoard() {
+        new Thread(() -> {
+            Board currentGameBoard = chess.getBoard();
+            if (!currentGameBoard.equals(localBoard)) {
+                SwingUtilities.invokeLater(() -> {
+                    localBoard = currentGameBoard;
+                    boardPanel.placePieces(localBoard);
+                });
+            }
+        }).start();
     }
 
     /**
@@ -255,36 +274,33 @@ public class ChessGame extends JPanel implements GameObserver {
     }
 
     /**
-     * Handles a click on a square.
+     * Handles a click on a clickedSquare.
      *
-     * @param square The square that was clicked
+     * @param clickedSquare The clickedSquare that was clicked
      */
-    public void clickedOn(Square square) {
-        System.out.println("Clicked on square X: " + square.getX() + ", Y: " + square.getY());
-        Optional.ofNullable(chess.getPieceAt(square))
-                .ifPresent(piece -> System.out.println("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().color()));
-        if (clickedSquare == null) {
-            clickedSquare = square;
-        } else if (clickedSquare != square && chess.getLegalSquares(clickedSquare).contains(square)) {
-            List<Square> list = chess.getLegalSquares(clickedSquare);
+    public void clickedOn(Square clickedSquare) {
+        System.out.println("Clicked on clickedSquare X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY());
+        Optional<Piece> clickedPieceOptional = Optional.ofNullable(chess.getPieceAt(clickedSquare));
+        clickedPieceOptional.ifPresent(piece -> System.out.println("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().color()));
+
+        if (clickedPieceOptional.isPresent() && clickedPieceOptional.get().getPlayer() == chess.getCurrentPlayer()) {
+            // Update selectedSquare and legalSquaresForSelectedPiece only if the clicked square has a piece
+            selectedSquare = clickedSquare;
+            legalSquaresForSelectedPiece = chess.getLegalSquares(selectedSquare);
+            boardPanel.setLegalSquares(legalSquaresForSelectedPiece); // Use local legal squares for UI update
+        }
+        if (selectedSquare != null && legalSquaresForSelectedPiece.contains(clickedSquare)) {
+            // Move logic remains the same
             try {
-                System.out.println("Moving piece from X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY() + " to X: " + square.getX() + ", Y: " + square.getY());
-                chess.movePiece(clickedSquare, square);
-                clickedSquare = null;
+                System.out.println("Moving piece from X: " + selectedSquare.getX() + ", Y: " + selectedSquare.getY() + " to X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY());
+                chess.movePiece(selectedSquare, clickedSquare);
+                localBoard.executeMove(new Move(selectedSquare, clickedSquare));
+                selectedSquare = null;
                 boardPanel.unsetLegalSquares();
-                return;
+                boardPanel.placePieces(localBoard); // Use local board for UI update
             } catch (IllegalMoveException e) {
                 LOGGER.log(Level.WARNING, "Illegal move");
-                return;
             }
-        } else {
-            clickedSquare = square;
         }
-
-        Piece clickedPiece = chess.getPieceAt(square);
-        if (clickedPiece != null && clickedPiece.getPlayer() == chess.getCurrentPlayer()) {
-            boardPanel.setLegalSquares(chess.getLegalSquares(square));
-        }
-        System.out.println("clickedSquare after clickedOn Method: X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY());
     }
 }

@@ -1,6 +1,7 @@
 package ptp.project.window.components;
 
 import ptp.project.Chess;
+import ptp.project.window.ConfirmDialog;
 import ptp.project.window.MainFrame;
 
 import javax.swing.*;

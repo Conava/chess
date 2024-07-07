@@ -3,7 +3,6 @@ package ptp.project.window;
 import ptp.project.Chess;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.window.components.ColorScheme;
-import ptp.project.window.components.InputDialog;
 
 import javax.swing.*;
 import java.awt.*;
