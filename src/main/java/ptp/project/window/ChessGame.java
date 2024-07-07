@@ -126,7 +126,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * @return The initialized side panel
      */
     private SidePanel initializeSidePanel() {
-        SidePanel sidePanel = new SidePanel(colorScheme, mainFrame);
+        SidePanel sidePanel = new SidePanel(colorScheme);
         sidePanel.setPreferredSize(new Dimension(300, sidePanel.getPreferredSize().height));
         return sidePanel;
     }

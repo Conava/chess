@@ -10,7 +10,6 @@ import ptp.project.logic.game.Game;
 import ptp.project.logic.game.GameObserver;
 import ptp.project.logic.game.OfflineGame;
 import ptp.project.logic.game.OnlineGame;
-import ptp.project.logic.moves.Move;
 import ptp.project.data.pieces.Piece;
 import ptp.project.window.MainFrame;
 import ptp.project.window.components.ColorScheme;
