@@ -11,6 +11,7 @@ import ptp.project.data.Square;
 import ptp.project.logic.game.GameObserver;
 import ptp.project.logic.moves.Move;
 import ptp.project.window.components.*;
+import ptp.project.window.tasks.UpdateGame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -176,33 +177,31 @@ public class ChessGame extends JPanel implements GameObserver {
         this.repaint();
     }
 
+    /**
+     * Updates the game window. This method is called from the Game class to all its observers on every change.
+     */
     @Override
     public void update() {
         LOGGER.log(Level.INFO, "Update Method called");
-        GameState state = checkState();
+        GameState state = getState();
 
         if (state == GameState.NO_GAME) {
             LOGGER.log(Level.WARNING, "No Game found\nSwitching to Menu");
             mainFrame.switchToMenu();
         } else if (state == GameState.RUNNING) {
-            updateActivePlayerHighlight(chess.getCurrentPlayer());
-            asyncCheckAndUpdateBoard();
-            updateList();
+            new UpdateGame(this).execute();
         } else {
             displayGameEndMessage(state);
         }
     }
 
-    private void asyncCheckAndUpdateBoard() {
-        new Thread(() -> {
-            Board currentGameBoard = chess.getBoard();
-            if (!currentGameBoard.equals(localBoard)) {
-                SwingUtilities.invokeLater(() -> {
-                    localBoard = currentGameBoard;
-                    boardPanel.placePieces(localBoard);
-                });
-            }
-        }).start();
+    /**
+     * Updates the game UI in a separate thread.
+     */
+    public void updateGame() {
+        updateBoard();
+        updateList();
+        updateActivePlayerHighlight(chess.getCurrentPlayer());
     }
 
     /**
@@ -210,7 +209,7 @@ public class ChessGame extends JPanel implements GameObserver {
      *
      * @return The status of the game as described in the Game class
      */
-    private GameState checkState() {
+    private GameState getState() {
         return chess.getState();
     }
 
