@@ -5,6 +5,7 @@ import ptp.project.data.board.Board;
 import ptp.project.data.enums.GameState;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.data.pieces.Piece;
+import ptp.project.exceptions.GameEndException;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
@@ -299,7 +300,11 @@ public class ChessGame extends JPanel implements GameObserver {
                 boardPanel.placePieces(localBoard); // Use local board for UI update
             } catch (IllegalMoveException e) {
                 LOGGER.log(Level.WARNING, "Illegal move");
+            } catch (GameEndException gameEndException) {
+                LOGGER.log(Level.WARNING, "Game end");
+                //todo pop-up
             }
+
         }
     }
 }

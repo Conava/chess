@@ -98,4 +98,8 @@ public abstract class Game extends Observable {
 
 
     public abstract void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException;
+
+    public GameState getGameState() {
+        return ruleset.getGameState(board, moves);
+    }
 }
