@@ -67,14 +67,16 @@ public class Board {
     }
 
     public void recountPieces() {
+        piecesWhite.clear();
+        piecesBlack.clear();
         for (Square[] squares : board) {
             for (Square square : squares) {
-                if (square.isOccupiedBy() == null) {
-                    continue;
-                } else if (square.getPiece().getPlayer().color().equals(PlayerColor.WHITE)) {//white
-                    piecesWhite.add(square);
-                } else {
-                    piecesBlack.add(square);
+                if (square.isOccupiedBy() != null) {
+                    if (square.getPiece().getPlayer().color().equals(PlayerColor.WHITE)) {//white
+                        piecesWhite.add(square);
+                    } else {
+                        piecesBlack.add(square);
+                    }
                 }
             }
         }

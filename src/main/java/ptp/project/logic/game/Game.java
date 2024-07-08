@@ -81,6 +81,9 @@ public abstract class Game extends Observable {
 
     public List<Square> getLegalSquares(Square position) {
         List<Square> legalSquares = new ArrayList<>();
+        if (position == null) {
+            return legalSquares;
+        }
         Square square = board.getSquare(position.getY(), position.getX());
         //System.out.println("Checks legal moves for " + square.getPiece().getClass() + " X=" + square.getX() + " Y=" + square.getY() + " in Game from boardSquare");
         if (square.isOccupiedBy() == null) {
