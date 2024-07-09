@@ -17,7 +17,7 @@ public class InputDialog extends JDialog {
 
     public InputDialog(JFrame parent, String title, ColorScheme colorScheme, String label1, String label2) {
         super(parent, title, true);
-        setSize(420, 300);
+        setSize(460, 300);
         setResizable(false);
         setUndecorated(true);
         getContentPane().setBackground(colorScheme.getDarkerBackgroundColor());
@@ -26,16 +26,21 @@ public class InputDialog extends JDialog {
         setLocationRelativeTo(null);
 
         JPanel contentPanel = new JPanel(new BorderLayout());
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20));
+        // Add outer margin to contentPanel
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         contentPanel.setBackground(colorScheme.getDarkerBackgroundColor());
 
         JPanel topLabelPanel = new JPanel(new BorderLayout());
         topLabelPanel.setBackground(colorScheme.getDarkerBackgroundColor());
         CustomLabel titleLabel = new CustomLabel(title, colorScheme);
-        titleLabel.setFont(new Font(titleLabel.getFont().getName(), Font.BOLD, 26)); // Increase font size
+        titleLabel.setFont(new Font(titleLabel.getFont().getName(), Font.BOLD, 26));
         topLabelPanel.add(titleLabel, BorderLayout.CENTER);
-        topLabelPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, colorScheme.getBorderColor())); // Add border
+        topLabelPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, colorScheme.getBorderColor()));
         contentPanel.add(topLabelPanel, BorderLayout.NORTH);
+
+        JPanel inputPanelContainer = new JPanel(new BorderLayout());
+        inputPanelContainer.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0)); // Adjust margin as needed
+        inputPanelContainer.setBackground(colorScheme.getDarkerBackgroundColor());
 
         JPanel inputPanel = new ControlPanel();
         inputPanel.setLayout(new GridLayout(3, 2, 10, 10));
@@ -49,11 +54,21 @@ public class InputDialog extends JDialog {
 
         comboBox = new CustomComboBox<>(RulesetOptions.values(), colorScheme);
         comboBox.setSelectedItem(RulesetOptions.STANDARD);
+        comboBox.setFocusable(false);
+        comboBox.setToolTipText("Wähle eine Spielvariante aus. Weitere werden in Kürze implementiert");
         inputPanel.add(new CustomLabel("Ruleset:", colorScheme));
         inputPanel.add(comboBox);
 
-        contentPanel.add(inputPanel, BorderLayout.CENTER);
+        inputPanelContainer.add(inputPanel, BorderLayout.NORTH);
+        contentPanel.add(inputPanelContainer, BorderLayout.CENTER);
 
+        JPanel buttonPanel = getButtonPanel(colorScheme);
+        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        add(contentPanel);
+    }
+
+    private JPanel getButtonPanel(ColorScheme colorScheme) {
         JPanel buttonPanel = new ControlPanel();
         buttonPanel.setBackground(colorScheme.getBackgroundColor().darker());
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER)); // Center the buttons
@@ -72,9 +87,7 @@ public class InputDialog extends JDialog {
 
         buttonPanel.add(cancelButton);
         buttonPanel.add(okButton);
-        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        add(contentPanel);
+        return buttonPanel;
     }
 
     public boolean isConfirmed() {
