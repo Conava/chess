@@ -37,7 +37,6 @@ public class OfflineGame extends Game {
                     board.executeMove(move);
                     moves.add(move);
                     turnCount++;
-                    notifyObservers();
                     return;
                 }
             }

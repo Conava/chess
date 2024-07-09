@@ -3,7 +3,6 @@ package ptp.project;
 import ptp.project.data.board.Board;
 import ptp.project.data.enums.GameState;
 import ptp.project.data.enums.RulesetOptions;
-import ptp.project.exceptions.GameEndException;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
@@ -188,14 +187,7 @@ public class Chess {
      * @param end   the end position of the players piece
      * @throws IllegalMoveException if the move is not allowed
      */
-    public void movePiece(Square start, Square end) throws IllegalMoveException, GameEndException {
-        GameState gameState;
-
+    public void movePiece(Square start, Square end) throws IllegalMoveException {
         game.movePiece(start, end);
-
-        gameState = game.getGameState();
-        if (gameState != GameState.RUNNING) {
-            throw new GameEndException(gameState);
-        }
     }
 }

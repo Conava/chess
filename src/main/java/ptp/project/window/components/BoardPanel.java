@@ -88,22 +88,27 @@ public class BoardPanel extends JPanel {
         add(topPanel, BorderLayout.NORTH);
     }
 
-private void addBoard() {
-    JPanel board = new JPanel(new GridLayout(8, 8));
-    board.setOpaque(true);
+    private void addBoard() {
+        JPanel board = new JPanel(new GridLayout(8, 8));
+        board.setOpaque(true);
 
-    // Create the board squares
-    for (int x = 7; x >= 0; x--) {
-        for (int y = 0; y < 8; y++) {
-            BoardButton bardSquare = new BoardButton(x, y, colorScheme);
-            bardSquare.setBorder(null);
-            bardSquare.addActionListener(e -> clickedOn(bardSquare.getSquare()));
-            boardButtons[x][y] = bardSquare;
-            board.add(bardSquare);
+        // Create the board squares
+        for (int x = 7; x >= 0; x--) {
+            for (int y = 0; y < 8; y++) {
+                BoardButton bardSquare = new BoardButton(x, y, colorScheme);
+                bardSquare.setBorder(null);
+                bardSquare.addActionListener(e -> clickedOn(bardSquare.getSquare()));
+                boardButtons[x][y] = bardSquare;
+                board.add(bardSquare);
+            }
         }
+        add(board, BorderLayout.CENTER);
     }
-    add(board, BorderLayout.CENTER);
-}
+
+    public void switchIconToSelected(Square selectedSquare, Square clickedSquare) {
+        boardButtons[clickedSquare.getY()][clickedSquare.getX()].setSelectedIcon(boardButtons[selectedSquare.getY()][selectedSquare.getX()].getIcon());
+        boardButtons[selectedSquare.getY()][selectedSquare.getX()].setSelectedIcon(null);
+    }
 
     private void clickedOn(Square square) {
         chessGame.clickedOn(square);
@@ -114,7 +119,7 @@ private void addBoard() {
         topPanelSize.height += (this.getHeight() - topPanelSize.height) % 8;
         topPanel.setPreferredSize(topPanelSize);
 
-        Dimension leftPanelSize = new Dimension(18 , leftPanel.getPreferredSize().height);
+        Dimension leftPanelSize = new Dimension(18, leftPanel.getPreferredSize().height);
         leftPanelSize.width += (this.getWidth() - leftPanelSize.width) % 8;
         leftPanel.setPreferredSize(leftPanelSize);
 

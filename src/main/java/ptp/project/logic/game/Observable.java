@@ -16,7 +16,7 @@ public abstract class Observable {
 
     public void notifyObservers() {
         for (GameObserver observer : observers) {
-            observer.update();
+            observer.updateFromRemote();
         }
     }
 }

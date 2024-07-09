@@ -56,7 +56,7 @@ public abstract class Game extends Observable {
     }
 
     public GameState getState() {
-        return gameState;
+        return ruleset.getGameState(board, moves);
     }
 
     public List<String> getMoveList() {
@@ -98,8 +98,4 @@ public abstract class Game extends Observable {
 
 
     public abstract void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException;
-
-    public GameState getGameState() {
-        return ruleset.getGameState(board, moves);
-    }
 }

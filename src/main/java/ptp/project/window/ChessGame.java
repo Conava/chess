@@ -5,14 +5,12 @@ import ptp.project.data.board.Board;
 import ptp.project.data.enums.GameState;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.data.pieces.Piece;
-import ptp.project.exceptions.GameEndException;
-import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
 import ptp.project.logic.game.GameObserver;
 import ptp.project.logic.moves.Move;
 import ptp.project.window.components.*;
-import ptp.project.window.tasks.UpdateGame;
+import ptp.project.window.tasks.ExecuteMove;
 
 import javax.swing.*;
 import java.awt.*;
@@ -178,10 +176,14 @@ public class ChessGame extends JPanel implements GameObserver {
         this.repaint();
     }
 
-    /**
-     * Updates the game window. This method is called from the Game class to all its observers on every change.
-     */
     @Override
+    public void updateFromRemote() {
+        update(); //todo: implement the update from remote in a separate thread
+    }
+
+    /**
+     * Updates the game window. This method is called from the SwingWorker ExecuteMove
+     */
     public void update() {
         LOGGER.log(Level.INFO, "Update Method called");
         GameState state = getState();
@@ -190,16 +192,16 @@ public class ChessGame extends JPanel implements GameObserver {
             LOGGER.log(Level.WARNING, "No Game found\nSwitching to Menu");
             mainFrame.switchToMenu();
         } else if (state == GameState.RUNNING) {
-            new UpdateGame(this).execute();
+            updateGameUI();
         } else {
             displayGameEndMessage(state);
         }
     }
 
     /**
-     * Updates the game UI in a separate thread.
+     * Updates the game UI
      */
-    public void updateGame() {
+    public void updateGameUI() {
         updateBoard();
         updateList();
         updateActivePlayerHighlight(chess.getCurrentPlayer());
@@ -233,7 +235,11 @@ public class ChessGame extends JPanel implements GameObserver {
      * Updates the board UI.
      */
     private void updateBoard() {
-        boardPanel.placePieces(chess.getBoard());
+        // Check if the board from chess and the local board differ, then change it
+        if (!chess.getBoard().equals(localBoard)) {
+            localBoard = chess.getBoard();
+            boardPanel.placePieces(localBoard);
+        }
     }
 
     /**
@@ -290,21 +296,13 @@ public class ChessGame extends JPanel implements GameObserver {
             boardPanel.setLegalSquares(legalSquaresForSelectedPiece); // Use local legal squares for UI update
         }
         if (selectedSquare != null && legalSquaresForSelectedPiece.contains(clickedSquare)) {
-            // Move logic remains the same
-            try {
-                System.out.println("Moving piece from X: " + selectedSquare.getX() + ", Y: " + selectedSquare.getY() + " to X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY());
-                chess.movePiece(selectedSquare, clickedSquare);
-                localBoard.executeMove(new Move(selectedSquare, clickedSquare));
-                selectedSquare = null;
-                boardPanel.unsetLegalSquares();
-                boardPanel.placePieces(localBoard); // Use local board for UI update
-            } catch (IllegalMoveException e) {
-                LOGGER.log(Level.WARNING, "Illegal move");
-            } catch (GameEndException gameEndException) {
-                LOGGER.log(Level.WARNING, "Game end");
-                //todo pop-up
-            }
+            System.out.println("Moving piece from X: " + selectedSquare.getX() + ", Y: " + selectedSquare.getY() + " to X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY());
+            boardPanel.switchIconToSelected(selectedSquare, clickedSquare);
+            localBoard.executeMove(new Move(selectedSquare, clickedSquare));
+            boardPanel.unsetLegalSquares();
 
+
+            new ExecuteMove(chess, this, selectedSquare, clickedSquare).execute();
         }
     }
 }
