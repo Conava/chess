@@ -10,6 +10,8 @@ public class CustomScrollPane extends JScrollPane {
         this.getViewport().setBackground(colorScheme.getDarkerBackgroundColor());
         this.setBackground(colorScheme.getDarkerBackgroundColor());
         this.setForeground(colorScheme.getFontColor());
+        this.getVerticalScrollBar().setUnitIncrement(14);
+
 
         customizeScrollBar(this.getVerticalScrollBar(), colorScheme);
         customizeScrollBar(this.getHorizontalScrollBar(), colorScheme);
