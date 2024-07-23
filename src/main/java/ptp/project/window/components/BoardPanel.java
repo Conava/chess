@@ -40,7 +40,6 @@ public class BoardPanel extends JPanel {
     }
 
     public void setLegalSquares(List<Square> legalSquares) {
-        System.out.println("Setting legal squares with size: " + legalSquares.size());
         unsetLegalSquares();
         for (Square square : legalSquares) {
             boardButtons[square.getY()][square.getX()].setMarker();

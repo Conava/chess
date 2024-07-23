@@ -2,6 +2,7 @@ package ptp.project;
 
 import ptp.project.data.board.Board;
 import ptp.project.data.enums.GameState;
+import ptp.project.data.enums.Pieces;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.data.Player;
@@ -189,5 +190,9 @@ public class Chess {
      */
     public void movePiece(Square start, Square end) throws IllegalMoveException {
         game.movePiece(start, end);
+    }
+
+    public void promoteMove(Square start, Square end, Pieces targetPiece) throws IllegalMoveException {
+        game.promoteMove(start, end, targetPiece);
     }
 }

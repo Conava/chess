@@ -188,7 +188,6 @@ public class StandardChessRuleset implements Ruleset {
      * Returns legal moves for the rook.
      */
     private List<Square> getLegalSquaresRook(Square square, Board board) {
-        System.out.println("CHecks rook moves");
         Player owner = square.isOccupiedBy();
         List<Square> legalMoves = new ArrayList<>();
         Square possibleSquare;

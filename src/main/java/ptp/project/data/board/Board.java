@@ -29,7 +29,6 @@ public class Board {
         if (board[y][x] != null) {
             return board[y][x];
         }
-        System.out.println("Square not found");
         return null;
     }
 
@@ -72,7 +71,7 @@ public class Board {
         for (Square[] squares : board) {
             for (Square square : squares) {
                 if (square.isOccupiedBy() != null) {
-                    if (square.getPiece().getPlayer().color().equals(PlayerColor.WHITE)) {//white
+                    if (square.getPiece().getPlayer().color().equals(PlayerColor.WHITE)) {
                         piecesWhite.add(square);
                     } else {
                         piecesBlack.add(square);

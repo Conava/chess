@@ -23,7 +23,7 @@ public class InputDialog extends JDialog {
         getContentPane().setBackground(colorScheme.getDarkerBackgroundColor());
         setLayout(new BorderLayout());
         setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 30, 30));
-        setLocationRelativeTo(null);
+        setLocationRelativeTo(parent);
 
         JPanel contentPanel = new JPanel(new BorderLayout());
         // Add outer margin to contentPanel

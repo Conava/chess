@@ -3,9 +3,12 @@ package ptp.project.logic.game;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
 import ptp.project.data.enums.GameState;
+import ptp.project.data.enums.Pieces;
 import ptp.project.data.enums.RulesetOptions;
+import ptp.project.data.pieces.Piece;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.logic.moves.Move;
+import ptp.project.logic.moves.PromotionMove;
 
 public class OfflineGame extends Game {
 
@@ -23,13 +26,12 @@ public class OfflineGame extends Game {
     }
 
     @Override
-    public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
+    protected void executeMove(Square squareStart, Square squareEnd, Move move) throws IllegalMoveException {
         Square squareStartBoard = toBoardSquare(squareStart);
         Square squareEndBoard = toBoardSquare(squareEnd);
 
         Player player = this.getCurrentPlayer();
         Player startSquarePlayer = squareStartBoard.isOccupiedBy();
-        Move move =  new Move(squareStartBoard, squareEndBoard);
 
         if (ruleset.isValidSquare(squareStart)) {
             if (squareStartBoard.isOccupiedBy() != null && startSquarePlayer == player) {
@@ -42,9 +44,5 @@ public class OfflineGame extends Game {
             }
         }
         throw new IllegalMoveException(move);
-    }
-
-    private Square toBoardSquare(Square square) {
-        return board.getSquare(square.getY(), square.getX());
     }
 }

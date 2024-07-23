@@ -3,15 +3,19 @@ package ptp.project.logic.game;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
 import ptp.project.data.enums.GameState;
+import ptp.project.data.enums.Pieces;
 import ptp.project.data.enums.PlayerColor;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.data.pieces.Piece;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.data.board.Board;
 import ptp.project.logic.moves.Move;
+import ptp.project.logic.moves.PromotionMove;
 import ptp.project.logic.ruleset.Ruleset;
 import ptp.project.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,17 +89,39 @@ public abstract class Game extends Observable {
             return legalSquares;
         }
         Square square = board.getSquare(position.getY(), position.getX());
-        //System.out.println("Checks legal moves for " + square.getPiece().getClass() + " X=" + square.getX() + " Y=" + square.getY() + " in Game from boardSquare");
         if (square.isOccupiedBy() == null) {
             return legalSquares;
         }
         else if (!square.isOccupiedBy().equals(getCurrentPlayer())) {
             return legalSquares;
         }
-        System.out.println("Querying ruleset for legal moves");
         return ruleset.getLegalSquares(square, board, moves, player0, player1);
     }
 
+    public Piece getNewPiece(Pieces targetPiece, Player player) {
+        try {
+            Class<?> pieceClass = Class.forName("ptp.project.data.pieces." + targetPiece.name());
+            Constructor<?> pieceConstructor = pieceClass.getConstructor(Player.class);
+            return (Piece) pieceConstructor.newInstance(player);
+        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
+                 IllegalAccessException | InvocationTargetException e) {
+            return null;
+        }
+    }
 
-    public abstract void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException;
+    public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
+        Move move = new Move(toBoardSquare(squareStart), toBoardSquare(squareEnd));
+        executeMove(squareStart, squareEnd, move);
+    }
+
+    public void promoteMove(Square squareStart, Square squareEnd, Pieces targetPiece) throws IllegalMoveException {
+        Move move = new PromotionMove(toBoardSquare(squareStart), toBoardSquare(squareEnd), getNewPiece(targetPiece, this.getCurrentPlayer()));
+        executeMove(squareStart, squareEnd, move);
+    }
+
+    protected abstract void executeMove(Square squareStart, Square squareEnd, Move move) throws IllegalMoveException;
+
+    protected Square toBoardSquare(Square square) {
+        return board.getSquare(square.getY(), square.getX());
+    }
 }

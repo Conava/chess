@@ -3,12 +3,14 @@ package ptp.project.window;
 import ptp.project.Chess;
 import ptp.project.data.board.Board;
 import ptp.project.data.enums.GameState;
+import ptp.project.data.enums.Pieces;
 import ptp.project.data.enums.RulesetOptions;
 import ptp.project.data.pieces.Piece;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
 import ptp.project.logic.game.GameObserver;
 import ptp.project.logic.moves.Move;
+import ptp.project.logic.moves.PromotionMove;
 import ptp.project.window.components.*;
 import ptp.project.window.tasks.ExecuteMove;
 
@@ -285,7 +287,6 @@ public class ChessGame extends JPanel implements GameObserver {
      * @param clickedSquare The clickedSquare that was clicked
      */
     public void clickedOn(Square clickedSquare) {
-        System.out.println("Clicked on clickedSquare X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY());
         Optional<Piece> clickedPieceOptional = Optional.ofNullable(chess.getPieceAt(clickedSquare));
         clickedPieceOptional.ifPresent(piece -> System.out.println("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().color()));
 
@@ -296,13 +297,17 @@ public class ChessGame extends JPanel implements GameObserver {
             boardPanel.setLegalSquares(legalSquaresForSelectedPiece); // Use local legal squares for UI update
         }
         if (selectedSquare != null && legalSquaresForSelectedPiece.contains(clickedSquare)) {
-            System.out.println("Moving piece from X: " + selectedSquare.getX() + ", Y: " + selectedSquare.getY() + " to X: " + clickedSquare.getX() + ", Y: " + clickedSquare.getY());
             boardPanel.switchIconToSelected(selectedSquare, clickedSquare);
             localBoard.executeMove(new Move(selectedSquare, clickedSquare));
             boardPanel.unsetLegalSquares();
 
-
-            new ExecuteMove(chess, this, selectedSquare, clickedSquare).execute();
+            if (chess.getPieceAt(selectedSquare) instanceof ptp.project.data.pieces.Pawn && (clickedSquare.getY() == 0 || clickedSquare.getY() == 7)) {
+                PromotionWindow promotionWindow = new PromotionWindow(mainFrame, colorScheme, chess.getCurrentPlayer().color());
+                Pieces selectedPiece = promotionWindow.getSelectedPiece();
+                new ExecuteMove(chess, this, selectedSquare, clickedSquare, selectedPiece).execute();
+            } else {
+                new ExecuteMove(chess, this, selectedSquare, clickedSquare, null).execute();
+            }
         }
     }
 }
