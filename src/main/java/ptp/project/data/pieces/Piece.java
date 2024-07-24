@@ -1,6 +1,7 @@
 package ptp.project.data.pieces;
 
 import ptp.project.data.Player;
+import ptp.project.data.enums.Pieces;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,5 +29,9 @@ public abstract class Piece {
         Image scaledImage = image.getScaledInstance(60, 60, Image.SCALE_SMOOTH);
 
         return new ImageIcon(scaledImage);
+    }
+
+    public Pieces getType() {
+        return Pieces.valueOf(this.getClass().getSimpleName().toUpperCase());
     }
 }
