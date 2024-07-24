@@ -100,7 +100,7 @@ public abstract class Game extends Observable {
 
     public Piece getNewPiece(Pieces targetPiece, Player player) {
         try {
-            Class<?> pieceClass = Class.forName("ptp.project.data.pieces." + targetPiece.name());
+            Class<?> pieceClass = Class.forName("ptp.project.data.pieces." + targetPiece.getClassName());
             Constructor<?> pieceConstructor = pieceClass.getConstructor(Player.class);
             return (Piece) pieceConstructor.newInstance(player);
         } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
