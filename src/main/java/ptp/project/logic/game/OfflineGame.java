@@ -3,12 +3,9 @@ package ptp.project.logic.game;
 import ptp.project.data.Player;
 import ptp.project.data.Square;
 import ptp.project.data.enums.GameState;
-import ptp.project.data.enums.Pieces;
 import ptp.project.data.enums.RulesetOptions;
-import ptp.project.data.pieces.Piece;
 import ptp.project.exceptions.IllegalMoveException;
 import ptp.project.logic.moves.Move;
-import ptp.project.logic.moves.PromotionMove;
 
 public class OfflineGame extends Game {
 

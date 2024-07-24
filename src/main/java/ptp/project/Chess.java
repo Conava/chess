@@ -26,7 +26,6 @@ import javax.swing.*;
  */
 public class Chess {
     private static final Logger LOGGER = Logger.getLogger(Chess.class.getName());
-    private final MainFrame mainFrame;
     private Game game;
 
     /**
@@ -64,10 +63,9 @@ public class Chess {
                     new Color(0x808080),  // Border color
                     new Color(0x762D9A) // Board dot color
             );
-            mainFrame = new MainFrame(this, colorScheme);
+            new MainFrame(this, colorScheme);
         } else {
             LOGGER.log(Level.INFO, "Chess application started without GUI");
-            mainFrame = null;
         }
     }
 
