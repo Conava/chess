@@ -29,11 +29,9 @@ public class Settings extends JDialog {
         this.add(titleLabel, BorderLayout.NORTH);
 
         // Add a grey border under the title
-        titleLabel.setBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY));
+        titleLabel.setBorder(new MatteBorder(0, 0, 1, 0, colorScheme.getBorderColor()));
         this.add(titleLabel, BorderLayout.NORTH);
 
-        // Create a message label with a smaller font
-        //todo: change message to settings
         JLabel messageLabel = new JLabel("Einstellungen sind noch nicht implementiert");
         messageLabel.setFont(colorScheme.getFont().deriveFont(colorScheme.getFont().getSize2D() - 2));
         messageLabel.setHorizontalAlignment(JLabel.CENTER);

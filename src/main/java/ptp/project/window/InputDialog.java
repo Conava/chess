@@ -26,7 +26,6 @@ public class InputDialog extends JDialog {
         setLocationRelativeTo(parent);
 
         JPanel contentPanel = new JPanel(new BorderLayout());
-        // Add outer margin to contentPanel
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         contentPanel.setBackground(colorScheme.getDarkerBackgroundColor());
 
@@ -39,7 +38,7 @@ public class InputDialog extends JDialog {
         contentPanel.add(topLabelPanel, BorderLayout.NORTH);
 
         JPanel inputPanelContainer = new JPanel(new BorderLayout());
-        inputPanelContainer.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0)); // Adjust margin as needed
+        inputPanelContainer.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         inputPanelContainer.setBackground(colorScheme.getDarkerBackgroundColor());
 
         JPanel inputPanel = new ControlPanel();

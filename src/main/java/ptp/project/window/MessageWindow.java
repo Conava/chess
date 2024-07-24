@@ -34,7 +34,7 @@ public class MessageWindow extends JDialog {
         JLabel messageLabel = new JLabel(message);
         messageLabel.setFont(colorScheme.getFont().deriveFont(colorScheme.getFont().getSize2D() - 2));
         messageLabel.setHorizontalAlignment(JLabel.CENTER);
-        messageLabel.setForeground(colorScheme.getBorderColor());
+        messageLabel.setForeground(colorScheme.getFontColor());
         this.add(messageLabel, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel();
