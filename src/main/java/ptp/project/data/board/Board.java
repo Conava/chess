@@ -14,62 +14,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * The Board class represents a chess board and provides methods to manipulate and query the board state.
+ */
 public class Board {
     private final Square[][] board;
     private static final Logger LOGGER = Logger.getLogger(Board.class.getName());
-    private final List<Square> piecesWhite = new ArrayList<Square>();
-    private final List<Square> piecesBlack = new ArrayList<Square>();
+    private final List<Square> piecesWhite = new ArrayList<>();
+    private final List<Square> piecesBlack = new ArrayList<>();
 
+    /**
+     * Constructs a Board with the given squares.
+     * @param board A 2D array of Square objects representing the board.
+     */
     public Board(Square[][] board) {
         this.board = board;
-        recountPieces();
-    }
 
-    public Square getSquare(int y, int x) {
-        if (board[y][x] != null) {
-            return board[y][x];
-        }
-        return null;
-    }
-
-    public void executeMove(Move move) {
-        Square square1 = move.getStart();
-        Square square2 = move.getEnd();
-        Piece piece = square1.getPiece();
-        if (piece instanceof Rook rook) {
-            rook.setHasMoved();
-        } else if (piece instanceof King king) {
-            king.setHasMoved();
-        }
-        if (move instanceof CastleMove) {
-            Piece rook;
-            if (square2.getY() == 2) {//castle long
-                rook = this.getSquare(0, square1.getX()).getPiece();
-                this.getSquare(3, square1.getX()).setPiece(rook);
-                this.getSquare(0, square1.getX()).setPiece(null);
-            } else { //castle must be short
-                rook = this.getSquare(7, square1.getX()).getPiece();
-                this.getSquare(5, square1.getX()).setPiece(rook);
-                this.getSquare(7, square1.getX()).setPiece(null);
-            }
-        } else if (move instanceof PromotionMove promotionMove) {
-            piece = promotionMove.getTargetPiece();
-        }
-        square2.setPiece(piece);
-        removePiece(square1);
-        square1.setPiece(null);
-
-    }
-
-    public Board getCopy() {
-        return new Board(board);
-    }
-
-    public void recountPieces() {
-        piecesWhite.clear();
-        piecesBlack.clear();
-        for (Square[] squares : board) {
-            for (Square square : squares) {
+        for (Square[] row : board) {
+            for (Square square : row) {
                 if (square.isOccupiedBy() != null) {
                     if (square.getPiece().getPlayer().color().equals(PlayerColor.WHITE)) {
                         piecesWhite.add(square);
@@ -81,7 +43,94 @@ public class Board {
         }
     }
 
-    private void removePiece (Square square) {
+    /**
+     * Returns the square at the specified coordinates.
+     * @param y The y-coordinate of the square.
+     * @param x The x-coordinate of the square.
+     * @return The Square at the specified coordinates.
+     */
+    public Square getSquare(int y, int x) {
+        return board[y][x];
+    }
+
+    /**
+     * Executes a move on the board.
+     * @param move The move to be executed.
+     */
+    public void executeMove(Move move) {
+        Square startSquare = move.getStart();
+        Square endSquare = move.getEnd();
+        Piece piece = startSquare.getPiece();
+        if (piece instanceof Rook rook) {
+            rook.setHasMoved();
+        } else if (piece instanceof King king) {
+            king.setHasMoved();
+        }
+
+        if (move instanceof CastleMove) {
+            handleCastleMove(startSquare, endSquare);
+        } else if (move instanceof PromotionMove promotionMove) {
+            piece = promotionMove.getTargetPiece();
+        }
+
+        endSquare.setPiece(piece);
+        removePiece(startSquare);
+        startSquare.setPiece(null);
+        updatePieceLists(startSquare, endSquare, piece);
+    }
+
+    /**
+     * Returns a copy of the board.
+     * @return A new Board object that is a copy of the current board.
+     */
+    public Board getCopy() {
+        return new Board(board);
+    }
+
+    /**
+     * Returns a list of squares occupied by the pieces of the specified player.
+     * @param player The player whose pieces are to be returned.
+     * @return A list of squares occupied by the player's pieces.
+     */
+    public List<Square> getPieces(Player player) {
+        if (player == null) {
+            return null;
+        }
+        return player.color().equals(PlayerColor.WHITE) ? piecesWhite : piecesBlack;
+    }
+
+    /**
+     * Returns the piece at the specified square.
+     * @param square The square whose piece is to be returned.
+     * @return The piece at the specified square.
+     */
+    public Piece getPieceAt(Square square) {
+        return board[square.getY()][square.getX()].getPiece();
+    }
+
+    /**
+     * Handles the logic for a castle move.
+     * @param startSquare The starting square of the move.
+     * @param endSquare The ending square of the move.
+     */
+    private void handleCastleMove(Square startSquare, Square endSquare) {
+        Piece rook;
+        if (endSquare.getY() == 2) { // castle long
+            rook = getSquare(0, startSquare.getX()).getPiece();
+            getSquare(3, startSquare.getX()).setPiece(rook);
+            getSquare(0, startSquare.getX()).setPiece(null);
+        } else { // castle short
+            rook = getSquare(7, startSquare.getX()).getPiece();
+            getSquare(5, startSquare.getX()).setPiece(rook);
+            getSquare(7, startSquare.getX()).setPiece(null);
+        }
+    }
+
+    /**
+     * Removes the piece from the specified square.
+     * @param square The square from which the piece is to be removed.
+     */
+    private void removePiece(Square square) {
         if (square.getPiece() == null) {
             return;
         }
@@ -93,17 +142,19 @@ public class Board {
         }
     }
 
-    public List<Square> getPieces(Player player) {
-        if (player == null) {
-            return null;
-        } else if (player.color().equals(PlayerColor.WHITE)) {
-            return piecesWhite;
+    /**
+     * Updates the piece lists when a piece is moved.
+     * @param startSquare The starting square of the move.
+     * @param endSquare The ending square of the move.
+     * @param piece The piece being moved.
+     */
+    private void updatePieceLists(Square startSquare, Square endSquare, Piece piece) {
+        if (piece.getPlayer().color().equals(PlayerColor.WHITE)) {
+            piecesWhite.remove(startSquare);
+            piecesWhite.add(endSquare);
         } else {
-            return piecesBlack;
+            piecesBlack.remove(startSquare);
+            piecesBlack.add(endSquare);
         }
-    }
-
-    public Piece getPieceAt(Square square) {
-        return board[square.getY()][square.getX()].getPiece();
     }
 }
