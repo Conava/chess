@@ -12,14 +12,12 @@ import ptp.project.data.pieces.Piece;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * The Board class represents a chess board and provides methods to manipulate and query the board state.
  */
 public class Board {
     private final Square[][] board;
-    private static final Logger LOGGER = Logger.getLogger(Board.class.getName());
     private final List<Square> piecesWhite = new ArrayList<>();
     private final List<Square> piecesBlack = new ArrayList<>();
 
