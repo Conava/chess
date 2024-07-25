@@ -1,9 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Chess" type="Application" factoryName="Application">
-    <option name="MAIN_CLASS_NAME" value="ptp.project.Chess" />
-    <module name="Chess" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
-  </configuration>
-</component>
