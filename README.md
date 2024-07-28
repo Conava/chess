@@ -4,13 +4,13 @@ This is a Chess application developed as a university project in Java. It allows
 
 ## Project Description
 
-The Chess application is designed with a focus on object-oriented programming principles and follows a modularized architecture. The project is divided into two main modules: `application` and `server`.
+The Chess application is designed with a focus on object-oriented programming principles and follows a modularized architecture. The project is divided into 3 main modules: `application`, `server` and `core`.
 
 ### Modules
 
 - **application**: The GUI application for playing chess games.
 - **server**: The server to handle online games.
-- **core**: Contains the core game logic and data structures.
+- **core**: Contains the core game logic and data structures used by all other modules`
 
 
 ## Features
