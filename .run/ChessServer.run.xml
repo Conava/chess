@@ -2,8 +2,18 @@
   <configuration default="false" name="ChessServer" type="Application" factoryName="Application">
     <option name="ALTERNATIVE_JRE_PATH" value="17" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-    <option name="MAIN_CLASS_NAME" value="Server" />
+    <option name="MAIN_CLASS_NAME" value="ptp.server.Server" />
     <module name="server" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+  <configuration default="false" name="ChessServer" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="17" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="ptp.server.Server" />
+    <module name="server" />
+    <option name="PROGRAM_PARAMETERS" value="54321" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

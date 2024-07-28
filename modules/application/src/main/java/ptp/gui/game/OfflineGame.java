@@ -1,10 +1,11 @@
-package ptp.core.logic.game;
+package ptp.gui.game;
 
 import ptp.core.data.Player;
 import ptp.core.data.Square;
 import ptp.core.data.enums.GameState;
 import ptp.core.data.enums.RulesetOptions;
 import ptp.core.exceptions.IllegalMoveException;
+import ptp.core.logic.game.Game;
 import ptp.core.logic.moves.Move;
 
 public class OfflineGame extends Game {

@@ -65,7 +65,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>ptp.Server</mainClass>
+                                    <mainClass>ptp.server.Server</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>

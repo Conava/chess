@@ -1,7 +1,12 @@
 package ptp.core.logic.moves;
 
+import ptp.core.data.Player;
 import ptp.core.data.Square;
 import ptp.core.data.enums.Pieces;
+import ptp.core.data.enums.PlayerColor;
+import ptp.core.data.pieces.Piece;
+
+import java.lang.reflect.InvocationTargetException;
 
 public class Move {
     private final Square start;
@@ -68,6 +73,33 @@ public class Move {
         }
         sb.append(convertToAlgebraic(this.end));
         return sb.toString();
+    }
+
+    public static Move fromString(String moveString, Player movePlayer) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    if (moveString.equals("O-O")) {
+        Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
+        Square end = new Square(6, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // g1 or g8
+        return new CastleMove(start, end);
+    } else if (moveString.equals("O-O-O")) {
+        Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
+        Square end = new Square(2, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // c1 or c8
+        return new CastleMove(start, end);
+    } else if (moveString.contains("=")) {
+        String[] parts = moveString.split("=");
+        Square start = convertToSquare(parts[0]);
+        Square end = convertToSquare(parts[1]);
+        Pieces targetPiece = Pieces.valueOf(parts[2]);
+        Piece targetPieceInstance = (Piece) Class.forName("ptp.core.data.pieces." + targetPiece.getClassName()).getConstructor(Player.class).newInstance(movePlayer);
+        return new PromotionMove(start, end, targetPieceInstance);
+    } else {
+        Square start = convertToSquare(moveString.substring(0, 2));
+        Square end = convertToSquare(moveString.substring(3, 5));
+        return new Move(start, end);
+    }
+}
+
+    private Square convertToSquare(String substring) {
+        return new Square(substring.charAt(0) - 'a', substring.charAt(1) - '1');
     }
 
     /**
