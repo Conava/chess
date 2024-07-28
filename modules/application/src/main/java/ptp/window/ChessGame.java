@@ -1,14 +1,14 @@
 package ptp.window;
 
-import ptp.data.board.Board;
-import ptp.data.enums.GameState;
-import ptp.data.enums.Pieces;
-import ptp.data.enums.RulesetOptions;
-import ptp.data.pieces.Piece;
-import ptp.data.Player;
-import ptp.data.Square;
-import ptp.logic.game.GameObserver;
-import ptp.logic.moves.Move;
+import ptp.core.data.board.Board;
+import ptp.core.data.enums.GameState;
+import ptp.core.data.enums.Pieces;
+import ptp.core.data.enums.RulesetOptions;
+import ptp.core.data.pieces.Piece;
+import ptp.core.data.Player;
+import ptp.core.data.Square;
+import ptp.core.logic.game.GameObserver;
+import ptp.core.logic.moves.Move;
 import ptp.window.tasks.ExecuteMove;
 import ptp.window.components.*;
 import ptp.Chess;
@@ -300,7 +300,7 @@ public class ChessGame extends JPanel implements GameObserver {
             localBoard.executeMove(new Move(selectedSquare, clickedSquare));
             boardPanel.unsetLegalSquares();
 
-            if (chess.getPieceAt(selectedSquare) instanceof ptp.data.pieces.Pawn && (clickedSquare.getY() == 0 || clickedSquare.getY() == 7)) {
+            if (chess.getPieceAt(selectedSquare) instanceof ptp.core.data.pieces.Pawn && (clickedSquare.getY() == 0 || clickedSquare.getY() == 7)) {
                 PromotionWindow promotionWindow = new PromotionWindow(mainFrame, colorScheme, chess.getCurrentPlayer().color());
                 Pieces selectedPiece = promotionWindow.getSelectedPiece();
                 new ExecuteMove(chess, this, selectedSquare, clickedSquare, selectedPiece).execute();

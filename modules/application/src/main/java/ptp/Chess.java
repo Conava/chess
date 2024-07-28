@@ -1,17 +1,17 @@
 package ptp;
 
-import ptp.data.board.Board;
-import ptp.data.enums.GameState;
-import ptp.data.enums.Pieces;
-import ptp.data.enums.RulesetOptions;
-import ptp.exceptions.IllegalMoveException;
-import ptp.data.Player;
-import ptp.data.Square;
-import ptp.logic.game.Game;
-import ptp.logic.game.GameObserver;
-import ptp.logic.game.OfflineGame;
-import ptp.logic.game.OnlineGame;
-import ptp.data.pieces.Piece;
+import ptp.core.data.board.Board;
+import ptp.core.data.enums.GameState;
+import ptp.core.data.enums.Pieces;
+import ptp.core.data.enums.RulesetOptions;
+import ptp.core.exceptions.IllegalMoveException;
+import ptp.core.data.Player;
+import ptp.core.data.Square;
+import ptp.core.logic.game.Game;
+import ptp.core.logic.game.GameObserver;
+import ptp.core.logic.game.OfflineGame;
+import ptp.core.logic.game.OnlineGame;
+import ptp.core.data.pieces.Piece;
 import ptp.window.MainFrame;
 import ptp.window.components.ColorScheme;
 

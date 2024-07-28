@@ -1,7 +1,7 @@
 package ptp.window;
 
-import ptp.data.enums.Pieces;
-import ptp.data.enums.PlayerColor;
+import ptp.core.data.enums.Pieces;
+import ptp.core.data.enums.PlayerColor;
 import ptp.window.components.BoardButton;
 import ptp.window.components.ColorScheme;
 import ptp.window.components.ControlPanel;

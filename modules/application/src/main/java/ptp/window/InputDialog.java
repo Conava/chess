@@ -1,6 +1,6 @@
 package ptp.window;
 
-import ptp.data.enums.RulesetOptions;
+import ptp.core.data.enums.RulesetOptions;
 import ptp.window.components.*;
 
 import javax.swing.*;

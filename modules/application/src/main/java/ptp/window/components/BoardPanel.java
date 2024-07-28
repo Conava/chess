@@ -1,7 +1,7 @@
 package ptp.window.components;
 
-import ptp.data.Square;
-import ptp.data.board.Board;
+import ptp.core.data.Square;
+import ptp.core.data.board.Board;
 import ptp.window.ChessGame;
 
 import javax.swing.*;

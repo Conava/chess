@@ -1,8 +1,8 @@
 package ptp.window.tasks;
 
 import ptp.Chess;
-import ptp.data.Square;
-import ptp.data.enums.Pieces;
+import ptp.core.data.Square;
+import ptp.core.data.enums.Pieces;
 import ptp.window.ChessGame;
 
 import javax.swing.SwingWorker;

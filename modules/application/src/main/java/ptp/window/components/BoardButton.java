@@ -1,7 +1,7 @@
 package ptp.window.components;
 
-import ptp.data.Square;
-import ptp.data.pieces.Piece;
+import ptp.core.data.Square;
+import ptp.core.data.pieces.Piece;
 
 import javax.swing.*;
 import java.awt.*;
