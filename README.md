@@ -8,8 +8,9 @@ The Chess application is designed with a focus on object-oriented programming pr
 
 ### Modules
 
-- **application**: Contains the main application logic, game logic and graphical user interface components.
+- **application**: The GUI application for playing chess games.
 - **server**: The server to handle online games.
+- **core**: Contains the core game logic and data structures.
 
 
 ## Features

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>ptp.project</groupId>
+        <groupId>ptp</groupId>
         <artifactId>Chess</artifactId>
         <version>0.6</version>
         <relativePath>../../pom.xml</relativePath>
@@ -12,6 +12,7 @@
 
     <artifactId>server</artifactId>
     <packaging>jar</packaging>
+    <version>0.1</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -20,6 +21,12 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>ptp</groupId>
+            <artifactId>core</artifactId>
+            <version>0.1</version>
+        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>ptp.project</groupId>
+    <groupId>ptp</groupId>
     <artifactId>Chess</artifactId>
     <version>0.6</version>
     <packaging>pom</packaging>
@@ -11,6 +11,7 @@
     <modules>
         <module>modules/application</module>
         <module>modules/server</module>
+        <module>modules/core</module>
     </modules>
 
     <properties>

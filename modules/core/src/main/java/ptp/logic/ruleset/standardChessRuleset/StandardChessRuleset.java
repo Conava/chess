@@ -4,12 +4,11 @@ import ptp.data.Player;
 import ptp.data.Square;
 import ptp.data.enums.GameState;
 import ptp.data.enums.PlayerColor;
-import ptp.data.pieces.*;
 import ptp.data.board.Board;
+import ptp.data.pieces.*;
 import ptp.logic.moves.Move;
 import ptp.logic.ruleset.Ruleset;
 
-//import java.lang.reflect.Array;
 import java.util.List;
 import java.util.ArrayList;
 
