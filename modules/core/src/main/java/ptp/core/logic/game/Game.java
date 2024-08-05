@@ -1,17 +1,17 @@
 package ptp.core.logic.game;
 
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
-import ptp.core.data.enums.GameState;
-import ptp.core.data.enums.Pieces;
-import ptp.core.data.enums.PlayerColor;
-import ptp.core.data.enums.RulesetOptions;
 import ptp.core.data.pieces.Piece;
+import ptp.core.data.pieces.Pieces;
+import ptp.core.data.player.PlayerColor;
 import ptp.core.exceptions.IllegalMoveException;
 import ptp.core.data.board.Board;
 import ptp.core.logic.moves.Move;
 import ptp.core.logic.moves.PromotionMove;
+import ptp.core.logic.observer.Observable;
 import ptp.core.logic.ruleset.Ruleset;
+import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
 import java.lang.reflect.Constructor;
@@ -30,6 +30,7 @@ public abstract class Game extends Observable {
     protected Board board;
     protected int turnCount;
     protected List<Move> moves;
+    protected GameType gameType;
 
     /**
      * Constructor for the Game class.
@@ -153,7 +154,13 @@ public abstract class Game extends Observable {
     /**
      * Starts the game.
      */
-    public abstract void startGame();
+    public void startGame() {
+        gameState = GameState.RUNNING;
+    }
+
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
 
     /**
      * Ends the game.

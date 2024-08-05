@@ -1,9 +1,9 @@
 package ptp.core.logic.moves;
 
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
-import ptp.core.data.enums.Pieces;
-import ptp.core.data.enums.PlayerColor;
+import ptp.core.data.pieces.Pieces;
+import ptp.core.data.player.PlayerColor;
 import ptp.core.data.pieces.Piece;
 
 import java.lang.reflect.InvocationTargetException;
@@ -98,7 +98,7 @@ public class Move {
     }
 }
 
-    private Square convertToSquare(String substring) {
+    private static Square convertToSquare(String substring) {
         return new Square(substring.charAt(0) - 'a', substring.charAt(1) - '1');
     }
 

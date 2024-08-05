@@ -2,8 +2,8 @@ package ptp.core.logic.ruleset;
 
 import ptp.core.data.Square;
 import ptp.core.data.board.Board;
-import ptp.core.data.Player;
-import ptp.core.data.enums.GameState;
+import ptp.core.data.player.Player;
+import ptp.core.logic.game.GameState;
 import ptp.core.logic.moves.Move;
 
 import java.util.List;

@@ -1,10 +1,10 @@
 package ptp.window;
 
-import ptp.core.data.enums.Pieces;
-import ptp.core.data.enums.PlayerColor;
-import ptp.window.components.BoardButton;
-import ptp.window.components.ColorScheme;
-import ptp.window.components.ControlPanel;
+import ptp.core.data.pieces.Pieces;
+import ptp.core.data.player.PlayerColor;
+import ptp.components.BoardButton;
+import ptp.components.ColorScheme;
+import ptp.components.ControlPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

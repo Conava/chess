@@ -1,9 +1,10 @@
 package ptp.core.data;
 
-import ptp.core.data.enums.PlayerColor;
+import ptp.core.data.player.PlayerColor;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ptp.core.data.player.Player;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

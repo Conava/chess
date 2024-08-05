@@ -1,16 +1,16 @@
 package ptp.window;
 
+import ptp.components.*;
 import ptp.core.data.board.Board;
-import ptp.core.data.enums.GameState;
-import ptp.core.data.enums.Pieces;
-import ptp.core.data.enums.RulesetOptions;
+import ptp.core.logic.game.GameState;
+import ptp.core.data.pieces.Pieces;
+import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.core.data.pieces.Piece;
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
-import ptp.core.logic.game.GameObserver;
+import ptp.core.logic.observer.GameObserver;
 import ptp.core.logic.moves.Move;
-import ptp.window.tasks.ExecuteMove;
-import ptp.window.components.*;
+import ptp.tasks.ExecuteMove;
 import ptp.Chess;
 
 import javax.swing.*;
@@ -30,13 +30,13 @@ public class ChessGame extends JPanel implements GameObserver {
     private static final Logger LOGGER = Logger.getLogger(ChessGame.class.getName());
     private final MainFrame mainFrame;
     private final Chess chess;
-    private final ptp.window.components.ColorScheme colorScheme;
+    private final ColorScheme colorScheme;
 
-    private ptp.window.components.TopPanel topPanel;
-    private ptp.window.components.BottomPanel bottomPanel;
-    private ptp.window.components.BoardPanel boardPanel;
-    private ptp.window.components.SidePanel sidePanelRight;
-    private ptp.window.components.SidePanel sidePanelLeft;
+    private TopPanel topPanel;
+    private BottomPanel bottomPanel;
+    private BoardPanel boardPanel;
+    private SidePanel sidePanelRight;
+    private SidePanel sidePanelLeft;
 
     private Board localBoard; // Keep a local copy of the board to improve responsiveness of the UI
 
@@ -52,7 +52,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * @param colorScheme The color scheme
      * @param online      The online status of the game. 0 for offline, 1 for online.
      */
-    public ChessGame(MainFrame mainFrame, Chess chess, ptp.window.components.ColorScheme colorScheme, int online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName) {
+    public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, int online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName) {
         this.mainFrame = mainFrame;
         this.chess = chess;
         this.colorScheme = colorScheme;

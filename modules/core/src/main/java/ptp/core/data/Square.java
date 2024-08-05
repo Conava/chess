@@ -1,6 +1,7 @@
 package ptp.core.data;
 
 import ptp.core.data.pieces.Piece;
+import ptp.core.data.player.Player;
 
 public class Square {
     private final int x;

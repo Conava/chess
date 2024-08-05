@@ -1,8 +1,8 @@
 package ptp.core.data.board;
 
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
-import ptp.core.data.enums.PlayerColor;
+import ptp.core.data.player.PlayerColor;
 import ptp.core.data.pieces.King;
 import ptp.core.data.pieces.Rook;
 import ptp.core.logic.moves.CastleMove;

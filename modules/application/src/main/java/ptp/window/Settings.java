@@ -1,7 +1,7 @@
 package ptp.window;
 
-import ptp.window.components.ColorScheme;
-import ptp.window.components.CustomButton;
+import ptp.components.ColorScheme;
+import ptp.components.CustomButton;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;

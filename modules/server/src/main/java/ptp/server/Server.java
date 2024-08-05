@@ -1,33 +1,28 @@
 package ptp.server;
 
-import ptp.server.io.MessageParser;
+import ptp.core.data.io.MessageParser;
+import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.server.management.ClientHandler;
-import ptp.server.management.GameManager;
+import ptp.core.logic.game.ServerGame;
+import ptp.server.management.GameInstance;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * The Server class is responsible for starting the server, accepting client connections,
- * and managing the lifecycle of the server.
- */
 public class Server {
-    private static final int THREAD_POOL_SIZE = 40; // Maximum of 40 clients connected at the same time
-    private static final GameManager gameManager = new GameManager();
+    private static final int THREAD_POOL_SIZE = 40;
+    private static final Map<GameInstance, ClientHandler[]> games = new HashMap<>();
     private static volatile boolean running = true;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
 
-    /**
-     * The main method to start the server.
-     *
-     * @param args Command line arguments, expects a single argument for the port number.
-     */
     public static void main(String[] args) {
         if (args.length != 1) {
             System.err.println("Usage: java ptp.server.Server <port number>");
@@ -36,12 +31,11 @@ public class Server {
 
         int port = Integer.parseInt(args[0]);
         ExecutorService executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
-        MessageParser messageParser = new MessageParser(gameManager);
+        MessageParser messageParser = new MessageParser();
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             logger.info("Server started on port " + port);
 
-            // Thread for listening to console input
             new Thread(() -> {
                 Scanner scanner = new Scanner(System.in);
                 while (running) {
@@ -61,7 +55,7 @@ public class Server {
             while (running) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    executorService.execute(new ClientHandler(clientSocket, messageParser));
+                    executorService.execute(new ClientHandler(clientSocket, messageParser, games));
                 } catch (IOException e) {
                     if (running) {
                         logger.log(Level.SEVERE, "Error accepting client connection", e);

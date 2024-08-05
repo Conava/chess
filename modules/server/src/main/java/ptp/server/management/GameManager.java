@@ -1,6 +1,6 @@
 package ptp.server.management;
 
-import ptp.core.data.enums.RulesetOptions;
+import ptp.core.logic.ruleset.RulesetOptions;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +20,7 @@ public class GameManager {
      */
     public String createGame(RulesetOptions ruleset) {
         String joinCode = generateJoinCode();
-        GameInstance gameInstance = new GameInstance(ruleset);
+        GameInstance gameInstance = new GameInstance();
         activeGames.put(joinCode, gameInstance);
         return joinCode;
     }

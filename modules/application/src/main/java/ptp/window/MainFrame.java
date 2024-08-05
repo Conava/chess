@@ -1,8 +1,8 @@
 package ptp.window;
 
 import ptp.Chess;
-import ptp.core.data.enums.RulesetOptions;
-import ptp.window.components.ColorScheme;
+import ptp.core.logic.ruleset.RulesetOptions;
+import ptp.components.ColorScheme;
 
 import javax.swing.*;
 import java.awt.*;
