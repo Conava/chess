@@ -29,7 +29,14 @@ public class CustomComboBox<T> extends JComboBox<T> {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setColor(getBackground());
         g2.fillRoundRect(0, 0, getWidth(), getHeight(), ARC_WIDTH, ARC_HEIGHT);
-        super.paintComponent(g2);
+
+        // Draw the text manually
+        g2.setColor(getForeground());
+        FontMetrics fm = g2.getFontMetrics();
+        int textX = getInsets().left;
+        int textY = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+        g2.drawString(getSelectedItem().toString(), textX, textY);
+
         g2.dispose();
     }
 
