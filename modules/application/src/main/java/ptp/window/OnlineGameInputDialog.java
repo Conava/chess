@@ -145,12 +145,64 @@ public class OnlineGameInputDialog extends JDialog {
     }
 
     private void onOkButtonPressed() {
-        confirmed = true;
+        boolean valid = true;
+        StringBuilder errorMessage = new StringBuilder("Please correct the following errors:\n");
+
+        // Validate IP address
         ip = ipField.getText();
+        if (ip.isEmpty() || !isValidIpAddress(ip)) {
+            valid = false;
+            errorMessage.append("- Invalid IP address\n");
+            ipField.setBorder(BorderFactory.createLineBorder(Color.RED));
+        } else {
+            ipField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        }
+
+        // Validate port
         port = portField.getText();
+        if (port.isEmpty() || !isValidPort(port)) {
+            valid = false;
+            errorMessage.append("- Invalid port number\n");
+            portField.setBorder(BorderFactory.createLineBorder(Color.RED));
+        } else {
+            portField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        }
+
+        // Validate join code
         joinCode = joinCodeField.getText();
-        selection = (RulesetOptions) comboBox.getSelectedItem();
-        dispose();
+        if (joinCode.isEmpty()) {
+            valid = false;
+            errorMessage.append("- Join code cannot be empty\n");
+            joinCodeField.setBorder(BorderFactory.createLineBorder(Color.RED));
+        } else {
+            joinCodeField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        }
+
+        if (valid) {
+            confirmed = true;
+            selection = (RulesetOptions) comboBox.getSelectedItem();
+            dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, errorMessage.toString(), "Validation Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private boolean isValidIpAddress(String ip) {
+        String ipv4Pattern =
+                "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
+        String ipv6Pattern =
+                "(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))";
+        String localhostPattern = "^(localhost|127\\.0\\.0\\.1)$";
+        return ip.matches(ipv4Pattern) || ip.matches(ipv6Pattern) || ip.matches(localhostPattern);
+    }
+
+    private boolean isValidPort(String port) {
+        try {
+            int portNumber = Integer.parseInt(port);
+            return portNumber > 0 && portNumber <= 65535;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private void toggleJoinCreateFields(boolean isJoin) {
