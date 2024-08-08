@@ -1,25 +1,31 @@
 package ptp.server.io;
 
 import ptp.core.data.io.Message;
-import ptp.core.logic.game.ServerGame;
 import ptp.server.management.ClientHandler;
 import ptp.server.management.GameInstance;
 
 import java.util.Map;
 
 public class MessageHandler {
-    private final Map<String, ServerGame> games;
+    private final Map<Integer, GameInstance> gamesList;
+    private final Map<ClientHandler, Integer> connectionsList;
 
-    public MessageHandler(Map<GameInstance, ClientHandler[]> games) {
-        this.games = games;
+    public MessageHandler(Map<Integer, GameInstance> gamesList, Map<ClientHandler, Integer> connectionsList) {
+        this.gamesList = gamesList;
+        this.connectionsList = connectionsList;
     }
 
     public void handleMessage(ClientHandler clientHandler, Message message) {
-        ServerGame game = games.get(clientHandler);
-        if (game != null) {
-            game.processMessage(message);
+        Integer gameId = connectionsList.get(clientHandler);
+        if (gameId != null) {
+            GameInstance gameInstance = gamesList.get(gameId);
+            if (gameInstance != null) {
+                gameInstance.processMessage(message);
+            } else {
+                // Handle case where no game exists for the client handler
+            }
         } else {
-            // Handle case where no game exists for the IP address
+            // Handle case where client handler is not part of any game
         }
     }
 }
