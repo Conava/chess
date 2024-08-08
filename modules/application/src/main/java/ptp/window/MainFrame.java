@@ -63,7 +63,7 @@ public class MainFrame extends JFrame {
             RulesetOptions selectedRuleset = dialog.getRulesetSelection();
             LOGGER.log(Level.INFO, "Switching to offline game");
             this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
-            chessGame = new ChessGame(this, chess, colorScheme, 1, selectedRuleset, playerWhiteName, playerBlackName, null);
+            chessGame = new ChessGame(this, chess, colorScheme, 0, selectedRuleset, playerWhiteName, playerBlackName, null);
             setExtendedState(JFrame.MAXIMIZED_BOTH);
             setContentPane(chessGame);
             validate();
