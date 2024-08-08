@@ -9,5 +9,6 @@ public enum MessageType {
     GAME_STATUS,
     GAME_END,
     SUCCESS,
+    ERROR,
     FAILURE
 }
