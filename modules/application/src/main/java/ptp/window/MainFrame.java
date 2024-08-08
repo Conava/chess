@@ -6,6 +6,7 @@ import ptp.components.ColorScheme;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.*;
 
@@ -84,9 +85,16 @@ public class MainFrame extends JFrame {
             RulesetOptions selectedRuleset = dialog.getRulesetSelection();
             String playerWhiteName = joinCode.isEmpty() ? "Online Gegner" : "Du";
             String playerBlackName = joinCode.isEmpty() ? "Du" : "Online Gegner";
+
+            Map<String, String> onlineGameOptions = Map.of(
+                    "ip", ip,
+                    "port", port,
+                    "joinCode", joinCode
+            );
+
             LOGGER.log(Level.INFO, "Switching to online game");
             this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
-            chessGame = new ChessGame(this, chess, colorScheme, 2, selectedRuleset, playerWhiteName, playerBlackName);
+            chessGame = new ChessGame(this, chess, colorScheme, 2, selectedRuleset, playerWhiteName, playerBlackName, onlineGameOptions);
             setExtendedState(JFrame.MAXIMIZED_BOTH);
             setContentPane(chessGame);
             validate();

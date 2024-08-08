@@ -18,6 +18,7 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,7 +53,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * @param colorScheme The color scheme
      * @param online      The online status of the game. 0 for offline, 1 for online.
      */
-    public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, int online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName) {
+    public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, int online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameOptions) {
         this.mainFrame = mainFrame;
         this.chess = chess;
         this.colorScheme = colorScheme;
@@ -60,9 +61,8 @@ public class ChessGame extends JPanel implements GameObserver {
 
         initializeGUI();
         LOGGER.log(Level.INFO, "GameWindow GUI initialized");
-        initializeGame(online, rulesetOptions, playerWhiteName, playerBlackName);
+        initializeGame(online, rulesetOptions, playerWhiteName, playerBlackName, onlineGameOptions);
         LOGGER.log(Level.INFO, "Game started");
-        chess.addObserver(this);
         update();
     }
 
@@ -142,8 +142,8 @@ public class ChessGame extends JPanel implements GameObserver {
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
-    private void initializeGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
-        chess.startGame(online, selectedRuleset, playerWhiteName, playerBlackName);
+    private void initializeGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameOptions) {
+        chess.startGame(online, selectedRuleset, playerWhiteName, playerBlackName, onlineGameOptions);
         LOGGER.log(Level.INFO, "Game started");
         chess.addObserver(this);
 

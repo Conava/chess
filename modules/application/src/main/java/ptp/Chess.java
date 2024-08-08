@@ -17,6 +17,7 @@ import ptp.components.ColorScheme;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.*;
 
 import javax.swing.*;
@@ -74,9 +75,9 @@ public class Chess {
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
-    public void startGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
+    public void startGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings) {
         if (game == null) {
-            game = online == 1 ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName) : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+            game = online == 1 ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings) : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
             game.startGame();
             LOGGER.log(Level.INFO, "Game started");
         } else {
