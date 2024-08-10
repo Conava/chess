@@ -9,8 +9,4 @@ public record Message(MessageType type, String content) {
             throw new IllegalArgumentException("Type cannot be null");
         }
     }
-
-    public MessageType getType() {
-        return type;
-    }
 }
