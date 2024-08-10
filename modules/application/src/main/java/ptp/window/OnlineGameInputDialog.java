@@ -13,6 +13,8 @@ public class OnlineGameInputDialog extends JDialog {
     private static final int BORDER_RADIUS = 30;
     private static final int FONT_SIZE = 26;
 
+    private final ColorScheme colorScheme;
+    private final JFrame parent;
     private CustomTextField ipField;
     private CustomTextField portField;
     private CustomTextField joinCodeField;
@@ -24,6 +26,8 @@ public class OnlineGameInputDialog extends JDialog {
     public OnlineGameInputDialog(JFrame parent, String title, ColorScheme colorScheme) {
         super(parent, title, true);
         initializeDialog(colorScheme);
+        this.colorScheme = colorScheme;
+        this.parent = parent;
         addComponentsToDialog(title, colorScheme);
     }
 
@@ -146,36 +150,36 @@ public class OnlineGameInputDialog extends JDialog {
 
     private void onOkButtonPressed() {
         boolean valid = true;
-        StringBuilder errorMessage = new StringBuilder("Please correct the following errors:\n");
+        StringBuilder errorMessage = new StringBuilder("Fehler bei der Eingabe:\n\n");
 
         // Validate IP address
         ip = ipField.getText();
         if (ip.isEmpty() || !isValidIpAddress(ip)) {
             valid = false;
-            errorMessage.append("- Invalid IP address\n");
-            ipField.setBorder(BorderFactory.createLineBorder(Color.RED));
+            errorMessage.append("- IP Adresse ungültig\n");
+            ipField.setBorderColor(Color.RED);
         } else {
-            ipField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+            ipField.resetBorderColor();
         }
 
         // Validate port
         port = portField.getText();
         if (port.isEmpty() || !isValidPort(port)) {
             valid = false;
-            errorMessage.append("- Invalid port number\n");
-            portField.setBorder(BorderFactory.createLineBorder(Color.RED));
+            errorMessage.append("- Port ungültig\n");
+            portField.setBorderColor(Color.RED);
         } else {
-            portField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+            portField.resetBorderColor();
         }
 
         // Validate join code
         joinCode = joinCodeField.getText();
-        if (joinCode.isEmpty()) {
+        if (joinCode.isEmpty() && joinCodeField.isEnabled()) {
             valid = false;
-            errorMessage.append("- Join code cannot be empty\n");
-            joinCodeField.setBorder(BorderFactory.createLineBorder(Color.RED));
+            errorMessage.append("- Join Code ungültig\n");
+            joinCodeField.setBorderColor(Color.RED);
         } else {
-            joinCodeField.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+            joinCodeField.resetBorderColor();
         }
 
         if (valid) {
@@ -183,7 +187,7 @@ public class OnlineGameInputDialog extends JDialog {
             selection = (RulesetOptions) comboBox.getSelectedItem();
             dispose();
         } else {
-            JOptionPane.showMessageDialog(this, errorMessage.toString(), "Validation Error", JOptionPane.ERROR_MESSAGE);
+            new MessageWindow(parent, errorMessage.toString(), "Fehler", colorScheme).setVisible(true);
         }
     }
 
