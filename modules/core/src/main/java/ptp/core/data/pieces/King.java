@@ -1,7 +1,7 @@
 package ptp.core.data.pieces;
 
-import ptp.core.data.Player;
-import ptp.core.data.enums.PlayerColor;
+import ptp.core.data.player.Player;
+import ptp.core.data.player.PlayerColor;
 
 public class King extends Piece {
     boolean hasMoved = false;

@@ -1,9 +1,9 @@
 package ptp.window;
 
-import ptp.window.components.ColorScheme;
-import ptp.window.components.CustomButton;
-import ptp.window.components.CustomLabel;
-import ptp.window.components.ExitButton;
+import ptp.components.ColorScheme;
+import ptp.components.CustomButton;
+import ptp.components.CustomLabel;
+import ptp.components.ExitButton;
 
 import javax.swing.*;
 import java.awt.*;

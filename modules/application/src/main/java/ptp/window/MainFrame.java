@@ -1,11 +1,12 @@
 package ptp.window;
 
 import ptp.Chess;
-import ptp.core.data.enums.RulesetOptions;
-import ptp.window.components.ColorScheme;
+import ptp.core.logic.ruleset.RulesetOptions;
+import ptp.components.ColorScheme;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.*;
 
@@ -50,26 +51,58 @@ public class MainFrame extends JFrame {
     }
 
     /**
-     * Switches the content pane to the game panel.
-     * @param online The online status of the game. 0 for offline, 1 for online.
+     * Switches the content pane to the game panel in offline mode.
      */
-    public void switchToGame(int online) {
-        ptp.window.InputDialog dialog = new ptp.window.InputDialog(this, "Spielerinformationen", colorScheme, "Name Spieler Weiß", "Name Spieler Schwarz");
+    public void switchToOfflineGame() {
+        InputDialog dialog = new InputDialog(this, "Spielerinformationen", colorScheme, "Name Spieler Weiß", "Name Spieler Schwarz");
         dialog.setVisible(true);
         if(dialog.isConfirmed())
         {
             String playerWhiteName = dialog.getInput1();
             String playerBlackName = dialog.getInput2();
             RulesetOptions selectedRuleset = dialog.getRulesetSelection();
-            LOGGER.log(Level.INFO, "Switching to game with online status " + online);
+            LOGGER.log(Level.INFO, "Switching to offline game");
             this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
-            chessGame = new ptp.window.ChessGame(this, chess, colorScheme, online, selectedRuleset, playerWhiteName, playerBlackName);
+            chessGame = new ChessGame(this, chess, colorScheme, 0, selectedRuleset, playerWhiteName, playerBlackName, null);
             setExtendedState(JFrame.MAXIMIZED_BOTH);
             setContentPane(chessGame);
             validate();
             LOGGER.log(Level.INFO, "Loaded game window successfully");
         }
-        LOGGER.log(Level.INFO, "Switching to game aborted");
+        LOGGER.log(Level.WARNING, "Switching to game aborted");
+    }
+
+    /**
+     * Switches the content pane to the game panel in online mode.
+     */
+    public void switchToOnlineGame() {
+        OnlineGameInputDialog dialog = new OnlineGameInputDialog(this, "Spielerinformationen", colorScheme);
+        dialog.setVisible(true);
+        if (dialog.isConfirmed()) {
+            String ip = dialog.getIp();
+            String port = dialog.getPort();
+            String joinCode = dialog.getJoinCode();
+            RulesetOptions selectedRuleset = dialog.getRulesetSelection();
+            String playerWhiteName = joinCode.isEmpty() ? "Du" : "Online Gegner";
+            String playerBlackName = joinCode.isEmpty() ? "Online Gegner" : "Du";
+
+            Map<String, String> onlineGameOptions = Map.of(
+                    "ip", ip,
+                    "port", port,
+                    "joinCode", joinCode
+            );
+
+            LOGGER.log(Level.INFO, "Switching to online game");
+            this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
+            chessGame = new ChessGame(this, chess, colorScheme, 1, selectedRuleset, playerWhiteName, playerBlackName, onlineGameOptions);
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+            setContentPane(chessGame);
+            validate();
+            LOGGER.log(Level.INFO, "Loaded game window successfully");
+        }
+        else {
+            LOGGER.log(Level.INFO, "Switching to game aborted");
+        }
     }
 
     /**

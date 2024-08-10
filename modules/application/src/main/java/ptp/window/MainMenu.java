@@ -1,6 +1,9 @@
 package ptp.window;
 
-import ptp.window.components.*;
+import ptp.components.ColorScheme;
+import ptp.components.ControlPanel;
+import ptp.components.CustomButton;
+import ptp.components.ExitButton;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,8 +25,6 @@ public class MainMenu extends JPanel {
     private static final String ONLINE_PLAY_BUTTON_TEXT = "Online Spielen";
     private static final String SETTINGS_BUTTON_TEXT = "Einstellungen";
     private static final String EXIT_BUTTON_TEXT = "Spiel Verlassen";
-    private static final String ONLINE_PLAY_ERROR_MESSAGE = "Online spielen ist noch nicht verfügbar";
-    private static final String ONLINE_PLAY_ERROR_TITLE = "Fehler";
 
     private final MainFrame mainFrame;
     private final ColorScheme colorScheme;
@@ -94,8 +95,8 @@ public class MainMenu extends JPanel {
     private void addButtonPanelContent(JPanel buttonPanel) {
         Dimension maxButtonSize = new Dimension(560, 100);
 
-        addButtonToPanel(buttonPanel, LOCAL_PLAY_BUTTON_TEXT, maxButtonSize, e -> mainFrame.switchToGame(0));
-        addButtonToPanel(buttonPanel, ONLINE_PLAY_BUTTON_TEXT, maxButtonSize, e -> new MessageWindow(mainFrame, ONLINE_PLAY_ERROR_MESSAGE, ONLINE_PLAY_ERROR_TITLE, colorScheme).setVisible(true));
+        addButtonToPanel(buttonPanel, LOCAL_PLAY_BUTTON_TEXT, maxButtonSize, e -> mainFrame.switchToOfflineGame());
+        addButtonToPanel(buttonPanel, ONLINE_PLAY_BUTTON_TEXT, maxButtonSize, e -> mainFrame.switchToOnlineGame());
         addButtonToPanel(buttonPanel, SETTINGS_BUTTON_TEXT, maxButtonSize, e -> mainFrame.openSettingsWindow());
         addButtonToPanel(buttonPanel, EXIT_BUTTON_TEXT, maxButtonSize, e -> System.exit(0));
     }
@@ -111,9 +112,9 @@ public class MainMenu extends JPanel {
     private void addButtonToPanel(JPanel panel, String text, Dimension maxSize, ActionListener actionListener) {
         JButton button;
         if (text.equals(EXIT_BUTTON_TEXT)) {
-            button = new ExitButton(text, colorScheme); // Create an ExitButton for the exit button
+            button = new ExitButton(text, colorScheme);
         } else {
-            button = new CustomButton(text, colorScheme); // Create a CustomButton for other buttons
+            button = new CustomButton(text, colorScheme);
         }
         button.setMaximumSize(maxSize);
         button.setAlignmentX(Component.CENTER_ALIGNMENT);

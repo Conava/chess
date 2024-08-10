@@ -1,7 +1,6 @@
 package ptp.core.data.pieces;
 
-import ptp.core.data.Player;
-import ptp.core.data.enums.Pieces;
+import ptp.core.data.player.Player;
 
 import javax.swing.*;
 import java.awt.*;

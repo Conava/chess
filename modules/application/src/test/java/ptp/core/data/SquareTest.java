@@ -2,10 +2,11 @@ package ptp.core.data;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ptp.core.data.enums.PlayerColor;
+import ptp.core.data.player.PlayerColor;
 import ptp.core.data.pieces.Bishop;
 import ptp.core.data.pieces.Pawn;
 import ptp.core.data.pieces.Rook;
+import ptp.core.data.player.Player;
 
 import static org.junit.jupiter.api.Assertions.*;
 

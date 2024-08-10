@@ -1,7 +1,7 @@
 package ptp.window;
 
-import ptp.core.data.enums.RulesetOptions;
-import ptp.window.components.*;
+import ptp.components.*;
+import ptp.core.logic.ruleset.RulesetOptions;
 
 import javax.swing.*;
 import java.awt.*;

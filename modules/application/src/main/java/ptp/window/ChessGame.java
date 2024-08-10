@@ -1,16 +1,16 @@
 package ptp.window;
 
+import ptp.components.*;
 import ptp.core.data.board.Board;
-import ptp.core.data.enums.GameState;
-import ptp.core.data.enums.Pieces;
-import ptp.core.data.enums.RulesetOptions;
+import ptp.core.logic.game.GameState;
+import ptp.core.data.pieces.Pieces;
+import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.core.data.pieces.Piece;
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
-import ptp.core.logic.game.GameObserver;
+import ptp.core.logic.observer.GameObserver;
 import ptp.core.logic.moves.Move;
-import ptp.window.tasks.ExecuteMove;
-import ptp.window.components.*;
+import ptp.tasks.ExecuteMove;
 import ptp.Chess;
 
 import javax.swing.*;
@@ -18,6 +18,7 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,13 +31,14 @@ public class ChessGame extends JPanel implements GameObserver {
     private static final Logger LOGGER = Logger.getLogger(ChessGame.class.getName());
     private final MainFrame mainFrame;
     private final Chess chess;
-    private final ptp.window.components.ColorScheme colorScheme;
+    private final ColorScheme colorScheme;
+    private WaitingForPlayerWindow waitingForPlayerWindow;
 
-    private ptp.window.components.TopPanel topPanel;
-    private ptp.window.components.BottomPanel bottomPanel;
-    private ptp.window.components.BoardPanel boardPanel;
-    private ptp.window.components.SidePanel sidePanelRight;
-    private ptp.window.components.SidePanel sidePanelLeft;
+    private TopPanel topPanel;
+    private BottomPanel bottomPanel;
+    private BoardPanel boardPanel;
+    private SidePanel sidePanelRight;
+    private SidePanel sidePanelLeft;
 
     private Board localBoard; // Keep a local copy of the board to improve responsiveness of the UI
 
@@ -52,7 +54,7 @@ public class ChessGame extends JPanel implements GameObserver {
      * @param colorScheme The color scheme
      * @param online      The online status of the game. 0 for offline, 1 for online.
      */
-    public ChessGame(MainFrame mainFrame, Chess chess, ptp.window.components.ColorScheme colorScheme, int online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName) {
+    public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, int online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameOptions) {
         this.mainFrame = mainFrame;
         this.chess = chess;
         this.colorScheme = colorScheme;
@@ -60,9 +62,8 @@ public class ChessGame extends JPanel implements GameObserver {
 
         initializeGUI();
         LOGGER.log(Level.INFO, "GameWindow GUI initialized");
-        initializeGame(online, rulesetOptions, playerWhiteName, playerBlackName);
+        initializeGame(online, rulesetOptions, playerWhiteName, playerBlackName, onlineGameOptions);
         LOGGER.log(Level.INFO, "Game started");
-        chess.addObserver(this);
         update();
     }
 
@@ -142,8 +143,8 @@ public class ChessGame extends JPanel implements GameObserver {
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
-    private void initializeGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
-        chess.startGame(online, selectedRuleset, playerWhiteName, playerBlackName);
+    private void initializeGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameOptions) {
+        chess.startGame(online, selectedRuleset, playerWhiteName, playerBlackName, onlineGameOptions);
         LOGGER.log(Level.INFO, "Game started");
         chess.addObserver(this);
 
@@ -188,14 +189,33 @@ public class ChessGame extends JPanel implements GameObserver {
     public void update() {
         LOGGER.log(Level.INFO, "Update Method called");
         GameState state = getState();
+        System.out.println("State: " + state);
 
         if (state == GameState.NO_GAME) {
-            LOGGER.log(Level.WARNING, "No Game found\nSwitching to Menu");
-            mainFrame.switchToMenu();
+            closeWaitingForPlayerWindow();
+            LOGGER.log(Level.WARNING, "No Game running");
         } else if (state == GameState.RUNNING) {
+            closeWaitingForPlayerWindow();
             updateGameUI();
+        } else if (state == GameState.WAITING_FOR_PLAYER) {
+            SwingUtilities.invokeLater(this::showWaitingForPlayerWindow);
         } else {
+            closeWaitingForPlayerWindow();
             displayGameEndMessage(state);
+        }
+    }
+
+    private void showWaitingForPlayerWindow() {
+        if (waitingForPlayerWindow == null) {
+            waitingForPlayerWindow = new WaitingForPlayerWindow(mainFrame, colorScheme);
+            waitingForPlayerWindow.setVisible(true);
+        }
+    }
+
+    private void closeWaitingForPlayerWindow() {
+        if (waitingForPlayerWindow != null) {
+            waitingForPlayerWindow.dispose();
+            waitingForPlayerWindow = null;
         }
     }
 

@@ -1,17 +1,17 @@
 package ptp.core.logic.game;
 
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
-import ptp.core.data.enums.GameState;
-import ptp.core.data.enums.Pieces;
-import ptp.core.data.enums.PlayerColor;
-import ptp.core.data.enums.RulesetOptions;
 import ptp.core.data.pieces.Piece;
+import ptp.core.data.pieces.Pieces;
+import ptp.core.data.player.PlayerColor;
 import ptp.core.exceptions.IllegalMoveException;
 import ptp.core.data.board.Board;
 import ptp.core.logic.moves.Move;
 import ptp.core.logic.moves.PromotionMove;
+import ptp.core.logic.observer.Observable;
 import ptp.core.logic.ruleset.Ruleset;
+import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
 import java.lang.reflect.Constructor;
@@ -30,6 +30,7 @@ public abstract class Game extends Observable {
     protected Board board;
     protected int turnCount;
     protected List<Move> moves;
+    protected GameType gameType;
 
     /**
      * Constructor for the Game class.
@@ -57,12 +58,12 @@ public abstract class Game extends Observable {
      * Moves a piece from one square to another.
      *
      * @param squareStart The starting square.
-     * @param squareEnd The ending square.
+     * @param squareEnd   The ending square.
      * @throws IllegalMoveException If the move is illegal.
      */
     public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
         Move move = new Move(toBoardSquare(squareStart), toBoardSquare(squareEnd));
-        executeMove(squareStart, squareEnd, move);
+        executeMove(move);
     }
 
     /**
@@ -118,8 +119,8 @@ public abstract class Game extends Observable {
      * @return The current game state.
      */
     public GameState getState() {
-        return ruleset.getGameState(board, moves);
-        //todo: Implement a persistent game state in Game that gets updated by the ruleset after moves if necessary
+        return gameState;
+        //todo: Update the gameState in the ruleset
     }
 
     /**
@@ -155,6 +156,10 @@ public abstract class Game extends Observable {
      */
     public abstract void startGame();
 
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
+
     /**
      * Ends the game.
      */
@@ -164,13 +169,13 @@ public abstract class Game extends Observable {
      * Promotes a piece and moves it from one square to another.
      *
      * @param squareStart The starting square.
-     * @param squareEnd The ending square.
+     * @param squareEnd   The ending square.
      * @param targetPiece The piece to promote to.
      * @throws IllegalMoveException If the move is illegal.
      */
     public void promoteMove(Square squareStart, Square squareEnd, Pieces targetPiece) throws IllegalMoveException {
         Move move = new PromotionMove(toBoardSquare(squareStart), toBoardSquare(squareEnd), getNewPiece(targetPiece, this.getCurrentPlayer()));
-        executeMove(squareStart, squareEnd, move);
+        executeMove(move);
     }
 
     /**
@@ -186,12 +191,28 @@ public abstract class Game extends Observable {
     /**
      * Executes a move.
      *
-     * @param squareStart The starting square.
-     * @param squareEnd The ending square.
      * @param move The move to execute.
      * @throws IllegalMoveException If the move is illegal.
      */
-    protected abstract void executeMove(Square squareStart, Square squareEnd, Move move) throws IllegalMoveException;
+    protected void executeMove(Move move) throws IllegalMoveException {
+        Square squareStart = move.getStart();
+        Square squareEnd = move.getEnd();
+
+        Player player = this.getCurrentPlayer();
+        Player startSquarePlayer = squareStart.isOccupiedBy();
+
+        if (ruleset.isValidSquare(squareStart)) {
+            if (squareStart.isOccupiedBy() != null && startSquarePlayer == player) {
+                if (this.getLegalSquares(squareStart).contains(squareEnd)) {
+                    board.executeMove(move);
+                    moves.add(move);
+                    turnCount++;
+                    return;
+                }
+            }
+        }
+        throw new IllegalMoveException(move);
+    }
 
     /**
      * Converts the list of moves to strings.
@@ -210,7 +231,7 @@ public abstract class Game extends Observable {
      * Creates a new piece of the given type for the given player.
      *
      * @param targetPiece The type of piece to create.
-     * @param player The player for whom the piece is created.
+     * @param player      The player for whom the piece is created.
      * @return The new piece.
      */
     private Piece getNewPiece(Pieces targetPiece, Player player) {

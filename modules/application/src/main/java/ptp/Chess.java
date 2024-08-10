@@ -1,22 +1,23 @@
 package ptp;
 
 import ptp.core.data.board.Board;
-import ptp.core.data.enums.GameState;
-import ptp.core.data.enums.Pieces;
-import ptp.core.data.enums.RulesetOptions;
+import ptp.core.logic.game.GameState;
+import ptp.core.data.pieces.Pieces;
+import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.core.exceptions.IllegalMoveException;
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
 import ptp.core.logic.game.Game;
-import ptp.core.logic.game.GameObserver;
+import ptp.core.logic.observer.GameObserver;
 import ptp.core.logic.game.OfflineGame;
 import ptp.core.logic.game.OnlineGame;
 import ptp.core.data.pieces.Piece;
 import ptp.window.MainFrame;
-import ptp.window.components.ColorScheme;
+import ptp.components.ColorScheme;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.*;
 
 import javax.swing.*;
@@ -74,9 +75,9 @@ public class Chess {
      *
      * @param online The online status of the game. 0 for offline, 1 for online.
      */
-    public void startGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
+    public void startGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings) {
         if (game == null) {
-            game = online == 1 ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName) : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+            game = online == 1 ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings) : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
             game.startGame();
             LOGGER.log(Level.INFO, "Game started");
         } else {

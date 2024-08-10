@@ -3,8 +3,9 @@ package ptp.core.data;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ptp.core.data.board.Board;
-import ptp.core.data.enums.PlayerColor;
+import ptp.core.data.player.PlayerColor;
 import ptp.core.data.pieces.Knight;
+import ptp.core.data.player.Player;
 
 public class BoardTest {
     private Board board;

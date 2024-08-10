@@ -1,9 +1,9 @@
 package ptp.core.logic.ruleset.standardChessRuleset;
 
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
-import ptp.core.data.enums.GameState;
-import ptp.core.data.enums.PlayerColor;
+import ptp.core.logic.game.GameState;
+import ptp.core.data.player.PlayerColor;
 import ptp.core.data.board.Board;
 import ptp.core.data.pieces.*;
 import ptp.core.logic.moves.Move;

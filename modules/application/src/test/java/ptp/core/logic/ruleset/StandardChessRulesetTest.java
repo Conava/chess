@@ -3,10 +3,10 @@ package ptp.core.logic.ruleset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
-import ptp.core.data.Player;
+import ptp.core.data.player.Player;
 import ptp.core.data.Square;
 import ptp.core.data.board.Board;
-import ptp.core.data.enums.PlayerColor;
+import ptp.core.data.player.PlayerColor;
 import ptp.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
 import java.util.ArrayList;
