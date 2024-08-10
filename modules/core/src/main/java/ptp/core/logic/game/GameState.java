@@ -2,6 +2,7 @@ package ptp.core.logic.game;
 
 public enum GameState {
     NO_GAME("Kein Spiel gefunden"),
+    SERVER_ERROR("Serverfehler"),
     WAITING_FOR_PLAYER("Warte auf Spieler"),
     RUNNING("Spiel läuft"),
     WHITE_WON_BY_CHECKMATE("Weiß hat durch Schachmatt gewonnen"),

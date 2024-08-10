@@ -9,6 +9,7 @@ import ptp.core.exceptions.IllegalMoveException;
 import ptp.core.logic.moves.Move;
 import ptp.core.data.io.MessageType;
 
+import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,14 +34,21 @@ public class OnlineGame extends Game {
         this.serverIP = onlineGameSettings.get("ip");
         this.serverPort = Integer.parseInt(onlineGameSettings.get("port"));
         this.joinCode = onlineGameSettings.get("joinCode");
-        startServerCommunication();
-        connectToServerGame();
+        if(startServerCommunication()) {
+            connectToServerGame();
+        }
     }
 
-    private void startServerCommunication() {
+    private boolean startServerCommunication() {
         serverTask = new ServerCommunicationTask(serverIP, serverPort, joinCode, this);
         Thread serverThread = new Thread(serverTask);
         serverThread.start();
+
+        if (!serverTask.isConnected()) {
+            gameState = GameState.SERVER_ERROR;
+            return false;
+        }
+        return true;
     }
 
     private void connectToServerGame() {

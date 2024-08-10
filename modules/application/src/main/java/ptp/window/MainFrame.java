@@ -24,7 +24,7 @@ public class MainFrame extends JFrame {
     private static final int GAME_WINDOW_HEIGHT = 800;
 
     private final ColorScheme colorScheme;
-    private ptp.window.ChessGame chessGame;
+    private ChessGame chessGame;
     private final Chess chess;
 
     /**
@@ -115,6 +115,7 @@ public class MainFrame extends JFrame {
         this.setSize(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT);
         MainMenu mainMenu = new MainMenu(this, colorScheme);
         setContentPane(mainMenu);
+        chessGame = null;
         validate();
         LOGGER.log(Level.INFO, "Loaded main menu successfully");
     }

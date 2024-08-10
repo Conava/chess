@@ -120,7 +120,6 @@ public class Chess {
      * Ends the game.
      */
     public void endGame() {
-        game.endGame();
         game = null;
     }
 

@@ -20,6 +20,7 @@ public class ServerCommunicationTask implements Runnable {
     private Socket socket;
     private PrintWriter out;
     private volatile boolean running = true;
+    private volatile boolean connected = false;
 
     public ServerCommunicationTask(String serverIP, int serverPort, String joinCode, OnlineGame onlineGame) {
         this.serverIP = serverIP;
@@ -32,6 +33,7 @@ public class ServerCommunicationTask implements Runnable {
     public void run() {
         try {
             socket = new Socket(serverIP, serverPort);
+            connected = true;
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
@@ -74,5 +76,9 @@ public class ServerCommunicationTask implements Runnable {
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to close socket", e);
         }
+    }
+
+    public boolean isConnected() {
+        return connected;
     }
 }

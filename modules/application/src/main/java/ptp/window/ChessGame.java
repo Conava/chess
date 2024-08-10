@@ -64,7 +64,7 @@ public class ChessGame extends JPanel implements GameObserver {
         LOGGER.log(Level.INFO, "GameWindow GUI initialized");
         initializeGame(online, rulesetOptions, playerWhiteName, playerBlackName, onlineGameOptions);
         LOGGER.log(Level.INFO, "Game started");
-        update();
+        SwingUtilities.invokeLater(this::update);
     }
 
     /**
@@ -155,6 +155,7 @@ public class ChessGame extends JPanel implements GameObserver {
         updateActivePlayerHighlight(chess.getCurrentPlayer());
 
         localBoard = chess.getBoard();
+        updateGameUI();
     }
 
     /**
@@ -191,8 +192,17 @@ public class ChessGame extends JPanel implements GameObserver {
         GameState state = getState();
         System.out.println("State: " + state);
 
-        if (state == GameState.NO_GAME) {
-            closeWaitingForPlayerWindow();
+        if (state == GameState.SERVER_ERROR) {
+            ConfirmDialog dialog = new ConfirmDialog(mainFrame, "Verbindung zum Server verloren\n\nZurück zum Menü?", "Serverfehler", colorScheme);
+            dialog.setVisible(true);
+            if (dialog.isConfirmed()) {
+                SwingUtilities.invokeLater(() -> {;
+                chess.endGame();
+                mainFrame.switchToMenu();
+            });
+            }
+        }
+        else if (state == GameState.NO_GAME) {
             LOGGER.log(Level.WARNING, "No Game running");
         } else if (state == GameState.RUNNING) {
             closeWaitingForPlayerWindow();
@@ -200,7 +210,6 @@ public class ChessGame extends JPanel implements GameObserver {
         } else if (state == GameState.WAITING_FOR_PLAYER) {
             SwingUtilities.invokeLater(this::showWaitingForPlayerWindow);
         } else {
-            closeWaitingForPlayerWindow();
             displayGameEndMessage(state);
         }
     }
