@@ -83,8 +83,8 @@ public class MainFrame extends JFrame {
             String port = dialog.getPort();
             String joinCode = dialog.getJoinCode();
             RulesetOptions selectedRuleset = dialog.getRulesetSelection();
-            String playerWhiteName = joinCode.isEmpty() ? "Online Gegner" : "Du";
-            String playerBlackName = joinCode.isEmpty() ? "Du" : "Online Gegner";
+            String playerWhiteName = joinCode.isEmpty() ? "Du" : "Online Gegner";
+            String playerBlackName = joinCode.isEmpty() ? "Online Gegner" : "Du";
 
             Map<String, String> onlineGameOptions = Map.of(
                     "ip", ip,
@@ -94,13 +94,15 @@ public class MainFrame extends JFrame {
 
             LOGGER.log(Level.INFO, "Switching to online game");
             this.setMinimumSize(new Dimension(GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT));
-            chessGame = new ChessGame(this, chess, colorScheme, 2, selectedRuleset, playerWhiteName, playerBlackName, onlineGameOptions);
+            chessGame = new ChessGame(this, chess, colorScheme, 1, selectedRuleset, playerWhiteName, playerBlackName, onlineGameOptions);
             setExtendedState(JFrame.MAXIMIZED_BOTH);
             setContentPane(chessGame);
             validate();
             LOGGER.log(Level.INFO, "Loaded game window successfully");
         }
-        LOGGER.log(Level.WARNING, "Switching to game aborted");
+        else {
+            LOGGER.log(Level.INFO, "Switching to game aborted");
+        }
     }
 
     /**
