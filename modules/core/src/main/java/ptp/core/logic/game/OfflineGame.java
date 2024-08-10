@@ -15,25 +15,4 @@ public class OfflineGame extends Game {
     @Override
     public void endGame() {
     }
-
-    @Override
-    protected void executeMove(Square squareStart, Square squareEnd, Move move) throws IllegalMoveException {
-        Square squareStartBoard = toBoardSquare(squareStart);
-        Square squareEndBoard = toBoardSquare(squareEnd);
-
-        Player player = this.getCurrentPlayer();
-        Player startSquarePlayer = squareStartBoard.isOccupiedBy();
-
-        if (ruleset.isValidSquare(squareStart)) {
-            if (squareStartBoard.isOccupiedBy() != null && startSquarePlayer == player) {
-                if (this.getLegalSquares(squareStartBoard).contains(squareEndBoard)) {
-                    board.executeMove(move);
-                    moves.add(move);
-                    turnCount++;
-                    return;
-                }
-            }
-        }
-        throw new IllegalMoveException(move);
-    }
 }

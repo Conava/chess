@@ -20,11 +20,10 @@ public class ServerGame extends Game{
 
     @Override
     public void endGame() {
-
     }
 
     @Override
-    protected void executeMove(Square squareStart, Square squareEnd, Move move) throws IllegalMoveException {
+    protected void executeMove(Move move) throws IllegalMoveException {
 
     }
 

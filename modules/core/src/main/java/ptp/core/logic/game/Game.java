@@ -58,12 +58,12 @@ public abstract class Game extends Observable {
      * Moves a piece from one square to another.
      *
      * @param squareStart The starting square.
-     * @param squareEnd The ending square.
+     * @param squareEnd   The ending square.
      * @throws IllegalMoveException If the move is illegal.
      */
     public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
         Move move = new Move(toBoardSquare(squareStart), toBoardSquare(squareEnd));
-        executeMove(squareStart, squareEnd, move);
+        executeMove(move);
     }
 
     /**
@@ -171,13 +171,13 @@ public abstract class Game extends Observable {
      * Promotes a piece and moves it from one square to another.
      *
      * @param squareStart The starting square.
-     * @param squareEnd The ending square.
+     * @param squareEnd   The ending square.
      * @param targetPiece The piece to promote to.
      * @throws IllegalMoveException If the move is illegal.
      */
     public void promoteMove(Square squareStart, Square squareEnd, Pieces targetPiece) throws IllegalMoveException {
         Move move = new PromotionMove(toBoardSquare(squareStart), toBoardSquare(squareEnd), getNewPiece(targetPiece, this.getCurrentPlayer()));
-        executeMove(squareStart, squareEnd, move);
+        executeMove(move);
     }
 
     /**
@@ -193,12 +193,28 @@ public abstract class Game extends Observable {
     /**
      * Executes a move.
      *
-     * @param squareStart The starting square.
-     * @param squareEnd The ending square.
      * @param move The move to execute.
      * @throws IllegalMoveException If the move is illegal.
      */
-    protected abstract void executeMove(Square squareStart, Square squareEnd, Move move) throws IllegalMoveException;
+    protected void executeMove(Move move) throws IllegalMoveException {
+        Square squareStart = move.getStart();
+        Square squareEnd = move.getEnd();
+
+        Player player = this.getCurrentPlayer();
+        Player startSquarePlayer = squareStart.isOccupiedBy();
+
+        if (ruleset.isValidSquare(squareStart)) {
+            if (squareStart.isOccupiedBy() != null && startSquarePlayer == player) {
+                if (this.getLegalSquares(squareStart).contains(squareEnd)) {
+                    board.executeMove(move);
+                    moves.add(move);
+                    turnCount++;
+                    return;
+                }
+            }
+        }
+        throw new IllegalMoveException(move);
+    }
 
     /**
      * Converts the list of moves to strings.
@@ -217,7 +233,7 @@ public abstract class Game extends Observable {
      * Creates a new piece of the given type for the given player.
      *
      * @param targetPiece The type of piece to create.
-     * @param player The player for whom the piece is created.
+     * @param player      The player for whom the piece is created.
      * @return The new piece.
      */
     private Piece getNewPiece(Pieces targetPiece, Player player) {
