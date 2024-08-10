@@ -12,6 +12,11 @@ import ptp.core.logic.ruleset.Ruleset;
 import java.util.List;
 import java.util.ArrayList;
 
+// todo: refactor the ruleset.
+//        - Operations should update the game state, it does not need to be calculated
+//        - Split in logical sections
+//        - Make it reusable for other rulesets
+//        - Implement the isCheck method to check if a player is in check
 /**
  * Standard chess ruleset.
  * Delivers the starting board and the legal moves for the pieces.

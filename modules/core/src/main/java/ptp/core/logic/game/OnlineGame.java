@@ -9,7 +9,6 @@ import ptp.core.exceptions.IllegalMoveException;
 import ptp.core.logic.moves.Move;
 import ptp.core.data.io.MessageType;
 
-import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +65,7 @@ public class OnlineGame extends Game {
     }
 
     public void handleMessage(Message message) {
+        // todo: implement message handling
         String messageString = message.content();
         switch (message.type()) {
             case JOIN_CODE:

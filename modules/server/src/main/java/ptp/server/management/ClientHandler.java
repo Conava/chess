@@ -28,6 +28,7 @@ public class ClientHandler implements Runnable {
     private PrintWriter out;
     private static final Logger logger = Logger.getLogger(ClientHandler.class.getName());
 
+    // todo: get rid of messageParser, use static methods instead
     public ClientHandler(Socket clientSocket, MessageParser messageParser, Map<Integer, GameInstance> gamesList, Map<ClientHandler, Integer> connectionsList, Semaphore gameSemaphore, AtomicInteger gameIdCounter) {
         this.clientSocket = clientSocket;
         this.messageParser = messageParser;
@@ -45,8 +46,8 @@ public class ClientHandler implements Runnable {
 
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
-                Message message = messageParser.parse(inputLine);
-                if (message.getType() == MessageType.CREATE_GAME) {
+                Message message = MessageParser.parse(inputLine);
+                if (message.type() == MessageType.CREATE_GAME) {
                     if (tryCreateGame()) {
                         sendMessage(new Message(MessageType.SUCCESS, "Game created successfully"));
                     } else {
@@ -65,7 +66,7 @@ public class ClientHandler implements Runnable {
 
     public void sendMessage(Message message) {
         if (out != null) {
-            out.println(messageParser.serialize(message));
+            out.println(MessageParser.serialize(message));
         } else {
             logger.log(Level.WARNING, "Output stream is not initialized");
         }

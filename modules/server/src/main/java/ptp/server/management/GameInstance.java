@@ -7,6 +7,7 @@ import ptp.core.logic.game.ServerGame;
 import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.core.logic.game.Game;
 
+// todo: this class has to use the ServerGame and manage it
 /**
  * The GameInstance class represents an instance of a game.
  * It manages the connection state of players and initializes the game state based on the provided ruleset.
@@ -49,4 +50,7 @@ public class GameInstance {
         return blackPlayerHandler;
     }
 
+    public void processMessage(Message message) {
+        //todo: implement message processing
+    }
 }

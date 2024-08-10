@@ -18,6 +18,7 @@ public class ServerGame extends Game{
         this.gameType = GameType.SERVER;
     }
 
+    //todo: implement server game logic
     @Override
     public void startGame() {
 

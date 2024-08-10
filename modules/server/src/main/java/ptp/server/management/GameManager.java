@@ -5,6 +5,8 @@ import ptp.core.logic.ruleset.RulesetOptions;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+// todo: implement use of this class or get rid of it
+
 /**
  * The GameManager class is responsible for managing active game instances.
  * It allows for creating new games and joining existing games using a join code.

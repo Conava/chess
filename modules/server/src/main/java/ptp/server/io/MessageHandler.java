@@ -22,10 +22,10 @@ public class MessageHandler {
             if (gameInstance != null) {
                 gameInstance.processMessage(message);
             } else {
-                // Handle case where no game exists for the client handler
+                // todo: implement handling of case where game instance is not found
             }
         } else {
-            // Handle case where client handler is not part of any game
+            // todo: implement handling of case where game id is not found
         }
     }
 }
