@@ -1,6 +1,7 @@
 package ptp.components;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -11,10 +12,12 @@ public class CustomTextField extends JTextField implements FocusListener {
     private static final int ARC_HEIGHT = 15;
     private boolean isFieldEnabled = true;
     private boolean isFieldActive = false;
+    private Color borderColor;
 
     public CustomTextField(ColorScheme colorScheme) {
         super();
         this.colorScheme = colorScheme;
+        borderColor = colorScheme.getBorderColor();
         init();
     }
 
@@ -52,7 +55,7 @@ public class CustomTextField extends JTextField implements FocusListener {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setStroke(new BasicStroke(1.2f));
-        g2.setColor(isFieldActive ? colorScheme.getAccentColor() : colorScheme.getBorderColor());
+        g2.setColor(isFieldActive ? colorScheme.getAccentColor() : borderColor);
         if (!isFieldEnabled) {
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
         }
@@ -69,6 +72,16 @@ public class CustomTextField extends JTextField implements FocusListener {
     @Override
     public void focusLost(FocusEvent e) {
         isFieldActive = false;
+        repaint();
+    }
+
+    public void setBorderColor(Color color) {
+        borderColor = color;
+        repaint();
+    }
+
+    public void resetBorderColor() {
+        borderColor = colorScheme.getBorderColor();
         repaint();
     }
 }
