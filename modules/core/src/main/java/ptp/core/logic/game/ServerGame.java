@@ -19,6 +19,11 @@ public class ServerGame extends Game{
     }
 
     @Override
+    public void startGame() {
+
+    }
+
+    @Override
     public void endGame() {
     }
 

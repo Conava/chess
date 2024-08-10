@@ -48,9 +48,11 @@ public class OnlineGame extends Game {
         if(joinCode != null && !joinCode.isEmpty()) {
             connectMessage = new Message(MessageType.JOIN_GAME, joinCode);
             localPlayerColor = PlayerColor.BLACK;
+            gameState = GameState.NO_GAME;
         } else {
             connectMessage= new Message(MessageType.CREATE_GAME, "");
             localPlayerColor = PlayerColor.WHITE;
+            gameState = GameState.WAITING_FOR_PLAYER;
         }
         sendMessageToServer(connectMessage);
     }
@@ -179,6 +181,11 @@ public class OnlineGame extends Game {
             return super.getLegalSquares(position);
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    public void startGame() {
+
     }
 
     public void backupGameState() {

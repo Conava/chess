@@ -119,8 +119,8 @@ public abstract class Game extends Observable {
      * @return The current game state.
      */
     public GameState getState() {
-        return ruleset.getGameState(board, moves);
-        //todo: Implement a persistent game state in Game that gets updated by the ruleset after moves if necessary
+        return gameState;
+        //todo: Update the gameState in the ruleset
     }
 
     /**
@@ -154,9 +154,7 @@ public abstract class Game extends Observable {
     /**
      * Starts the game.
      */
-    public void startGame() {
-        gameState = GameState.RUNNING;
-    }
+    public abstract void startGame();
 
     public void setGameState(GameState gameState) {
         this.gameState = gameState;

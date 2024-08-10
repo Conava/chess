@@ -13,6 +13,11 @@ public class OfflineGame extends Game {
     }
 
     @Override
+    public void startGame() {
+
+    }
+
+    @Override
     public void endGame() {
     }
 }

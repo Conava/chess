@@ -32,6 +32,7 @@ public class ChessGame extends JPanel implements GameObserver {
     private final MainFrame mainFrame;
     private final Chess chess;
     private final ColorScheme colorScheme;
+    private WaitingForPlayerWindow waitingForPlayerWindow;
 
     private TopPanel topPanel;
     private BottomPanel bottomPanel;
@@ -188,14 +189,33 @@ public class ChessGame extends JPanel implements GameObserver {
     public void update() {
         LOGGER.log(Level.INFO, "Update Method called");
         GameState state = getState();
+        System.out.println("State: " + state);
 
         if (state == GameState.NO_GAME) {
-            LOGGER.log(Level.WARNING, "No Game found\nSwitching to Menu");
-            mainFrame.switchToMenu();
+            closeWaitingForPlayerWindow();
+            LOGGER.log(Level.WARNING, "No Game running");
         } else if (state == GameState.RUNNING) {
+            closeWaitingForPlayerWindow();
             updateGameUI();
+        } else if (state == GameState.WAITING_FOR_PLAYER) {
+            SwingUtilities.invokeLater(this::showWaitingForPlayerWindow);
         } else {
+            closeWaitingForPlayerWindow();
             displayGameEndMessage(state);
+        }
+    }
+
+    private void showWaitingForPlayerWindow() {
+        if (waitingForPlayerWindow == null) {
+            waitingForPlayerWindow = new WaitingForPlayerWindow(mainFrame, colorScheme);
+            waitingForPlayerWindow.setVisible(true);
+        }
+    }
+
+    private void closeWaitingForPlayerWindow() {
+        if (waitingForPlayerWindow != null) {
+            waitingForPlayerWindow.dispose();
+            waitingForPlayerWindow = null;
         }
     }
 
