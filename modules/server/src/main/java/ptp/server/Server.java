@@ -12,9 +12,8 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
+import java.util.Set;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,7 +27,7 @@ public class Server {
     private static final int MAX_GAMES = 40;
     private static final Semaphore gameSemaphore = new Semaphore(MAX_GAMES);
     private static final Map<Integer, GameInstance> gamesList = new HashMap<>();
-    private static final Map<ClientHandler, Integer> connectionsList = new HashMap<>();
+    private static final Set<ClientHandler> connectionsList = new CopyOnWriteArraySet<>();
     private static final AtomicInteger gameIdCounter = new AtomicInteger(0);
     private static volatile boolean running = true;
     private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
@@ -51,7 +50,6 @@ public class Server {
         }
 
         ExecutorService executorService = Executors.newCachedThreadPool();
-        MessageParser messageParser = new MessageParser();
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             LOGGER.info("Server started on port " + port);
@@ -73,7 +71,7 @@ public class Server {
             while (running) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    executorService.execute(new ClientHandler(clientSocket, gamesList, connectionsList, gameSemaphore, gameIdCounter));
+                    executorService.execute(new ClientHandler(clientSocket, gamesList, gameSemaphore, gameIdCounter));
                 } catch (IOException e) {
                     if (running) {
                         LOGGER.log(Level.SEVERE, "Error accepting client connection", e);
@@ -113,7 +111,7 @@ public class Server {
     private static void stopServer(ExecutorService executorService, ServerSocket serverSocket) {
         running = false;
         LOGGER.info("Stopping server...");
-        for (ClientHandler clientHandler : connectionsList.keySet()) {
+        for (ClientHandler clientHandler : connectionsList) {
             clientHandler.sendMessage(new Message(MessageType.ERROR, "Server is shutting down"));
             clientHandler.releaseGameSlot();
         }
@@ -124,5 +122,13 @@ public class Server {
         }
         executorService.shutdown();
         LOGGER.info("Server stopped");
+    }
+
+    public static void addClientHandler(ClientHandler clientHandler) {
+        connectionsList.add(clientHandler);
+    }
+
+    public static void removeClientHandler(ClientHandler clientHandler) {
+        connectionsList.remove(clientHandler);
     }
 }

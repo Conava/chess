@@ -15,17 +15,18 @@ import ptp.core.logic.game.Game;
 public class GameInstance {
     private Game game;
     private RulesetOptions ruleset;
+    private final int gameId;
     private ClientHandler whitePlayerHandler;
     private ClientHandler blackPlayerHandler;
 
     /**
      * Constructs a GameInstance with the specified ruleset.
      */
-    public GameInstance() {
+    public GameInstance(int gameId) {
         game = null;
         whitePlayerHandler = null;
         blackPlayerHandler = null;
-
+        this.gameId = gameId;
     }
 
     public void startGame(RulesetOptions ruleset) {
@@ -55,5 +56,9 @@ public class GameInstance {
 
     public void processMessage(Message message) {
         //todo: implement message processing
+    }
+
+    public int getGameId() {
+        return gameId;
     }
 }

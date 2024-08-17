@@ -7,25 +7,11 @@ import ptp.server.management.GameInstance;
 import java.util.Map;
 
 public class MessageHandler {
-    private final Map<Integer, GameInstance> gamesList;
-    private final Map<ClientHandler, Integer> connectionsList;
 
-    public MessageHandler(Map<Integer, GameInstance> gamesList, Map<ClientHandler, Integer> connectionsList) {
-        this.gamesList = gamesList;
-        this.connectionsList = connectionsList;
+    public MessageHandler() {
     }
 
-    public void handleMessage(ClientHandler clientHandler, Message message) {
-        Integer gameId = connectionsList.get(clientHandler);
-        if (gameId != null) {
-            GameInstance gameInstance = gamesList.get(gameId);
-            if (gameInstance != null) {
-                gameInstance.processMessage(message);
-            } else {
-                // todo: implement handling of case where game instance is not found
-            }
-        } else {
-            // todo: implement handling of case where game id is not found
-        }
+    public void handleMessage(GameInstance gameInstance, Message message) {
+           gameInstance.processMessage(message);
     }
 }

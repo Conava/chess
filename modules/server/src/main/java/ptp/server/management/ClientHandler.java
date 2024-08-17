@@ -2,6 +2,7 @@ package ptp.server.management;
 
 import ptp.core.data.io.Message;
 import ptp.core.data.io.MessageType;
+import ptp.server.Server;
 import ptp.server.io.MessageHandler;
 import ptp.core.data.io.MessageParser;
 
@@ -21,24 +22,22 @@ public class ClientHandler implements Runnable {
     private final MessageHandler messageHandler;
     private final Semaphore gameSemaphore;
     private final Map<Integer, GameInstance> gamesList;
-    private final Map<ClientHandler, Integer> connectionsList;
     private final AtomicInteger gameIdCounter;
     private PrintWriter out;
     private static final Logger logger = Logger.getLogger(ClientHandler.class.getName());
     private GameInstance gameInstance;
 
-    // todo: get rid of messageParser, use static methods instead
-    public ClientHandler(Socket clientSocket, Map<Integer, GameInstance> gamesList, Map<ClientHandler, Integer> connectionsList, Semaphore gameSemaphore, AtomicInteger gameIdCounter) {
+    public ClientHandler(Socket clientSocket, Map<Integer, GameInstance> gamesList, Semaphore gameSemaphore, AtomicInteger gameIdCounter) {
         this.clientSocket = clientSocket;
-        this.messageHandler = new MessageHandler(gamesList, connectionsList);
+        this.messageHandler = new MessageHandler();
         this.gameSemaphore = gameSemaphore;
         this.gamesList = gamesList;
-        this.connectionsList = connectionsList;
         this.gameIdCounter = gameIdCounter;
     }
 
     @Override
     public void run() {
+        Server.addClientHandler(this);
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
@@ -50,13 +49,14 @@ public class ClientHandler implements Runnable {
                 } else if (message.type() == MessageType.JOIN_GAME) {
                     joinGame(message);
                 } else {
-                    messageHandler.handleMessage(this, message);
+                    messageHandler.handleMessage(gameInstance, message);
                 }
             }
         } catch (
                 IOException e) {
             logger.log(Level.SEVERE, "Error handling client connection", e);
         } finally {
+            Server.removeClientHandler(this);
             releaseGameSlot();
         }
     }
@@ -72,11 +72,9 @@ public class ClientHandler implements Runnable {
     private void createGame(Message message) {
         if (gameSemaphore.tryAcquire()) {
             int gameId = gameIdCounter.incrementAndGet();
-            gameInstance = new GameInstance();
+            gameInstance = new GameInstance(gameId);
             gameInstance.connectPlayer(this, message);
-            gamesList.put(gameId, gameInstance);
-            connectionsList.put(this, gameId);
-        }
+            gamesList.put(gameId, gameInstance);}
     }
 
     private void joinGame(Message message) {
@@ -84,7 +82,6 @@ public class ClientHandler implements Runnable {
         GameInstance gameInstance = gamesList.get(gameId);
         if (gameInstance != null) {
             gameInstance.connectPlayer(this, message);
-            connectionsList.put(this, gameId);
         } else {
             sendMessage(new Message(MessageType.ERROR, "Invalid join code"));
         }
@@ -92,10 +89,8 @@ public class ClientHandler implements Runnable {
     }
 
     public void releaseGameSlot() {
-        Integer gameId = connectionsList.remove(this);
-        if (gameId != null) {
-            gamesList.remove(gameId);
-            gameSemaphore.release();
-        }
+        Integer gameId = gameInstance.getGameId();
+        gamesList.remove(gameId);
+        gameSemaphore.release();
     }
 }
