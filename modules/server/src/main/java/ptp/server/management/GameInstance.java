@@ -14,32 +14,35 @@ import ptp.core.logic.game.Game;
  */
 public class GameInstance {
     private Game game;
-
+    private RulesetOptions ruleset;
     private ClientHandler whitePlayerHandler;
     private ClientHandler blackPlayerHandler;
 
     /**
      * Constructs a GameInstance with the specified ruleset.
      */
-    public GameInstance() {}
+    public GameInstance() {
+        game = null;
+        whitePlayerHandler = null;
+        blackPlayerHandler = null;
+
+    }
 
     public void startGame(RulesetOptions ruleset) {
         game = new ServerGame(ruleset);
     }
 
-    public synchronized int connectPlayer(ClientHandler clientHandler) {
+    public synchronized void connectPlayer(ClientHandler clientHandler, Message message) {
         if (whitePlayerHandler == null) {
             whitePlayerHandler = clientHandler;
-            clientHandler.sendMessage(new Message(MessageType.SUCCESS, "Player=White"));
+            clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=white"));
             game.setGameState(GameState.WAITING_FOR_PLAYER);
-            return 1;
+            ruleset = RulesetOptions.valueOf(message.getParameterValue("ruleset"));
         } else if (blackPlayerHandler == null) {
             blackPlayerHandler = clientHandler;
-            clientHandler.sendMessage(new Message(MessageType.SUCCESS, "Player=Black"));
-            game.startGame();
-            return 2;
+            clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=plack"));
+            startGame(ruleset);
         }
-        return 0;
     }
 
     public ClientHandler getWhitePlayerHandler() {

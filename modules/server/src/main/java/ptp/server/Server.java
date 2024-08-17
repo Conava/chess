@@ -73,7 +73,7 @@ public class Server {
             while (running) {
                 try {
                     Socket clientSocket = serverSocket.accept();
-                    executorService.execute(new ClientHandler(clientSocket, messageParser, gamesList, connectionsList, gameSemaphore, gameIdCounter));
+                    executorService.execute(new ClientHandler(clientSocket, gamesList, connectionsList, gameSemaphore, gameIdCounter));
                 } catch (IOException e) {
                     if (running) {
                         LOGGER.log(Level.SEVERE, "Error accepting client connection", e);
