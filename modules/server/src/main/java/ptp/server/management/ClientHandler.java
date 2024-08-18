@@ -49,7 +49,7 @@ public class ClientHandler implements Runnable {
                 } else if (message.type() == MessageType.JOIN_GAME) {
                     joinGame(message);
                 } else {
-                    messageHandler.handleMessage(gameInstance, message);
+                    messageHandler.handleMessage(gameInstance, message, this);
                 }
             }
         } catch (

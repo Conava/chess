@@ -71,17 +71,11 @@ public class OnlineGame extends Game {
             case JOIN_CODE:
                 handleJoinCode(messageString);
                 break;
-            case MOVE_FEEDBACK:
-                handleMoveFeedback(messageString);
-                break;
-            case MOVE_FROM_REMOTE:
-                handleMoveFromRemote(messageString);
+            case MOVE:
+                handleMove(messageString);
                 break;
             case GAME_STATUS:
                 handleGameStatus(messageString);
-                break;
-            case GAME_END:
-                handleGameEnd(messageString);
                 break;
             case SUCCESS:
                 handleSuccess(messageString);
@@ -102,26 +96,8 @@ public class OnlineGame extends Game {
         System.out.println("Join code received: " + joinCode + " - Please share this code with your friend to join the game");
     }
 
-    private void handleMoveFeedback(String message) {
-        LOGGER.log(Level.INFO, "Move feedback received: " + message);
-        if (message.equals("ILLEGAL")) {
-            LOGGER.log(Level.WARNING, "Move illegal, restoring game state");
-            restoreGameState();
-            notifyObservers();
-        }
-        else if (message.equals("SUCCESS")) {
-            LOGGER.log(Level.INFO, "Move successful");
-        }
-    }
+    private void handleMove(String message) {
 
-    private void handleMoveFromRemote(String message) {
-        try {
-            Move move = Move.fromString(message, localPlayerColor == PlayerColor.WHITE ? player0 : player1);
-            executeMoveFromRemote(move);
-        } catch (IllegalMoveException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                 InstantiationException | IllegalAccessException e) {
-            LOGGER.log(Level.SEVERE, "Illegal move from remote: " + message, e);
-        }
     }
 
     private void handleGameStatus(String message) {
@@ -155,7 +131,7 @@ public class OnlineGame extends Game {
     @Override
     public void endGame() {
         if (serverTask != null) {
-            Message endGameMessage = new Message(MessageType.GAME_END, "");
+            Message endGameMessage = new Message(MessageType.GAME_STATUS, "gameState=" + gameState);
             sendMessageToServer(endGameMessage);
             serverTask.closeConnection();
         }
@@ -170,7 +146,7 @@ public class OnlineGame extends Game {
         if(localPlayerColor == PlayerColor.WHITE && getCurrentPlayer() == player0 || localPlayerColor == PlayerColor.BLACK && getCurrentPlayer() == player1) {
             backupGameState();
             super.executeMove(move);
-            Message moveMessage = new Message(MessageType.SUBMIT_MOVE, move.toString());
+            Message moveMessage = new Message(MessageType.MOVE, move.toString());
             sendMessageToServer(moveMessage);
         } else {
             throw new IllegalMoveException(move);
