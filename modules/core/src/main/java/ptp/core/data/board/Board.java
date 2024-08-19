@@ -42,6 +42,24 @@ public class Board {
     }
 
     /**
+     * Returns the amount of rows (x)
+     *
+     * @return the amount of rows
+     */
+    public int getRowCount() {
+        return board[0].length;
+    }
+
+    /**
+     * Returns the amount of columns (y)
+     *
+     * @return the amount of columns
+     */
+    public int getColCount() {
+        return board.length;
+    }
+
+    /**
      * Returns the square at the specified coordinates.
      * @param y The y-coordinate of the square.
      * @param x The x-coordinate of the square.
