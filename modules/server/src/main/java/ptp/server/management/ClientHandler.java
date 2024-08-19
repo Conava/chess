@@ -3,7 +3,6 @@ package ptp.server.management;
 import ptp.core.data.io.Message;
 import ptp.core.data.io.MessageType;
 import ptp.server.Server;
-import ptp.server.io.MessageHandler;
 import ptp.core.data.io.MessageParser;
 
 import java.io.BufferedReader;
@@ -19,7 +18,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
-    private final MessageHandler messageHandler;
     private final Semaphore gameSemaphore;
     private final Map<Integer, GameInstance> gamesList;
     private final AtomicInteger gameIdCounter;
@@ -29,7 +27,6 @@ public class ClientHandler implements Runnable {
 
     public ClientHandler(Socket clientSocket, Map<Integer, GameInstance> gamesList, Semaphore gameSemaphore, AtomicInteger gameIdCounter) {
         this.clientSocket = clientSocket;
-        this.messageHandler = new MessageHandler();
         this.gameSemaphore = gameSemaphore;
         this.gamesList = gamesList;
         this.gameIdCounter = gameIdCounter;
@@ -49,7 +46,7 @@ public class ClientHandler implements Runnable {
                 } else if (message.type() == MessageType.JOIN_GAME) {
                     joinGame(message);
                 } else {
-                    messageHandler.handleMessage(gameInstance, message, this);
+                    gameInstance.processMessage(this, message);
                 }
             }
         } catch (
