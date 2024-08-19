@@ -8,6 +8,10 @@ import ptp.core.data.board.Board;
 import ptp.core.data.pieces.*;
 import ptp.core.logic.moves.Move;
 import ptp.core.logic.ruleset.Ruleset;
+import ptp.core.logic.ruleset.possibleMoves.PossibleStandardBishopMoves;
+import ptp.core.logic.ruleset.possibleMoves.PossibleStandardKnightMoves;
+import ptp.core.logic.ruleset.possibleMoves.PossibleStandardQueenMoves;
+import ptp.core.logic.ruleset.possibleMoves.PossibleStandardRookMoves;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -17,6 +21,7 @@ import java.util.ArrayList;
 //        - Split in logical sections
 //        - Make it reusable for other rulesets
 //        - Implement the isCheck method to check if a player is in check
+
 /**
  * Standard chess ruleset.
  * Delivers the starting board and the legal moves for the pieces.
@@ -168,197 +173,26 @@ public class StandardChessRuleset implements Ruleset {
     private List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) {
         List<Square> legalMoves;
         if (square.getPiece().getClass().equals(Rook.class)) {
-            legalMoves = getLegalSquaresRook(square, board);
+            PossibleStandardRookMoves rookMoves = new PossibleStandardRookMoves(square, board);
+            return rookMoves.getPossibleSquares();
         } else if (square.getPiece().getClass().equals(Knight.class)) {
-            legalMoves = getLegalSquaresKnight(square, board);
+            PossibleStandardKnightMoves knightMoves = new PossibleStandardKnightMoves(square, board);
+            return knightMoves.getPossibleSquares();
         } else if (square.getPiece().getClass().equals(Bishop.class)) {
-            legalMoves = getLegalSquaresBishop(square, board);
+            PossibleStandardBishopMoves bishopMoves = new PossibleStandardBishopMoves(square, board);
+            return bishopMoves.getPossibleSquares();
         } else if (square.getPiece().getClass().equals(Queen.class)) {
-            legalMoves = getLegalSquaresBishop(square, board);
-            legalMoves.addAll(getLegalSquaresRook(square, board));
+            PossibleStandardQueenMoves queenMoves = new PossibleStandardQueenMoves(square, board);
+            return queenMoves.getPossibleSquares();
         } else if (square.getPiece().getClass().equals(King.class)) {
             legalMoves = getLegalSquaresKing(square, board);
         } else if (square.getPiece().getClass().equals(Pawn.class)) {
             legalMoves = getLegalSquaresPawn(square, board, moves);
-        } else { //space is empty
-            legalMoves = new ArrayList<>();
+        } else {
+            return new ArrayList<>();
         }
         //@TODO: Check
         //@TODO TTests
-        return legalMoves;
-    }
-
-    /**
-     * Returns legal moves for the rook.
-     */
-    private List<Square> getLegalSquaresRook(Square square, Board board) {
-        Player owner = square.isOccupiedBy();
-        List<Square> legalMoves = new ArrayList<>();
-        Square possibleSquare;
-        //checks column down
-        for (int y = square.getY() - 1; y >= 0; y--) {
-            if (isInBoundsY(y) && isInBoundsX(square.getX())) {
-                possibleSquare = board.getSquare(y, square.getX());
-                if (possibleSquare.isEmpty()) {
-                    legalMoves.add(possibleSquare);
-                } else if (isCapture(possibleSquare, owner)) {
-                    legalMoves.add(possibleSquare);
-                    if (isCapturePiece(possibleSquare, owner) != null &&
-                            isCapturePiece(possibleSquare, owner) instanceof King) {
-                        isCheck = true;
-                    }
-                    break;
-                } else break;
-            }
-        }
-        //checks column up
-        for (int y = square.getY() + 1; y < 8; y++) {
-            if (isInBoundsY(y) && isInBoundsX(square.getX())) {
-                possibleSquare = board.getSquare(y, square.getX());
-                if (possibleSquare.isEmpty()) {
-                    legalMoves.add(possibleSquare);
-                } else if (isCapture(possibleSquare, owner)) {
-                    legalMoves.add(possibleSquare);
-                    if (isCapturePiece(possibleSquare, owner) != null &&
-                            isCapturePiece(possibleSquare, owner) instanceof King) {
-                        isCheck = true;
-                    }
-                    break;
-                } else break;
-            }
-        }
-        //checks row left
-        for (int x = square.getX() - 1; x >= 0; x--) {
-            if (isInBoundsY(square.getY()) && isInBoundsX(x)) {
-                possibleSquare = board.getSquare(square.getY(), x);
-                if (possibleSquare.isEmpty()) {
-                    legalMoves.add(possibleSquare);
-                } else if (isCapture(possibleSquare, owner)) {
-                    legalMoves.add(possibleSquare);
-                    if (isCapturePiece(possibleSquare, owner) != null &&
-                            isCapturePiece(possibleSquare, owner) instanceof King) {
-                        isCheck = true;
-                    }
-                    break;
-                } else break;
-            }
-        }
-        //checks row right
-        for (int x = square.getX() + 1; x < 8; x++) {
-            if (isInBoundsY(square.getY()) && isInBoundsX(x)) {
-                possibleSquare = board.getSquare(square.getY(), x);
-                if (possibleSquare.isEmpty()) {
-                    legalMoves.add(possibleSquare);
-                } else if (isCapture(possibleSquare, owner)) {
-                    legalMoves.add(possibleSquare);
-                    if (isCapturePiece(possibleSquare, owner) != null &&
-                            isCapturePiece(possibleSquare, owner) instanceof King) {
-                        isCheck = true;
-                    }
-                    break;
-                } else break;
-            }
-        }
-        return legalMoves;
-    }
-
-    /**
-     * Returns legal moves for the bishop.
-     */
-    private List<Square> getLegalSquaresBishop(Square square, Board board) {
-        Player owner = square.isOccupiedBy();
-        List<Square> legalMoves = new ArrayList<>();
-        Square possibleSquare;
-        //checks diagonal down left
-        for (int i = 1; i < 8; i++) {
-            if (isInBoundsY(square.getY() - i) && isInBoundsX(square.getX() - i)) {
-                possibleSquare = board.getSquare(square.getY() - i, square.getX() - i);
-                if (possibleSquare.isEmpty()) {
-                    legalMoves.add(possibleSquare);
-                } else if (isCapture(possibleSquare, owner)) {
-                    legalMoves.add(possibleSquare);
-                    if (isCapturePiece(possibleSquare, owner) != null &&
-                            isCapturePiece(possibleSquare, owner) instanceof King) {
-                        isCheck = true;
-                    }
-                    break;
-                } else break;
-            }
-        }
-        //checks diagonal up left
-        for (int i = 1; i < 8; i++) {
-            if (isInBoundsY(square.getY() + i) && isInBoundsX(square.getX() - i)) {
-                possibleSquare = board.getSquare(square.getY() + i, square.getX() - i);
-                if (possibleSquare.isEmpty()) {
-                    legalMoves.add(possibleSquare);
-                } else if (isCapture(possibleSquare, owner)) {
-                    legalMoves.add(possibleSquare);
-                    if (isCapturePiece(possibleSquare, owner) != null &&
-                            isCapturePiece(possibleSquare, owner) instanceof King) {
-                        isCheck = true;
-                    }
-                    break;
-                } else break;
-            }
-        }
-        //checks diagonal down right
-        for (int i = 1; i < 8; i++) {
-            if (isInBoundsY(square.getY() - i) && isInBoundsX(square.getX() + i)) {
-                possibleSquare = board.getSquare(square.getY() - i, square.getX() + i);
-                if (possibleSquare.isEmpty()) {
-                    legalMoves.add(possibleSquare);
-                } else if (isCapture(possibleSquare, owner)) {
-                    legalMoves.add(possibleSquare);
-                    if (isCapturePiece(possibleSquare, owner) != null &&
-                            isCapturePiece(possibleSquare, owner) instanceof King) {
-                        isCheck = true;
-                    }
-                    break;
-                } else break;
-            }
-        }
-        //checks diagonal up right
-        for (int i = 1; i < 8; i++) {
-            if (isInBoundsY(square.getY() + i) && isInBoundsX(square.getX() + i)) {
-                possibleSquare = board.getSquare(square.getY() + i, square.getX() + i);
-                if (possibleSquare.isEmpty()) {
-                    legalMoves.add(possibleSquare);
-                } else if (isCapture(possibleSquare, owner)) {
-                    legalMoves.add(possibleSquare);
-                    if (isCapturePiece(possibleSquare, owner) != null &&
-                            isCapturePiece(possibleSquare, owner) instanceof King) {
-                        isCheck = true;
-                    }
-                    break;
-                } else break;
-            }
-        }
-
-        return legalMoves;
-    }
-
-    /**
-     * Returns legal moves for the knight.
-     */
-    private List<Square> getLegalSquaresKnight(Square square, Board board) {
-        Player owner = square.isOccupiedBy();
-        List<Square> legalMoves = new ArrayList<>();
-
-        /*
-            -2 / +1
-            -2 / -1
-            -1 / +2
-            -1 / -2
-            +1 / +2
-            +1 / -2
-            +2 / +1
-            +2 / -1
-         */
-        int[] arrY = {-2, -2, -1, -1, +1, +1, +2, +2};
-        int[] arrX = {+1, -1, +2, -2, +2, -2, +1, -1};
-
-        tryArrayMoves(square, board, owner, legalMoves, arrY, arrX);
-
         return legalMoves;
     }
 
@@ -577,17 +411,6 @@ public class StandardChessRuleset implements Ruleset {
         return canCastle;
     }
 
-    private boolean getLegalSquaresBeamHelp(Square square, Player owner, List<Square> legalMoves, Square possibleSquare) {
-        if (isValidSquare(possibleSquare) && possibleSquare.isOccupiedBy() == null) {
-            legalMoves.add(possibleSquare);
-            if (isCapturePiece(possibleSquare, owner) != null &&
-                    isCapturePiece(possibleSquare, owner) instanceof King) {
-                isCheck = true;
-            }
-            return false;
-        } else return true;
-    }
-
     private void tryArrayMoves(Square square, Board board, Player owner, List<Square> legalMoves, int[] arrY, int[] arrX) {
         for (int i = 0; i < 8; i++) {
             if ((square.getY() + arrY[i]) < 0 || (square.getY() + arrY[i]) > 7) {
@@ -633,33 +456,33 @@ public class StandardChessRuleset implements Ruleset {
     }
 
 
-     public GameState getGameState(Board board, List<Move> moves) {
+    public GameState getGameState(Board board, List<Move> moves) {
         boolean kingWhiteExists = false;
         boolean kingBlackExists = false;
         Piece tempPiece;
-         for (int y = 0; y < 8; y++) {
-             for (int x = 0; x < 8; x++) {
-                 tempPiece = board.getSquare(x, y).getPiece();
-                 if (tempPiece == null || !(tempPiece instanceof King)) {
-                     continue;
-                 } else if (tempPiece.getPlayer().color() == PlayerColor.WHITE){
-                     kingWhiteExists = true;
-                 } else if (tempPiece.getPlayer().color() == PlayerColor.BLACK){
-                     kingBlackExists = true;
-                 } else {
-                     //this should never be reached
-                     return GameState.NO_GAME;
-                 }
-             }
-         }
-         if (kingWhiteExists && kingBlackExists) {
-             return GameState.RUNNING;
-         } else if (kingWhiteExists) { // no black king
-             return GameState.WHITE_WON_BY_CHECKMATE;
-         } else if (kingBlackExists) {
-             return GameState.BLACK_WON_BY_CHECKMATE;
-         } else{
-             return GameState.DRAW_BY_INSUFFICIENT_MATERIAL;
-         }
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                tempPiece = board.getSquare(x, y).getPiece();
+                if (tempPiece == null || !(tempPiece instanceof King)) {
+                    continue;
+                } else if (tempPiece.getPlayer().color() == PlayerColor.WHITE) {
+                    kingWhiteExists = true;
+                } else if (tempPiece.getPlayer().color() == PlayerColor.BLACK) {
+                    kingBlackExists = true;
+                } else {
+                    //this should never be reached
+                    return GameState.NO_GAME;
+                }
+            }
+        }
+        if (kingWhiteExists && kingBlackExists) {
+            return GameState.RUNNING;
+        } else if (kingWhiteExists) { // no black king
+            return GameState.WHITE_WON_BY_CHECKMATE;
+        } else if (kingBlackExists) {
+            return GameState.BLACK_WON_BY_CHECKMATE;
+        } else {
+            return GameState.DRAW_BY_INSUFFICIENT_MATERIAL;
+        }
     }
 }

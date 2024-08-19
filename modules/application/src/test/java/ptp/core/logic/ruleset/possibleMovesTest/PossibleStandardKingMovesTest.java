@@ -7,13 +7,13 @@ import ptp.core.data.board.Board;
 import ptp.core.data.pieces.*;
 import ptp.core.data.player.Player;
 import ptp.core.data.player.PlayerColor;
-import ptp.core.logic.ruleset.possibleMoves.PossibleStandardQueenMoves;
+import ptp.core.logic.ruleset.possibleMoves.PossibleStandardKingMoves;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PossibleStandardQueenMovesTest {
+public class PossibleStandardKingMovesTest {
     @BeforeEach
     public void setUp() {
     }
@@ -59,14 +59,12 @@ public class PossibleStandardQueenMovesTest {
 
         List<Square> possibleSquares;
 
-        PossibleStandardQueenMoves movesQB = new PossibleStandardQueenMoves(startBoard[7][0], board);
-        possibleSquares = movesQB.getPossibleSquares();
+        PossibleStandardKingMoves movesKB = new PossibleStandardKingMoves(startBoard[7][6], board);
+        possibleSquares = movesKB.getPossibleSquares();
 
         assertFalse(possibleSquares.isEmpty());
-        assertTrue(possibleSquares.contains(startBoard[4][0]));
-        assertTrue(possibleSquares.contains(startBoard[7][3]));
-        assertTrue(possibleSquares.contains(startBoard[3][4]));
-        assertFalse(possibleSquares.contains(startBoard[2][5]));
-        assertEquals(10, possibleSquares.size());
+        assertTrue(possibleSquares.contains(startBoard[7][7]));
+        assertFalse(possibleSquares.contains(startBoard[6][6]));
+        assertEquals(1, possibleSquares.size());
     }
 }

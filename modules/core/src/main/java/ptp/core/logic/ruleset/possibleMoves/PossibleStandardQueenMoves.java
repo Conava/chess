@@ -26,7 +26,7 @@ public class PossibleStandardQueenMoves {
      *
      * @return List of potentially possible moves
      */
-    public List<Square> getLegalSquares() {
+    public List<Square> getPossibleSquares() {
         PossibleStandardRookMoves rookMoves = new PossibleStandardRookMoves(square, board);
         PossibleStandardBishopMoves bishopMoves = new PossibleStandardBishopMoves(square, board);
 
