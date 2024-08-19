@@ -38,7 +38,7 @@ public class PossibleStandardRookMoves {
             possibleSquare = board.getSquare(y, square.getX());
             if (possibleSquare.isEmpty()) {
                 possibleMoves.add(possibleSquare);
-            } else if (isSquareSelfCapture(possibleSquare, board, owner)) {
+            } else if (isSquareSelfCapture(possibleSquare, owner)) {
                 break;
             } else {
                 possibleMoves.add(possibleSquare);
@@ -51,7 +51,7 @@ public class PossibleStandardRookMoves {
             possibleSquare = board.getSquare(square.getY(), x);
             if (possibleSquare.isEmpty()) {
                 possibleMoves.add(possibleSquare);
-            } else if (isSquareSelfCapture(possibleSquare, board, owner)) {
+            } else if (isSquareSelfCapture(possibleSquare, owner)) {
                 break;
             } else {
                 possibleMoves.add(possibleSquare);
@@ -64,7 +64,7 @@ public class PossibleStandardRookMoves {
             possibleSquare = board.getSquare(y, square.getX());
             if (possibleSquare.isEmpty()) {
                 possibleMoves.add(possibleSquare);
-            } else if (isSquareSelfCapture(possibleSquare, board, owner)) {
+            } else if (isSquareSelfCapture(possibleSquare, owner)) {
                 break;
             } else {
                 possibleMoves.add(possibleSquare);
@@ -77,7 +77,7 @@ public class PossibleStandardRookMoves {
             possibleSquare = board.getSquare(square.getY(), x);
             if (possibleSquare.isEmpty()) {
                 possibleMoves.add(possibleSquare);
-            } else if (isSquareSelfCapture(possibleSquare, board, owner)) {
+            } else if (isSquareSelfCapture(possibleSquare, owner)) {
                 break;
             } else {
                 possibleMoves.add(possibleSquare);
@@ -92,11 +92,10 @@ public class PossibleStandardRookMoves {
      * Checks if square is legal to move to
      *
      * @param square Square to check
-     * @param board  Board to check on
      * @param owner  owner of the piece
      * @return ?isLegal
      */
-    private boolean isSquareSelfCapture(Square square, Board board, Player owner) {
+    private boolean isSquareSelfCapture(Square square, Player owner) {
         if (square.isEmpty()) {
             return false;
         }

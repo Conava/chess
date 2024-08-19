@@ -317,7 +317,7 @@ public class StandardChessRuleset implements Ruleset {
                 } else break;
             }
         }
-        //checks diagonal down left
+        //checks diagonal up right
         for (int i = 1; i < 8; i++) {
             if (isInBoundsY(square.getY() + i) && isInBoundsX(square.getX() + i)) {
                 possibleSquare = board.getSquare(square.getY() + i, square.getX() + i);
