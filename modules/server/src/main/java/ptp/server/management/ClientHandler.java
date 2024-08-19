@@ -2,6 +2,7 @@ package ptp.server.management;
 
 import ptp.core.data.io.Message;
 import ptp.core.data.io.MessageType;
+import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.server.Server;
 import ptp.core.data.io.MessageParser;
 
@@ -17,12 +18,12 @@ import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ClientHandler implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
     private final Socket clientSocket;
     private final Semaphore gameSemaphore;
     private final Map<Integer, GameInstance> gamesList;
     private final AtomicInteger gameIdCounter;
     private PrintWriter out;
-    private static final Logger logger = Logger.getLogger(ClientHandler.class.getName());
     private GameInstance gameInstance;
 
     public ClientHandler(Socket clientSocket, Map<Integer, GameInstance> gamesList, Semaphore gameSemaphore, AtomicInteger gameIdCounter) {
@@ -34,13 +35,14 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
+        LOGGER.info("Client connected: " + clientSocket.getInetAddress());
         Server.addClientHandler(this);
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
-
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
                 Message message = MessageParser.parse(inputLine);
+                LOGGER.info("Received message: " + message.type() + "\n" + message.content());
                 if (message.type() == MessageType.CREATE_GAME) {
                     createGame(message);
                 } else if (message.type() == MessageType.JOIN_GAME) {
@@ -49,10 +51,12 @@ public class ClientHandler implements Runnable {
                     gameInstance.processMessage(this, message);
                 }
             }
+            LOGGER.info("Connection closed by client " + clientSocket.getInetAddress());
         } catch (
                 IOException e) {
-            logger.log(Level.SEVERE, "Error handling client connection", e);
+            LOGGER.log(Level.SEVERE, "Error handling client connection", e);
         } finally {
+            LOGGER.log(Level.INFO, "Client disconnected: " + clientSocket.getInetAddress());
             Server.removeClientHandler(this);
             releaseGameSlot();
         }
@@ -62,14 +66,15 @@ public class ClientHandler implements Runnable {
         if (out != null) {
             out.println(MessageParser.serialize(message));
         } else {
-            logger.log(Level.WARNING, "Output stream is not initialized");
+            LOGGER.log(Level.WARNING, "Output stream is not initialized");
         }
     }
 
     private void createGame(Message message) {
         if (gameSemaphore.tryAcquire()) {
             int gameId = gameIdCounter.incrementAndGet();
-            gameInstance = new GameInstance(gameId);
+            RulesetOptions ruleset = RulesetOptions.valueOf(message.getParameterValue("ruleset"));
+            gameInstance = new GameInstance(gameId, ruleset);
             gameInstance.connectPlayer(this, message);
             gamesList.put(gameId, gameInstance);}
     }
@@ -86,8 +91,10 @@ public class ClientHandler implements Runnable {
     }
 
     public void releaseGameSlot() {
-        Integer gameId = gameInstance.getGameId();
-        gamesList.remove(gameId);
-        gameSemaphore.release();
+        if (gameInstance != null) {
+            Integer gameId = gameInstance.getGameId();
+            gamesList.remove(gameId);
+            gameSemaphore.release();
+        }
     }
 }

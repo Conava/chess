@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,25 +24,39 @@ public class OnlineGame extends Game {
     private String joinCode;
     private ServerCommunicationTask serverTask;
     private PlayerColor localPlayerColor;
+    private final RulesetOptions selectedRuleset;
 
     private Board backupBoard;
     private List<Move> backupMoves;
     private GameState backupGameState;
+    private final CountDownLatch connectionLatch = new CountDownLatch(1);
+
 
     public OnlineGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings) {
         super(selectedRuleset, playerWhiteName, playerBlackName);
+        this.gameState = GameState.NO_GAME;
         this.serverIP = onlineGameSettings.get("ip");
         this.serverPort = Integer.parseInt(onlineGameSettings.get("port"));
         this.joinCode = onlineGameSettings.get("joinCode");
+        this.selectedRuleset = selectedRuleset;
         if(startServerCommunication()) {
             connectToServerGame();
         }
     }
 
     private boolean startServerCommunication() {
-        serverTask = new ServerCommunicationTask(serverIP, serverPort, joinCode, this);
+        serverTask = new ServerCommunicationTask(serverIP, serverPort,  this, connectionLatch);
         Thread serverThread = new Thread(serverTask);
         serverThread.start();
+
+        try {
+            connectionLatch.await(); // Wait for the connection to be established
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.log(Level.SEVERE, "Thread interrupted while waiting for server connection", e);
+            gameState = GameState.SERVER_ERROR;
+            return false;
+        }
 
         if (!serverTask.isConnected()) {
             gameState = GameState.SERVER_ERROR;
@@ -53,11 +68,11 @@ public class OnlineGame extends Game {
     private void connectToServerGame() {
         Message connectMessage;
         if(joinCode != null && !joinCode.isEmpty()) {
-            connectMessage = new Message(MessageType.JOIN_GAME, joinCode);
+            connectMessage = new Message(MessageType.JOIN_GAME, "joinCode=" + joinCode);
             localPlayerColor = PlayerColor.BLACK;
-            gameState = GameState.NO_GAME;
+            gameState = GameState.RUNNING;
         } else {
-            connectMessage= new Message(MessageType.CREATE_GAME, "");
+            connectMessage= new Message(MessageType.CREATE_GAME, "ruleset=" + selectedRuleset);
             localPlayerColor = PlayerColor.WHITE;
             gameState = GameState.WAITING_FOR_PLAYER;
         }

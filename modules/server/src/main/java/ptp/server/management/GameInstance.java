@@ -2,11 +2,15 @@ package ptp.server.management;
 
 import ptp.core.data.io.Message;
 import ptp.core.data.io.MessageType;
+import ptp.core.data.player.Player;
+import ptp.core.exceptions.IllegalMoveException;
 import ptp.core.logic.game.GameState;
 import ptp.core.logic.game.ServerGame;
+import ptp.core.logic.moves.Move;
 import ptp.core.logic.ruleset.RulesetOptions;
 import ptp.core.logic.game.Game;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Logger;
 
 // todo: this class has to use the ServerGame and manage it
@@ -25,17 +29,13 @@ public class GameInstance {
     /**
      * Constructs a GameInstance with the specified ruleset.
      */
-    public GameInstance(int gameId) {
+    public GameInstance(int gameId, RulesetOptions ruleset) {
         game = null;
         whitePlayerHandler = null;
         blackPlayerHandler = null;
         this.gameId = gameId;
-    }
-
-    public void startGame(RulesetOptions ruleset) {
         game = new ServerGame(ruleset);
         game.setGameState(GameState.RUNNING);
-        sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=running"));
     }
 
     public synchronized void connectPlayer(ClientHandler clientHandler, Message message) {
@@ -47,7 +47,8 @@ public class GameInstance {
         } else if (blackPlayerHandler == null) {
             blackPlayerHandler = clientHandler;
             clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=plack"));
-            startGame(ruleset);
+            game.startGame();
+            sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=running"));
         }
     }
 
@@ -65,7 +66,7 @@ public class GameInstance {
             handleJoinCode(clientHandler, message);
             break;
         case MOVE:
-            handleMove(message);
+            handleMove(message, clientHandler == whitePlayerHandler ? game.getPlayerWhite() : game.getPlayerBlack(), clientHandler);
             break;
         case GAME_STATUS:
             handleGameStatus(message);
@@ -84,16 +85,41 @@ public class GameInstance {
     }
 }
 
+/**
+ * Handles the JOIN_CODE message type.
+ * Sends the join code to the client.
+ *
+ * @param clientHandler The client handler that sent the message.
+ * @param message The message to be processed.
+ */
 private void handleJoinCode(ClientHandler clientHandler, Message message) {
         LOGGER.info("Received join code request.\nSending response: " + message.content());
         clientHandler.sendMessage(new Message(MessageType.JOIN_CODE, String.valueOf(gameId)));
 }
 
-private void handleMove(Message message) {
-    // Implement logic to handle MOVE message
+/**
+ * Handles the MOVE message type.
+ * Processes the move and sends the updated game state to both players.
+ *
+ * @param message The message to be processed.
+ */
+private void handleMove(Message message, Player player, ClientHandler clientHandler) {
+    try {
+        Move move = Move.fromString(message.content(), player);
+        game.movePiece(move.getStart(), move.getEnd());
+        LOGGER.info("Move processed: " + message.content());
+        sendMessageToPlayers(new Message(MessageType.MOVE, message.content()));
+    } catch (InvocationTargetException | ClassNotFoundException | NoSuchMethodException | InstantiationException |
+             IllegalAccessException e) {
+        LOGGER.warning("Invalid move: " + message.content());
+        clientHandler.sendMessage(new Message(MessageType.ERROR, "Invalid move: " + message.content()));
+    } catch (IllegalMoveException e) {
+        LOGGER.warning("Illegal move rejected: " + message.content());
+        clientHandler.sendMessage(new Message(MessageType.ERROR, "Illegal move rejected: " + message.content()));
+    }
 }
 
-private void handleGameStatus(Message message) {
+    private void handleGameStatus(Message message) {
     // Implement logic to handle GAME_STATUS message
 }
 
