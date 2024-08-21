@@ -13,6 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +22,7 @@ public class OnlineGame extends Game {
     private static final Logger LOGGER = Logger.getLogger(OnlineGame.class.getName());
     private final String serverIP;
     private final int serverPort;
-    private String joinCode;
+    private final String joinCode;
     private ServerCommunicationTask serverTask;
     private PlayerColor localPlayerColor;
     private final RulesetOptions selectedRuleset;
@@ -80,61 +81,72 @@ public class OnlineGame extends Game {
     }
 
     public void handleMessage(Message message) {
-        // todo: implement message handling
-        String messageString = message.content();
         switch (message.type()) {
             case JOIN_CODE:
-                handleJoinCode(messageString);
+                handleJoinCode(message);
                 break;
             case MOVE:
-                handleMove(messageString);
+                handleMove(message);
                 break;
             case GAME_STATUS:
-                handleGameStatus(messageString);
+                handleGameStatus(message);
                 break;
             case SUCCESS:
-                handleSuccess(messageString);
+                handleSuccess(message);
                 break;
             case ERROR:
-                handleError(messageString);
+                handleError(message);
                 break;
             case FAILURE:
-                handleFailure(messageString);
+                handleFailure(message);
                 break;
             default:
                 LOGGER.log(Level.WARNING, "Unsupported message type: " + message.type());
         }
     }
 
-    private void handleJoinCode(String message) {
-        joinCode = message;
+    private void handleJoinCode(Message message) {
+        String joinCode = message.getParameterValue("joinCode=");
         System.out.println("Join code received: " + joinCode + " - Please share this code with your friend to join the game");
     }
 
-    private void handleMove(String message) {
+    private void handleMove(Message message) {
+        if (Objects.equals(message.getParameterValue("playerColor="), localPlayerColor.toString())) {
+            return;
+        }
 
+        try {
+            Move move = Move.fromString(Objects.requireNonNull(message.getParameterValue("move=")), Objects.equals(message.getParameterValue("playerColor="), "WHITE") ? player0 : player1);
+            executeMoveFromRemote(move);
+        } catch (IllegalMoveException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
+                 InstantiationException | IllegalAccessException e) {
+            LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
+        }
     }
 
-    private void handleGameStatus(String message) {
-        LOGGER.log(Level.INFO, "Game status update: " + message);
-        this.gameState = GameState.valueOf(message);
+    private void handleGameStatus(Message message) {
+        LOGGER.log(Level.INFO, "Game status update: " + message.getParameterValue("gameState="));
+        this.gameState = GameState.valueOf(message.getParameterValue("gameState="));
     }
 
-    private void handleGameEnd(String message) {
-        LOGGER.log(Level.INFO, "Game ended: " + message);
-        endGame();
-    }
-
-    private void handleSuccess(String message) {
+    private void handleSuccess(Message message) {
         LOGGER.log(Level.INFO, "Success: " + message);
+        // todo: Needed? probably remove the success message type
+        if(Objects.equals(message.getParameterValue("move="), "accepted")) {
+            LOGGER.log(Level.INFO, "Move accepted by server");
+        }
     }
 
-    private void handleError(String message) {
-        LOGGER.log(Level.SEVERE, "Error: " + message);
+    private void handleError(Message message) {
+        LOGGER.log(Level.SEVERE, "Error: " + message.content());
     }
 
-    private void handleFailure(String message) {
-        LOGGER.log(Level.SEVERE, "Failure: " + message);
+    private void handleFailure(Message message) {
+        LOGGER.log(Level.SEVERE, "Failure: " + message.content());
+        if (Objects.equals(message.getParameterValue("move="), "rejected")) {
+            restoreGameState();
+            notifyObservers();
+        }
     }
 
     public void sendMessageToServer(Message message) {
@@ -145,6 +157,7 @@ public class OnlineGame extends Game {
 
     @Override
     public void endGame() {
+        gameState = localPlayerColor == PlayerColor.WHITE ? GameState.WHITE_WON_BY_RESIGNATION : GameState.BLACK_WON_BY_RESIGNATION;
         if (serverTask != null) {
             Message endGameMessage = new Message(MessageType.GAME_STATUS, "gameState=" + gameState);
             sendMessageToServer(endGameMessage);
@@ -152,16 +165,12 @@ public class OnlineGame extends Game {
         }
     }
 
-    public String getJoinCode() {
-        return joinCode;
-    }
-
     @Override
     protected void executeMove(Move move) throws IllegalMoveException {
         if(localPlayerColor == PlayerColor.WHITE && getCurrentPlayer() == player0 || localPlayerColor == PlayerColor.BLACK && getCurrentPlayer() == player1) {
             backupGameState();
             super.executeMove(move);
-            Message moveMessage = new Message(MessageType.MOVE, move.toString());
+            Message moveMessage = new Message(MessageType.MOVE, "move=" + move + ",playerColor=" + localPlayerColor);
             sendMessageToServer(moveMessage);
         } else {
             throw new IllegalMoveException(move);
