@@ -40,19 +40,29 @@ public abstract class Game extends Observable {
      * @param playerBlackName The name of the black player.
      */
     public Game(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
-        String playerWhiteNameFinal = playerWhiteName.isBlank() ? "Spieler 0 (Weiß)" : playerWhiteName;
-        String playerBlackNameFinal = playerBlackName.isBlank() ? "Spieler 1 (Schwarz)" : playerBlackName;
-
-        this.player0 = new Player(playerWhiteNameFinal, PlayerColor.WHITE);
-        this.player1 = new Player(playerBlackNameFinal, PlayerColor.BLACK);
-        this.ruleset = switch (selectedRuleset) {
-            case STANDARD -> new StandardChessRuleset();
-            // Implement other rulesets here
-        };
+        this.player0 = createPlayer(playerWhiteName, PlayerColor.WHITE);
+        this.player1 = createPlayer(playerBlackName, PlayerColor.BLACK);
+        this.ruleset = createRuleset(selectedRuleset);
         this.board = new Board(ruleset.getStartBoard(player0, player1));
         this.turnCount = 0;
         this.moves = new ArrayList<>();
     }
+
+    private Player createPlayer(String playerName, PlayerColor color) {
+        return new Player(playerName.isBlank() ? getDefaultPlayerName(color) : playerName, color);
+    }
+
+    private String getDefaultPlayerName(PlayerColor color) {
+        return color == PlayerColor.WHITE ? "Spieler 0 (Weiß)" : "Spieler 1 (Schwarz)";
+    }
+
+    private Ruleset createRuleset(RulesetOptions selectedRuleset) {
+        return switch (selectedRuleset) {
+            case STANDARD -> new StandardChessRuleset();
+            // Implement other rulesets here
+        };
+    }
+
 
     /**
      * Moves a piece from one square to another.
@@ -73,15 +83,12 @@ public abstract class Game extends Observable {
      * @return The list of legal squares.
      */
     public List<Square> getLegalSquares(Square position) {
-        List<Square> legalSquares = new ArrayList<>();
         if (position == null) {
-            return legalSquares;
+            return new ArrayList<>();
         }
         Square square = board.getSquare(position.getY(), position.getX());
-        if (square.isOccupiedBy() == null) {
-            return legalSquares;
-        } else if (!square.isOccupiedBy().equals(getCurrentPlayer())) {
-            return legalSquares;
+        if (square.isOccupiedBy() == null || !square.isOccupiedBy().equals(getCurrentPlayer())) {
+            return new ArrayList<>();
         }
         return ruleset.getLegalSquares(square, board, moves, player0, player1);
     }
@@ -139,7 +146,7 @@ public abstract class Game extends Observable {
      * @return The piece at the given position.
      */
     public Piece getPieceAt(Square position) {
-        return board.getPieceAt(position);
+        return board.getPieceAt(toBoardSquare(position));
     }
 
     /**
@@ -150,11 +157,6 @@ public abstract class Game extends Observable {
     public Board getBoard() {
         return board.getCopy();
     }
-
-    /**
-     * Starts the game.
-     */
-    public abstract void startGame();
 
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
@@ -179,6 +181,11 @@ public abstract class Game extends Observable {
     }
 
     /**
+     * Starts the game.
+     */
+    public abstract void startGame();
+
+    /**
      * Converts a square to a board square.
      *
      * @param square The square to convert.
@@ -195,23 +202,31 @@ public abstract class Game extends Observable {
      * @throws IllegalMoveException If the move is illegal.
      */
     protected void executeMove(Move move) throws IllegalMoveException {
+        if (isMoveValid(move)) {
+            board.executeMove(move);
+            moves.add(move);
+            turnCount++;
+        } else {
+            throw new IllegalMoveException(move);
+        }
+    }
+
+    /**
+     * Validates if a move is legal.
+     *
+     * @param move The move to validate.
+     * @return true if the move is valid, false otherwise.
+     */
+    private boolean isMoveValid(Move move) {
         Square squareStart = move.getStart();
         Square squareEnd = move.getEnd();
-
         Player player = this.getCurrentPlayer();
         Player startSquarePlayer = squareStart.isOccupiedBy();
 
-        if (ruleset.isValidSquare(squareStart)) {
-            if (squareStart.isOccupiedBy() != null && startSquarePlayer == player) {
-                if (this.getLegalSquares(squareStart).contains(squareEnd)) {
-                    board.executeMove(move);
-                    moves.add(move);
-                    turnCount++;
-                    return;
-                }
-            }
-        }
-        throw new IllegalMoveException(move);
+        return ruleset.isValidSquare(squareStart) &&
+                startSquarePlayer != null &&
+                startSquarePlayer == player &&
+                this.getLegalSquares(squareStart).contains(squareEnd);
     }
 
     /**
