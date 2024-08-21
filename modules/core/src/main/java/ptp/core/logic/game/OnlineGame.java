@@ -24,10 +24,10 @@ import java.util.logging.Logger;
  */
 public class OnlineGame extends Game {
     private static final Logger LOGGER = Logger.getLogger(OnlineGame.class.getName());
-    private static final String JOIN_CODE_PARAM = "joinCode=";
-    private static final String PLAYER_COLOR_PARAM = "playerColor=";
-    private static final String MOVE_PARAM = "move=";
-    private static final String GAME_STATE_PARAM = "gameState=";
+    private static final String JOIN_CODE_PARAM = "joinCode";
+    private static final String PLAYER_COLOR_PARAM = "playerColor";
+    private static final String MOVE_PARAM = "move";
+    private static final String GAME_STATE_PARAM = "gameState";
 
     private final String serverIP;
     private final int serverPort;
@@ -93,7 +93,7 @@ public class OnlineGame extends Game {
     private void connectToServerGame() {
         Message connectMessage;
         if (joinCode != null && !joinCode.isEmpty()) {
-            connectMessage = new Message(MessageType.JOIN_GAME, JOIN_CODE_PARAM + joinCode);
+            connectMessage = new Message(MessageType.JOIN_GAME, JOIN_CODE_PARAM + "=" + joinCode);
             localPlayerColor = PlayerColor.BLACK;
             gameState = GameState.RUNNING;
         } else {
@@ -226,7 +226,7 @@ public class OnlineGame extends Game {
     public void endGame() {
         gameState = localPlayerColor == PlayerColor.WHITE ? GameState.WHITE_WON_BY_RESIGNATION : GameState.BLACK_WON_BY_RESIGNATION;
         if (serverTask != null) {
-            Message endGameMessage = new Message(MessageType.GAME_STATUS, GAME_STATE_PARAM + gameState);
+            Message endGameMessage = new Message(MessageType.GAME_STATUS, GAME_STATE_PARAM + "=" + gameState);
             sendMessageToServer(endGameMessage);
             serverTask.closeConnection();
         }
@@ -266,7 +266,7 @@ public class OnlineGame extends Game {
      * @param move The move to be sent to the server.
      */
     private void sendMoveToServer(Move move) {
-        Message moveMessage = new Message(MessageType.MOVE, MOVE_PARAM + move + "," + PLAYER_COLOR_PARAM + localPlayerColor);
+        Message moveMessage = new Message(MessageType.MOVE, MOVE_PARAM + "=" + move + " " + PLAYER_COLOR_PARAM + "=" + localPlayerColor);
         sendMessageToServer(moveMessage);
     }
 

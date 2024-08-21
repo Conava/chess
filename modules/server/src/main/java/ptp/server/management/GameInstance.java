@@ -62,7 +62,7 @@ public class GameInstance {
                 handleMove(message);
                 break;
             case GAME_STATUS:
-                handleGameStatus(message);
+                handleGameStatus(message, clientHandler);
                 break;
             case SUCCESS:
                 handleSuccess(message);
@@ -107,9 +107,9 @@ public class GameInstance {
         }
     }
 
-    private void handleGameStatus(Message message) {
-        LOGGER.log(Level.INFO, "Game status update: " + message.getParameterValue("gameState"));
-        game.setGameState(GameState.valueOf(message.getParameterValue("gameState")));
+    private void handleGameStatus(Message message, ClientHandler clientHandler) {
+        LOGGER.log(Level.INFO, "Game status requested");
+        clientHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + game.getState()));
     }
 
     private void handleSuccess(Message message) {
