@@ -2,6 +2,8 @@ package ptp.core.logic.ruleset.possibleMoves;
 
 import ptp.core.data.Square;
 import ptp.core.data.board.Board;
+import ptp.core.data.pieces.King;
+import ptp.core.data.pieces.Rook;
 import ptp.core.data.player.Player;
 
 import java.util.ArrayList;
@@ -41,12 +43,19 @@ public class PossibleStandardKingMoves {
         int[] arrX = {+1, +1, +1, 0, -1, -1, -1, 0};
 
         for (int i = 0; i < 8; i++) {
-            if(isInBounds(square.getY()+ arrY[i], square.getX() + arrX[i])) {
-                possibleSquare = board.getSquare(square.getY()+ arrY[i], square.getX() + arrX[i]);
+            if (isInBounds(square.getY() + arrY[i], square.getX() + arrX[i])) {
+                possibleSquare = board.getSquare(square.getY() + arrY[i], square.getX() + arrX[i]);
                 if (possibleSquare.isEmpty() || !possibleSquare.isOccupiedBy().equals(owner)) {
                     possibleMoves.add(possibleSquare);
                 }
             }
+        }
+
+        if (canCastleLong()) {
+            possibleMoves.add(board.getSquare(square.getY(), 2));
+        }
+        if (canCastleShort()) {
+            possibleMoves.add(board.getSquare(square.getY(), rowCount - 2));
         }
 
         return possibleMoves;
@@ -61,6 +70,86 @@ public class PossibleStandardKingMoves {
      */
     private boolean isInBounds(int y, int x) {
         return y >= 0 && y < colCount && x >= 0 && x < rowCount;
+    }
+
+    /**
+     * Checks if long castle is possible
+     *
+     * @return ?isPossible
+     */
+    private boolean canCastleLong() {
+        if (square.getPiece() instanceof King king && king.getHasMoved()) {
+            return false;
+        } else return getRookLeft() != null && getRookLeft().getHasNotMoved() && getLeftEmpty();
+    }
+
+    /**
+     * Checks fi short castle is possible
+     *
+     * @return ?isPossible
+     */
+    private boolean canCastleShort() {
+        if (square.getPiece() instanceof King king && king.getHasMoved()) {
+            return false;
+        } else return getRookRight() != null && getRookRight().getHasNotMoved() && getRightEmpty();
+    }
+
+    /**
+     * Finds a rook on the left is eligible for castling
+     *
+     * @return Rook that has not moved, null if none
+     */
+    private Rook getRookLeft() {
+        for (int x = 0; x <= rowCount / 2; x++) {
+            if (board.getSquare(square.getY(), x).getPiece() instanceof Rook rook && rook.getHasNotMoved()) {
+                return rook;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds a rook on the right is eligible for castling
+     *
+     * @return Rook that has not moved, null if none
+     */
+    private Rook getRookRight() {
+        for (int x = rowCount - 1; x >= rowCount / 2 + 1; x--) {
+            if (board.getSquare(square.getY(), x).getPiece() instanceof Rook rook && rook.getHasNotMoved()) {
+                return rook;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds if there are pieces blocking potential castling on the left
+     *
+     * @return Boolean if there are pieces blocking castling
+     */
+    private boolean getLeftEmpty() {
+        for (int x = 0; x <= rowCount / 2; x++) {
+            if (!(board.getSquare(square.getY(), x).getPiece() instanceof Rook rook && rook.getHasNotMoved()) ||
+                    !board.getSquare(square.getY(), x).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Finds if there are pieces blocking potential castling on the right
+     *
+     * @return Boolean if there are pieces blocking castling
+     */
+    private boolean getRightEmpty() {
+        for (int x = rowCount - 1; x >= rowCount / 2 + 1; x--) {
+            if ((board.getSquare(square.getY(), x).getPiece() instanceof Rook rook && rook.getHasNotMoved()) ||
+                    !board.getSquare(square.getY(), x).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

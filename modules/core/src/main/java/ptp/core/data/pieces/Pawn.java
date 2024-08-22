@@ -17,8 +17,10 @@ public class Pawn extends Piece {
     }
 
     public boolean hasMoveJustMovedTwoSquares(List<Move> list) {
-        if (list.get(list.size()-1).getStart().getPiece() instanceof Pawn) {
-            int distance = (list.get(list.size()-1).getStart().getX() - list.get(list.size()-1).getEnd().getX());
+        if (list == null || list.isEmpty()) {
+            return false;
+        } else if (list.get(list.size() - 1).getStart().getPiece() instanceof Pawn) {
+            int distance = (list.get(list.size() - 1).getStart().getY() - list.get(list.size() - 1).getEnd().getY());
             return (distance * distance) == 4;
         }
         return false;
