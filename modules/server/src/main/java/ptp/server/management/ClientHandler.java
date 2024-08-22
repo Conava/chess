@@ -124,7 +124,7 @@ public class ClientHandler implements Runnable {
             int gameId = gameIdCounter.incrementAndGet();
             RulesetOptions ruleset = RulesetOptions.valueOf(message.getParameterValue("ruleset"));
             gameInstance = new GameInstance(gameId, ruleset);
-            gameInstance.connectPlayer(this, message);
+            gameInstance.connectPlayer(this);
             gamesList.put(gameId, gameInstance);
         } else {
             sendMessage(new Message(MessageType.ERROR, "Failed to create game"));
@@ -140,7 +140,7 @@ public class ClientHandler implements Runnable {
         int gameId = Integer.parseInt(message.content());
         GameInstance gameInstance = gamesList.get(gameId);
         if (gameInstance != null) {
-            gameInstance.connectPlayer(this, message);
+            gameInstance.connectPlayer(this);
         } else {
             sendMessage(new Message(MessageType.ERROR, "Invalid join code"));
         }
@@ -158,7 +158,7 @@ public class ClientHandler implements Runnable {
     /**
      * Releases the game slot if a game instance exists.
      */
-    private void releaseGameSlot() {
+    public void releaseGameSlot() {
         if (gameInstance != null) {
             Integer gameId = gameInstance.getGameId();
             gamesList.remove(gameId);

@@ -26,6 +26,9 @@ public class GameInstance {
 
     /**
      * Constructs a GameInstance with the specified ruleset.
+     *
+     * @param gameId The unique ID of the game.
+     * @param ruleset The ruleset options for the game.
      */
     public GameInstance(int gameId, RulesetOptions ruleset) {
         this.gameId = gameId;
@@ -33,26 +36,36 @@ public class GameInstance {
         this.game.setGameState(GameState.WAITING_FOR_PLAYER);
     }
 
-    public synchronized void connectPlayer(ClientHandler clientHandler, Message message) {
+    /**
+     * Connects a player to the game instance.
+     *
+     * @param clientHandler The client handler for the player.
+     */
+    public synchronized void connectPlayer(ClientHandler clientHandler) {
         if (whitePlayerHandler == null) {
             whitePlayerHandler = clientHandler;
             clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=white"));
         } else if (blackPlayerHandler == null) {
             blackPlayerHandler = clientHandler;
             clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=black"));
-            game.startGame();
-            sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=running"));
+            startGame();
         }
     }
 
-    public ClientHandler getWhitePlayerHandler() {
-        return whitePlayerHandler;
+    /**
+     * Starts the game and notifies players.
+     */
+    private void startGame() {
+        game.startGame();
+        sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=running"));
     }
 
-    public ClientHandler getBlackPlayerHandler() {
-        return blackPlayerHandler;
-    }
-
+    /**
+     * Processes a message from a client.
+     *
+     * @param clientHandler The client handler sending the message.
+     * @param message The message to process.
+     */
     public void processMessage(ClientHandler clientHandler, Message message) {
         switch (message.type()) {
             case JOIN_CODE:
@@ -62,7 +75,7 @@ public class GameInstance {
                 handleMove(message);
                 break;
             case GAME_STATUS:
-                handleGameStatus(message, clientHandler);
+                handleGameStatus(clientHandler);
                 break;
             case SUCCESS:
                 handleSuccess(message);
@@ -78,10 +91,11 @@ public class GameInstance {
         }
     }
 
-    public int getGameId() {
-        return gameId;
-    }
-
+    /**
+     * Sends a message to both players.
+     *
+     * @param message The message to send.
+     */
     private void sendMessageToPlayers(Message message) {
         if (whitePlayerHandler != null) {
             whitePlayerHandler.sendMessage(message);
@@ -91,10 +105,20 @@ public class GameInstance {
         }
     }
 
+    /**
+     * Handles a join code message.
+     *
+     * @param message The message containing the join code.
+     */
     private void handleJoinCode(Message message) {
         LOGGER.log(Level.INFO, "Join code received: " + message.content());
     }
 
+    /**
+     * Handles a move message.
+     *
+     * @param message The message containing the move details.
+     */
     private void handleMove(Message message) {
         try {
             Move move = Move.fromString(Objects.requireNonNull(message.getParameterValue("move")),
@@ -107,20 +131,67 @@ public class GameInstance {
         }
     }
 
-    private void handleGameStatus(Message message, ClientHandler clientHandler) {
+    /**
+     * Handles a game status request.
+     *
+     * @param clientHandler The client handler requesting the game status.
+     */
+    private void handleGameStatus(ClientHandler clientHandler) {
         LOGGER.log(Level.INFO, "Game status requested");
         clientHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + game.getState()));
     }
 
+    /**
+     * Handles a success message.
+     *
+     * @param message The success message.
+     */
     private void handleSuccess(Message message) {
         LOGGER.log(Level.INFO, "Success: " + message);
     }
 
+    /**
+     * Handles an error message.
+     *
+     * @param message The error message.
+     */
     private void handleError(Message message) {
         LOGGER.log(Level.SEVERE, "Error: " + message.content());
     }
 
+    /**
+     * Handles a failure message.
+     *
+     * @param message The failure message.
+     */
     private void handleFailure(Message message) {
         LOGGER.log(Level.SEVERE, "Failure: " + message.content());
+    }
+
+    /**
+     * Gets the game ID.
+     *
+     * @return The game ID.
+     */
+    public int getGameId() {
+        return gameId;
+    }
+
+    /**
+     * Gets the white player handler.
+     *
+     * @return The white player handler.
+     */
+    public ClientHandler getWhitePlayerHandler() {
+        return whitePlayerHandler;
+    }
+
+    /**
+     * Gets the black player handler.
+     *
+     * @return The black player handler.
+     */
+    public ClientHandler getBlackPlayerHandler() {
+        return blackPlayerHandler;
     }
 }
