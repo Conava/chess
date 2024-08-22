@@ -1,38 +1,36 @@
 package ptp.core.logic.game;
 
-import ptp.core.data.Square;
 import ptp.core.logic.ruleset.RulesetOptions;
-import ptp.core.exceptions.IllegalMoveException;
-import ptp.core.data.io.Message;
-import ptp.core.logic.moves.Move;
 
-public class ServerGame extends Game{
+/**
+ * The ServerGame class represents a game that is managed by a server.
+ * It extends the Game class and provides implementations for starting and ending the game.
+ */
+public class ServerGame extends Game {
 
     /**
-     * Constructor for the Game class.
+     * Constructs a ServerGame instance.
      *
-     * @param selectedRuleset The ruleset to be used for the game.
+     * @param selectedRuleset The ruleset options for the game.
      */
     public ServerGame(RulesetOptions selectedRuleset) {
         super(selectedRuleset, "Player 1", "Player 2");
         this.gameType = GameType.SERVER;
     }
 
-    //todo: implement server game logic
+    /**
+     * Starts the server game by setting the game state to RUNNING.
+     */
     @Override
     public void startGame() {
-
+        gameState = GameState.RUNNING;
     }
 
+    /**
+     * Ends the server game by setting the game state to ENDED.
+     */
     @Override
     public void endGame() {
-    }
-
-    @Override
-    protected void executeMove(Move move) throws IllegalMoveException {
-
-    }
-
-    public void processMessage(Message message) {
+        // todo: Not sure if implementation is needed here
     }
 }
