@@ -2,7 +2,6 @@ package ptp.core.logic.ruleset.possibleMoves;
 
 import ptp.core.data.Square;
 import ptp.core.data.board.Board;
-import ptp.core.data.pieces.Pawn;
 import ptp.core.data.player.Player;
 import ptp.core.data.player.PlayerColor;
 import ptp.core.logic.moves.Move;
@@ -17,13 +16,15 @@ public class PossibleStandardPawnMoves {
     private final List<Move> moves;
     private final int colCount;
     private final int rowCount;
+    private final int direction;
+    private final Player owner;
 
     /**
      * Initiates a new instance of a standard pawn move lookup table
      *
      * @param square The square the pawn is on
      * @param board  The board surrounding the pawn
-     * @param moves List of Past moves
+     * @param moves List of Past moves, used for en passant
      */
     public PossibleStandardPawnMoves(Square square, Board board, List<Move> moves) {
         this.square = square;
@@ -31,19 +32,18 @@ public class PossibleStandardPawnMoves {
         this.moves = moves;
         colCount = board.getColCount();
         rowCount = board.getRowCount();
-    }
-
-    public List<Square> possibleMoves() {
-        List<Square> possibleMoves = new ArrayList<>();
-        Player owner = square.isOccupiedBy();
-        Square possibleSquare;
-        int direction;
+        owner = square.isOccupiedBy();
 
         if (owner.color().equals(PlayerColor.WHITE)) {
             direction = 1;
         } else {
             direction = -1;
         }
+    }
+
+    public List<Square> possibleMoves() {
+        List<Square> possibleMoves = new ArrayList<>();
+        Square possibleSquare;
 
         //move 1 square
         if (isInBounds(square.getY() + direction, square.getX())) {
@@ -60,6 +60,15 @@ public class PossibleStandardPawnMoves {
                 }
             }
         }
+
+        possibleMoves.addAll(possibleCaptureMoves());
+
+        return possibleMoves;
+    }
+
+    public List<Square> possibleCaptureMoves() {
+        List<Square> possibleMoves = new ArrayList<>();
+        Square possibleSquare;
 
         //capture left
         if (isInBounds(square.getY() + direction, square.getX() - 1)) {

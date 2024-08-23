@@ -15,16 +15,12 @@ import java.util.ArrayList;
 
 // todo: refactor the ruleset.
 //        - Operations should update the game state, it does not need to be calculated
-//        - Split in logical sections
-//        - Make it reusable for other rulesets
-//        - Implement the isCheck method to check if a player is in check
 
 /**
  * Standard chess ruleset.
  * Delivers the starting board and the legal moves for the pieces.
  */
 public class StandardChessRuleset implements Ruleset {
-    private boolean isCheck;
 
     /**
      * Gets the width of the chess board
@@ -91,7 +87,6 @@ public class StandardChessRuleset implements Ruleset {
         return startBoard;
     }
 
-
     /**
      * Provides a list of legal moves.
      *
@@ -104,20 +99,15 @@ public class StandardChessRuleset implements Ruleset {
      */
     @Override
     public List<Move> getLegalMoves(Square square, Board board, List<Move> moves, Player player1, Player player2) {
-        List<Move> legalMoves = new ArrayList<>();
         List<Square> sudoLegalSquares;
-        List<Move> sudoLegalMoves = new ArrayList<>();
+        List<Move> legalMoves = new ArrayList<>();
 
         sudoLegalSquares = getSudoLegalSquares(square, board, moves);
 
         for (Square squareTemp : sudoLegalSquares) {
-            sudoLegalMoves.add(new Move(square, squareTemp));
+            legalMoves.add(new Move(square, squareTemp));
         }
-        for (Move move : sudoLegalMoves) {
-            if (isMoveLegal(move, board, moves, player2)) {
-                legalMoves.add(move);
-            }
-        }
+
         return legalMoves;
     }
 
@@ -133,42 +123,10 @@ public class StandardChessRuleset implements Ruleset {
      */
     @Override
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
-        List<Square> legalSquares = new ArrayList<>();
-        //legalSquares.add(new Square(4,4));
-        /* todo: wenn man die legalSquares auf 4,4 setzt, giben nur 4 figuren dieses feld an (fixed)
-        List<Move> legalMoves = getLegalMoves(square, board, moves, player1, player2);
-        for (Move legalMove : legalMoves) {
-            legalSquares.add(legalMove.getEnd());
-        }
-        System.out.println("#LegaleZüge" + legalSquares.size());
-        */
-
-        legalSquares = getSudoLegalSquares(square, board, moves);
-
-        return legalSquares;
-    }
-
-    /**
-     * Checks if given move is legal.
-     *
-     * @param move    Move to check.
-     * @param board   Current board. Does not get changed.
-     * @param moves   List of moves already played in-game
-     * @param player2 Player opponent
-     * @return Is the move legal?
-     */
-    private boolean isMoveLegal(Move move, Board board, List<Move> moves, Player player2) {
-        isCheck = false;
-        Board boardTemp = board.getCopy();
-        boardTemp.executeMove(move);
-
-        getAllSudoLegalMoves(board, player2, moves);
-
-        return isCheck;
+        return getSudoLegalSquares(square, board, moves);
     }
 
     private List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) {
-        List<Square> legalMoves;
         if (square.getPiece().getClass().equals(Rook.class)) {
             PossibleStandardRookMoves rookMoves = new PossibleStandardRookMoves(square, board);
             return rookMoves.getPossibleSquares();
@@ -190,10 +148,7 @@ public class StandardChessRuleset implements Ruleset {
         } else {
             return new ArrayList<>();
         }
-        //@TODO: Check
-        //@TODO TTests
     }
-
 
     /**
      * Returns a valid square
@@ -205,7 +160,6 @@ public class StandardChessRuleset implements Ruleset {
         return square != null && isInBoundsY(square.getY()) && isInBoundsX(square.getX());
     }
 
-
     /**
      * @param board  Board, where the check should be checked
      * @param player Player who can move
@@ -213,28 +167,59 @@ public class StandardChessRuleset implements Ruleset {
      */
     @Override
     public boolean isCheck(Board board, Player player, List<Move> moves) {
-        isCheck = false;
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                getSudoLegalSquares(board.getSquare(y, x), board, moves);
-            }
-        }
-        return isCheck;
+        return canBeCaptured(board, lookForKing(board, player), moves);
     }
 
-    private List<Move> getAllSudoLegalMoves(Board board, Player player, List<Move> moves) {
-        List<Move> legalMoves = new ArrayList<>();
-        List<Square> squaresWithPieces = board.getPieces(player);
-        for (Square square : squaresWithPieces) {
-            List<Square> squares = getSudoLegalSquares(square, board, moves);
-            for (Square square2 : squares) {
-                if (square2 == null) {
-                    continue;
-                }
-                legalMoves.add(new Move(square, square2));
+    private Square lookForKing(Board board, Player player) {
+        List<Square> potentialSquares = board.getPieces(player);
+        for (Square square : potentialSquares) {
+            if (square.getPiece() instanceof King) {
+                return square;
             }
         }
-        return legalMoves;
+        return null;
+    }
+
+    private boolean canBeCaptured(Board board, Square square, List<Move> moves) {
+        List<Square> squaresToCheck;
+
+        //Knight can capture
+        PossibleStandardKnightMoves knightMoves = new PossibleStandardKnightMoves(square, board);
+        squaresToCheck = knightMoves.getPossibleSquares();
+        for (Square squareToCheck : squaresToCheck) {
+            if (squareToCheck.getPiece() instanceof Knight) {
+                return true;
+            }
+        }
+
+        //Rook can capture
+        PossibleStandardRookMoves rookMoves = new PossibleStandardRookMoves(square, board);
+        squaresToCheck = rookMoves.getPossibleSquares();
+        for (Square squareToCheck : squaresToCheck) {
+            if (squareToCheck.getPiece() instanceof Rook || squareToCheck.getPiece() instanceof Queen) {
+                return true;
+            }
+        }
+
+        //Bishop can capture
+        PossibleStandardBishopMoves bishopMoves = new PossibleStandardBishopMoves(square, board);
+        squaresToCheck = bishopMoves.getPossibleSquares();
+        for (Square squareToCheck : squaresToCheck) {
+            if (squareToCheck.getPiece() instanceof Bishop || squareToCheck.getPiece() instanceof Queen) {
+                return true;
+            }
+        }
+
+        //Pawn can capture
+        PossibleStandardPawnMoves pawnMoves = new PossibleStandardPawnMoves(square, board, moves);
+        squaresToCheck = pawnMoves.possibleCaptureMoves();
+        for (Square squareToCheck : squaresToCheck) {
+            if (squareToCheck.getPiece() instanceof Pawn) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private boolean isInBoundsX(int x) {
@@ -244,7 +229,6 @@ public class StandardChessRuleset implements Ruleset {
     private boolean isInBoundsY(int y) {
         return y >= 0 && y < 8;
     }
-
 
     public GameState getGameState(Board board, List<Move> moves) {
         boolean kingWhiteExists = false;
