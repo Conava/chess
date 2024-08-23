@@ -107,7 +107,7 @@
                 <executions>
                     <execution>
                         <id>copy-jar</id>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
