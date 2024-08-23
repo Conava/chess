@@ -311,7 +311,7 @@ public class OnlineGame extends Game {
      */
     @Override
     public void startGame() {
-        // Implementation for starting the game not needed in online game
+        // Implementation for starting the game not needed in online game as the start is handled by the server
     }
 
     /**

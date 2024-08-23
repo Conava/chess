@@ -75,7 +75,7 @@ public class GameInstance {
                 handleMove(message);
                 break;
             case GAME_STATUS:
-                handleGameStatus(clientHandler);
+                handleGameStatus(clientHandler, message);
                 break;
             case SUCCESS:
                 handleSuccess(message);
@@ -136,9 +136,20 @@ public class GameInstance {
      *
      * @param clientHandler The client handler requesting the game status.
      */
-    private void handleGameStatus(ClientHandler clientHandler) {
-        LOGGER.log(Level.INFO, "Game status requested");
-        clientHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + game.getState()));
+    private void handleGameStatus(ClientHandler clientHandler, Message message) {
+        if(!message.content().isEmpty()) {
+            LOGGER.log(Level.INFO, "Game status update from Player: " + message.content());
+            GameState newGameState = GameState.valueOf(message.getParameterValue("gameState"));
+            if (clientHandler == whitePlayerHandler && newGameState == GameState.BLACK_WON_BY_RESIGNATION) {
+                game.setGameState(newGameState);
+            } else if (clientHandler == blackPlayerHandler && newGameState == GameState.WHITE_WON_BY_RESIGNATION) {
+                game.setGameState(newGameState);
+            }
+        }
+        else {
+            LOGGER.log(Level.INFO, "Current game status requested");
+            clientHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + game.getState()));
+        }
     }
 
     /**

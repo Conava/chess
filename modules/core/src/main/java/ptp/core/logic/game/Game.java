@@ -1,5 +1,6 @@
 package ptp.core.logic.game;
 
+import ptp.core.data.pieces.King;
 import ptp.core.data.player.Player;
 import ptp.core.data.Square;
 import ptp.core.data.pieces.Piece;
@@ -127,7 +128,6 @@ public abstract class Game extends Observable {
      */
     public GameState getState() {
         return gameState;
-        //todo: Update the gameState in the ruleset
     }
 
     /**
@@ -203,6 +203,7 @@ public abstract class Game extends Observable {
      */
     protected void executeMove(Move move) throws IllegalMoveException {
         if (isMoveValid(move)) {
+            checkForGameEnd(move);
             board.executeMove(move);
             moves.add(move);
             turnCount++;
@@ -257,6 +258,19 @@ public abstract class Game extends Observable {
         } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
                  IllegalAccessException | InvocationTargetException e) {
             return null;
+        }
+    }
+
+    /**
+     * Checks if the game will be ending after the execution of move and sets the game state accordingly.
+     *
+     * @param move The move to check.
+     */
+    private void checkForGameEnd(Move move) {
+        Piece piece = toBoardSquare(move.getEnd()).getPiece();
+        if (piece instanceof King king) {
+            System.out.println("King captured, changing gameState");
+            gameState = king.getPlayer().color() == PlayerColor.WHITE ? GameState.BLACK_WON_BY_CHECKMATE : GameState.WHITE_WON_BY_CHECKMATE;
         }
     }
 }

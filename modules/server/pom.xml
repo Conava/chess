@@ -6,13 +6,13 @@
     <parent>
         <groupId>ptp</groupId>
         <artifactId>Chess</artifactId>
-        <version>0.6</version>
+        <version>0.9</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>server</artifactId>
     <packaging>jar</packaging>
-    <version>0.1</version>
+    <version>0.9</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>ptp</groupId>
             <artifactId>core</artifactId>
-            <version>0.1</version>
+            <version>0.9</version>
         </dependency>
 
         <dependency>
@@ -37,7 +37,7 @@
 
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
-        <testSourceDirectory>src/test/java</testSourceDirectory>
+        <testSourceDirectory>src/test/java/</testSourceDirectory>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -51,12 +51,40 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>ptp:core</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>ptp.server.Server</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
                     <execution>
                         <id>default-jar</id>
-                        <phase>package</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -79,7 +107,7 @@
                 <executions>
                     <execution>
                         <id>copy-jar</id>
-                        <phase>package</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>

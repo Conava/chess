@@ -198,34 +198,4 @@ public class StandardChessRuleset implements Ruleset {
     private boolean isInBoundsY(int y) {
         return y >= 0 && y < 8;
     }
-
-    public GameState getGameState(Board board, List<Move> moves) {
-        boolean kingWhiteExists = false;
-        boolean kingBlackExists = false;
-        Piece tempPiece;
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                tempPiece = board.getSquare(x, y).getPiece();
-                if (tempPiece == null || !(tempPiece instanceof King)) {
-                    continue;
-                } else if (tempPiece.getPlayer().color() == PlayerColor.WHITE) {
-                    kingWhiteExists = true;
-                } else if (tempPiece.getPlayer().color() == PlayerColor.BLACK) {
-                    kingBlackExists = true;
-                } else {
-                    //this should never be reached
-                    return GameState.NO_GAME;
-                }
-            }
-        }
-        if (kingWhiteExists && kingBlackExists) {
-            return GameState.RUNNING;
-        } else if (kingWhiteExists) { // no black king
-            return GameState.WHITE_WON_BY_CHECKMATE;
-        } else if (kingBlackExists) {
-            return GameState.BLACK_WON_BY_CHECKMATE;
-        } else {
-            return GameState.DRAW_BY_INSUFFICIENT_MATERIAL;
-        }
-    }
 }

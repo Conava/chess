@@ -71,12 +71,4 @@ public interface Ruleset {
      * @return ?isCheck
      */
     boolean isCheck(Board board, Player player, List<Move> moves);
-
-    /**
-     * Returns the current GameState, should be called after every move.
-     * @param board The current board
-     * @param moves The list of all prior moves.
-     * @return ENUM of GameState
-     */
-    GameState getGameState(Board board, List<Move> moves);
 }
