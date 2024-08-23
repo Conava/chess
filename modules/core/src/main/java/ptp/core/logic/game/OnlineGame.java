@@ -31,7 +31,7 @@ public class OnlineGame extends Game {
 
     private final String serverIP;
     private final int serverPort;
-    private final String joinCode;
+    private String joinCode;
     private ServerCommunicationTask serverTask;
     private PlayerColor localPlayerColor;
     private final RulesetOptions selectedRuleset;
@@ -140,7 +140,7 @@ public class OnlineGame extends Game {
      * @param message The message containing the join code.
      */
     private void handleJoinCode(Message message) {
-        String joinCode = message.getParameterValue(JOIN_CODE_PARAM);
+        joinCode = message.getParameterValue(JOIN_CODE_PARAM);
         System.out.println("Join code received: " + joinCode + " - Please share this code with your friend to join the game");
     }
 
@@ -330,5 +330,14 @@ public class OnlineGame extends Game {
         this.board = this.backupBoard.getCopy();
         this.moves = new ArrayList<>(this.backupMoves);
         this.setGameState(this.backupGameState);
+    }
+
+    /**
+     * Gets the join code for the game.
+     *
+     * @return The join code.
+     */
+    public String getJoinCode() {
+        return joinCode;
     }
 }

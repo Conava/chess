@@ -126,6 +126,7 @@ public class ClientHandler implements Runnable {
             gameInstance = new GameInstance(gameId, ruleset);
             gameInstance.connectPlayer(this);
             gamesList.put(gameId, gameInstance);
+            sendMessage(new Message(MessageType.JOIN_CODE, "joinCode=" + gameId));
         } else {
             sendMessage(new Message(MessageType.ERROR, "Failed to create game"));
         }

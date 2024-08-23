@@ -193,4 +193,8 @@ public class Chess {
     public void promoteMove(Square start, Square end, Pieces targetPiece) throws IllegalMoveException {
         game.promoteMove(start, end, targetPiece);
     }
+
+    public String getJoinCode() {
+        return ((OnlineGame) game).getJoinCode();
+    }
 }

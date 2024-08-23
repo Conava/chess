@@ -48,6 +48,7 @@ public class GameInstance {
         } else if (blackPlayerHandler == null) {
             blackPlayerHandler = clientHandler;
             clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=black"));
+            sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=RUNNING"));
             startGame();
         }
     }

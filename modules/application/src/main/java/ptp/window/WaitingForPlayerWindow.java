@@ -9,14 +9,14 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class WaitingForPlayerWindow extends JDialog {
-    public WaitingForPlayerWindow(Frame parent, ColorScheme colorScheme) {
+    public WaitingForPlayerWindow(Frame parent, ColorScheme colorScheme, String joinCode) {
         super(parent, "Waiting for Player", true);
         initializeDialog(colorScheme);
-        addComponentsToDialog(colorScheme);
+        addComponentsToDialog(colorScheme, joinCode);
     }
 
     private void initializeDialog(ColorScheme colorScheme) {
-        setSize(300, 150);
+        setSize(350, 200);
         setResizable(false);
         setUndecorated(true);
         getContentPane().setBackground(colorScheme.getDarkerBackgroundColor());
@@ -24,8 +24,8 @@ public class WaitingForPlayerWindow extends JDialog {
         setLocationRelativeTo(getParent());
     }
 
-    private void addComponentsToDialog(ColorScheme colorScheme) {
-        JTextArea messageArea = new JTextArea("Warte auf Gegner zum beitreten...");
+    private void addComponentsToDialog(ColorScheme colorScheme, String joinCode) {
+        JTextArea messageArea = new JTextArea("Warte auf Gegner zum beitreten...\nJoin-Code: " + joinCode);
         messageArea.setFont(colorScheme.getFont().deriveFont(colorScheme.getFont().getSize2D() + 2));
         messageArea.setForeground(colorScheme.getFontColor());
         messageArea.setBackground(colorScheme.getDarkerBackgroundColor());

@@ -216,7 +216,8 @@ public class ChessGame extends JPanel implements GameObserver {
 
     private void showWaitingForPlayerWindow() {
         if (waitingForPlayerWindow == null) {
-            waitingForPlayerWindow = new WaitingForPlayerWindow(mainFrame, colorScheme);
+            String joinCode = chess.getJoinCode();
+            waitingForPlayerWindow = new WaitingForPlayerWindow(mainFrame, colorScheme, joinCode);
             waitingForPlayerWindow.setVisible(true);
         }
     }
