@@ -4,7 +4,6 @@ import ptp.components.ColorScheme;
 import ptp.components.CustomButton;
 
 import javax.swing.*;
-import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
@@ -25,14 +24,7 @@ public class WaitingForPlayerWindow extends JDialog {
     }
 
     private void addComponentsToDialog(ColorScheme colorScheme, String joinCode) {
-        JTextArea messageArea = new JTextArea("Warte auf Gegner zum beitreten...\nJoin-Code: " + joinCode);
-        messageArea.setFont(colorScheme.getFont().deriveFont(colorScheme.getFont().getSize2D() + 2));
-        messageArea.setForeground(colorScheme.getFontColor());
-        messageArea.setBackground(colorScheme.getDarkerBackgroundColor());
-        messageArea.setEditable(false);
-        messageArea.setWrapStyleWord(true);
-        messageArea.setLineWrap(true);
-        messageArea.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JTextArea messageArea = getjTextArea(colorScheme, joinCode);
         add(messageArea, BorderLayout.CENTER);
 
         CustomButton cancelButton = new CustomButton("Schließen", colorScheme);
@@ -43,12 +35,22 @@ public class WaitingForPlayerWindow extends JDialog {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
+    private static JTextArea getjTextArea(ColorScheme colorScheme, String joinCode) {
+        JTextArea messageArea = new JTextArea("Warte auf Gegner zum beitreten...\nJoin-Code: " + joinCode);
+        messageArea.setFont(colorScheme.getFont().deriveFont(colorScheme.getFont().getSize2D() + 2));
+        messageArea.setForeground(colorScheme.getFontColor());
+        messageArea.setBackground(colorScheme.getDarkerBackgroundColor());
+        messageArea.setEditable(false);
+        messageArea.setWrapStyleWord(true);
+        messageArea.setLineWrap(true);
+        messageArea.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        return messageArea;
+    }
+
     @Override
     public void setVisible(boolean b) {
         if (b) {
-            SwingUtilities.invokeLater(() -> {
-                setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 30, 30));
-            });
+            SwingUtilities.invokeLater(() -> setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 30, 30)));
         }
         super.setVisible(b);
     }
