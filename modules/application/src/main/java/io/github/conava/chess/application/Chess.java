@@ -19,65 +19,101 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.*;
-
 import javax.swing.*;
 
 /**
- * Main class of the chess application. This class is responsible for starting the application and managing the game.
+ * Entry point and façade for the Chess application.
+ * Manages game lifecycle, GUI initialization, and delegates core logic to {@code OfflineGame} or {@code OnlineGame}.
+ *
+ * <p>Usage examples:</p>
+ * <pre>
+ * // Launch with GUI
+ * java -jar chess.jar
+ *
+ * // Launch without GUI (console only)
+ * java -jar chess.jar nogui
+ * </pre>
  */
 public class Chess {
     private static final Logger LOGGER = Logger.getLogger(Chess.class.getName());
     private Game game;
 
     /**
-     * Main method of the application. Starts the application.
+     * Main method. Determines GUI mode based on first argument.
      *
-     * @param args Command line arguments
+     * @param args program arguments; pass "nogui" to disable the Swing GUI
+     *
+     * <p>Example:</p>
+     * <pre>
+     * Chess.main(new String[] { "nogui" });
+     * </pre>
      */
     public static void main(String[] args) {
-        if (args.length > 0 && args[0].equals("nogui")) {
-            // Start the game without GUI
-            SwingUtilities.invokeLater(() -> new Chess(false));
-        } else {
-            // Start the game with GUI
-            SwingUtilities.invokeLater(() -> new Chess(true));
-        }
+        boolean guiMode = args.length == 0 || !args[0].equals("nogui");
+        SwingUtilities.invokeLater(() -> new Chess(guiMode));
     }
 
     /**
-     * Constructor of the Chess class. Starts the application with or without GUI.
+     * Creates the application instance and launches GUI if requested.
      *
-     * @param gui True if the application should start with GUI, false otherwise
+     * @param gui {@code true} to initialize Swing GUI; {@code false} for console-only mode
+     *
+     * <p>Example:</p>
+     * <pre>
+     * Chess chessApp = new Chess(true);
+     * </pre>
      */
     public Chess(boolean gui) {
         if (gui) {
-            LOGGER.log(Level.INFO, "Chess application started");
-            ColorScheme colorScheme = new ColorScheme(
-                    new Font("Arial", Font.PLAIN, 20), // Font
-                    new Color(0x2b2d30), // Background color
-                    new Color(0x3B3F42), // Brighter background color
-                    new Color(0x27272B), // Darker background color
-                    new Color(0xECF0F1), // Font color
-                    new Color(0x1e1f22), // Button color
-                    new Color(0x31709A), // Accent color
-                    new Color(0xA31717),  // Exit button color
-                    new Color(0x808080),  // Border color
-                    new Color(0x762D9A) // Board dot color
+            LOGGER.log(Level.INFO, "Chess application started with GUI");
+            ColorScheme scheme = new ColorScheme(
+                    new Font("Arial", Font.PLAIN, 20),
+                    new Color(0x2b2d30),
+                    new Color(0x3B3F42),
+                    new Color(0x27272B),
+                    new Color(0xECF0F1),
+                    new Color(0x1e1f22),
+                    new Color(0x31709A),
+                    new Color(0xA31717),
+                    new Color(0x808080),
+                    new Color(0x762D9A)
             );
-            new MainFrame(this, colorScheme);
+            new MainFrame(this, scheme);
         } else {
             LOGGER.log(Level.INFO, "Chess application started without GUI");
         }
     }
 
     /**
-     * Starts the game.
+     * Initializes and starts a new game instance.
      *
-     * @param online The online status of the game. 0 for offline, 1 for online.
+     * @param online             0 for offline play, 1 for online play
+     * @param selectedRuleset    configuration options for the game rules
+     * @param playerWhiteName    display name of the white player
+     * @param playerBlackName    display name of the black player
+     * @param onlineGameSettings key-value settings for online matchmaking or server connection
+     *
+     * <p>Example for offline:</p>
+     * <pre>
+     * RulesetOptions opts = RulesetOptions.standard();
+     * chess.startGame(0, opts, "Alice", "Bob", Collections.emptyMap());
+     * </pre>
+     *
+     * <p>Example for online:</p>
+     * <pre>
+     * Map<String,String> settings = Map.of("host","game.example.com","port","1234");
+     * chess.startGame(1, opts, "Alice", "Bob", settings);
+     * </pre>
      */
-    public void startGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings) {
+    public void startGame(int online,
+                          RulesetOptions selectedRuleset,
+                          String playerWhiteName,
+                          String playerBlackName,
+                          Map<String, String> onlineGameSettings) {
         if (game == null) {
-            game = online == 1 ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings) : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+            game = (online == 1)
+                    ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings)
+                    : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
             game.startGame();
             LOGGER.log(Level.INFO, "Game started");
         } else {
@@ -86,47 +122,82 @@ public class Chess {
     }
 
     /**
-     * Returns the state of the game.
+     * Retrieves the current {@link GameState}.
      *
-     * @return The state of the game
+     * @return current state of the running game
+     *
+     * <p>Example:</p>
+     * <pre>
+     * GameState state = chess.getState();
+     * </pre>
      */
     public GameState getState() {
         return game.getState();
     }
 
+    /**
+     * Retrieves the current {@link Board}.
+     *
+     * @return board representation of the game
+     *
+     * <p>Example:</p>
+     * <pre>
+     * Board board = chess.getBoard();
+     * </pre>
+     */
     public Board getBoard() {
         return game.getBoard();
     }
 
     /**
-     * Adds an observer to the game.
+     * Attaches an observer to receive game updates.
      *
-     * @param observer The observer to add
+     * @param observer implementation of {@link GameObserver}
+     *
+     * <p>Example:</p>
+     * <pre>
+     * chess.addObserver(myObserver);
+     * </pre>
      */
     public void addObserver(GameObserver observer) {
         game.addObserver(observer);
     }
 
     /**
-     * Removes an observer from the game.
+     * Detaches a previously added observer.
      *
-     * @param observer The observer to remove
+     * @param observer the observer to remove
+     *
+     * <p>Example:</p>
+     * <pre>
+     * chess.removeObserver(myObserver);
+     * </pre>
      */
     public void removeObserver(GameObserver observer) {
         game.removeObserver(observer);
     }
 
     /**
-     * Ends the game.
+     * Terminates the current game session and clears state.
+     *
+     * <p>Example:</p>
+     * <pre>
+     * chess.endGame();
+     * </pre>
      */
     public void endGame() {
         game = null;
     }
 
     /**
-     * Returns the current player.
+     * Returns the player whose turn it is.
      *
-     * @return The current player
+     * @return current {@link Player}
+     *
+     * <p>Example:</p>
+     * <pre>
+     * Player current = chess.getCurrentPlayer();
+     * </pre>
      */
     public Player getCurrentPlayer() {
         return game.getCurrentPlayer();
@@ -135,7 +206,7 @@ public class Chess {
     /**
      * Returns the white player.
      *
-     * @return The white player
+     * @return white {@link Player}
      */
     public Player getPlayerWhite() {
         return game.getPlayerWhite();
@@ -144,56 +215,94 @@ public class Chess {
     /**
      * Returns the black player.
      *
-     * @return The black player
+     * @return black {@link Player}
      */
     public Player getPlayerBlack() {
         return game.getPlayerBlack();
     }
 
     /**
-     * Returns the piece at a given position.
+     * Retrieves the {@link Piece} at a given board position.
      *
-     * @param position The position of the piece
-     * @return The piece at the given position
+     * @param position target {@link Square}
+     * @return piece occupying that square, or {@code null} if empty
+     *
+     * <p>Example:</p>
+     * <pre>
+     * Piece p = chess.getPieceAt(new Square("e4"));
+     * </pre>
      */
     public Piece getPieceAt(Square position) {
         return game.getPieceAt(position);
     }
 
     /**
-     * Returns the legal squares for a Piece on a given position.
+     * Computes all legal target squares for a piece at the given position.
      *
-     * @param position The position of the piece
-     * @return The legal squares for the given piece
+     * @param position start {@link Square} of the piece
+     * @return list of legal {@link Square} destinations
+     *
+     * <p>Example:</p>
+     * <pre>
+     * List<Square> moves = chess.getLegalSquares(new Square("d2"));
+     * </pre>
      */
     public List<Square> getLegalSquares(Square position) {
         return game.getLegalSquares(position);
     }
 
     /**
-     * Returns the list of moves made in the game.
+     * Returns the list of moves made so far in algebraic notation.
      *
-     * @return The list of moves made in the game
+     * @return move list as {@link List} of {@link String}
      */
     public List<String> getMoveList() {
         return game.getMoveList();
     }
 
     /**
-     * Moves a piece in the game.
+     * Executes a move from start to end square.
      *
-     * @param start the starting position of the players piece
-     * @param end   the end position of the players piece
-     * @throws IllegalMoveException if the move is not allowed
+     * @param start source {@link Square}
+     * @param end   destination {@link Square}
+     * @throws IllegalMoveException if the move violates game rules
+     *
+     * <p>Example:</p>
+     * <pre>
+     * chess.movePiece(new Square("e2"), new Square("e4"));
+     * </pre>
      */
     public void movePiece(Square start, Square end) throws IllegalMoveException {
         game.movePiece(start, end);
     }
 
+    /**
+     * Executes a pawn promotion move.
+     *
+     * @param start       source {@link Square}
+     * @param end         destination {@link Square}
+     * @param targetPiece piece type to promote to (e.g., {@link Pieces#QUEEN})
+     * @throws IllegalMoveException if promotion is invalid
+     *
+     * <p>Example:</p>
+     * <pre>
+     * chess.promoteMove(new Square("e7"), new Square("e8"), Pieces.QUEEN);
+     *</pre>
+     */
     public void promoteMove(Square start, Square end, Pieces targetPiece) throws IllegalMoveException {
         game.promoteMove(start, end, targetPiece);
     }
 
+    /**
+     * Retrieves the join code for an online game session.
+     *
+     * @return join code string, or {@code null} if offline
+     *
+     * <p>Example:</p>
+     * <pre>
+     * String code = chess.getJoinCode();
+     * </pre>
+     */
     public String getJoinCode() {
         return ((OnlineGame) game).getJoinCode();
     }
