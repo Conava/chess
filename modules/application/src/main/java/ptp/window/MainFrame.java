@@ -44,7 +44,7 @@ public class MainFrame extends JFrame {
     private void initializeWindow() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(MINIMUM_WINDOW_WIDTH, MINIMUM_WINDOW_HEIGHT);
-        setTitle("ptp-do09 Schachspiel");
+        setTitle("Chess");
         setLocationRelativeTo(null);
         setVisible(true);
         LOGGER.log(Level.INFO, "MainFrame initialized");
