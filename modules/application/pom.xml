@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>ptp</groupId>
-        <artifactId>Chess</artifactId>
+        <groupId>io.github.conava</groupId>
+        <artifactId>chess</artifactId>
         <version>0.9</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
@@ -22,7 +22,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>ptp</groupId>
+            <groupId>io.github.conava</groupId>
             <artifactId>core</artifactId>
             <version>0.9</version>
         </dependency>
@@ -62,7 +62,7 @@
                         <configuration>
                             <filters>
                                 <filter>
-                                    <artifact>ptp:core</artifact>
+                                    <artifact>io.github.conava:core</artifact>
                                     <excludes>
                                         <exclude>META-INF/MANIFEST.MF</exclude>
                                     </excludes>
@@ -70,7 +70,7 @@
                             </filters>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>ptp.Chess</mainClass>
+                                    <mainClass>io.github.conava.chess.application.Chess</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -93,7 +93,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>ptp.Chess</mainClass>
+                                    <mainClass>io.github.conava.chess.application.Chess</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
