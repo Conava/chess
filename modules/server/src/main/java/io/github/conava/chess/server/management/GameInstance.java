@@ -8,7 +8,6 @@ import io.github.conava.chess.core.logic.game.ServerGame;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -126,8 +125,7 @@ public class GameInstance {
                     Objects.equals(message.getParameterValue("playerColor"), "WHITE") ? game.getPlayerWhite() : game.getPlayerBlack());
             game.movePiece(move.getStart(), move.getEnd());
             LOGGER.log(Level.INFO, "Move executed: " + message.content());
-        } catch (IllegalMoveException | ClassNotFoundException | NoSuchMethodException |
-                 InstantiationException | IllegalAccessException | InvocationTargetException e) {
+        } catch (IllegalMoveException e) {
             LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
         }
     }

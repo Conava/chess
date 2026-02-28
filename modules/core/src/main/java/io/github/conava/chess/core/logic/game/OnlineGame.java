@@ -9,7 +9,6 @@ import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.data.io.MessageType;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -158,8 +157,7 @@ public class OnlineGame extends Game {
             Move move = Move.fromString(Objects.requireNonNull(message.getParameterValue(MOVE_PARAM)),
                     Objects.equals(message.getParameterValue(PLAYER_COLOR_PARAM), "WHITE") ? player0 : player1);
             executeMoveFromRemote(move);
-        } catch (IllegalMoveException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                 InstantiationException | IllegalAccessException e) {
+        } catch (IllegalMoveException e) {
             LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
         }
     }

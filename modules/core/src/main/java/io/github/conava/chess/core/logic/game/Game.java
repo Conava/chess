@@ -1,6 +1,10 @@
 package io.github.conava.chess.core.logic.game;
 
+import io.github.conava.chess.core.data.pieces.Bishop;
 import io.github.conava.chess.core.data.pieces.King;
+import io.github.conava.chess.core.data.pieces.Knight;
+import io.github.conava.chess.core.data.pieces.Queen;
+import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.pieces.Piece;
@@ -15,8 +19,6 @@ import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -251,14 +253,13 @@ public abstract class Game extends Observable {
      * @return The new piece.
      */
     private Piece getNewPiece(Pieces targetPiece, Player player) {
-        try {
-            Class<?> pieceClass = Class.forName("ptp.core.data.pieces." + targetPiece.getClassName());
-            Constructor<?> pieceConstructor = pieceClass.getConstructor(Player.class);
-            return (Piece) pieceConstructor.newInstance(player);
-        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
-                 IllegalAccessException | InvocationTargetException e) {
-            return null;
-        }
+        return switch (targetPiece) {
+            case QUEEN  -> new Queen(player);
+            case ROOK   -> new Rook(player);
+            case BISHOP -> new Bishop(player);
+            case KNIGHT -> new Knight(player);
+            default     -> null;
+        };
     }
 
     /**

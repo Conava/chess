@@ -2,11 +2,13 @@ package io.github.conava.chess.core.logic.moves;
 
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
-import io.github.conava.chess.core.data.pieces.Pieces;
-import io.github.conava.chess.core.data.player.PlayerColor;
+import io.github.conava.chess.core.data.pieces.Bishop;
+import io.github.conava.chess.core.data.pieces.Knight;
 import io.github.conava.chess.core.data.pieces.Piece;
-
-import java.lang.reflect.InvocationTargetException;
+import io.github.conava.chess.core.data.pieces.Pieces;
+import io.github.conava.chess.core.data.pieces.Queen;
+import io.github.conava.chess.core.data.pieces.Rook;
+import io.github.conava.chess.core.data.player.PlayerColor;
 
 public class Move {
     private final Square start;
@@ -75,28 +77,34 @@ public class Move {
         return sb.toString();
     }
 
-    public static Move fromString(String moveString, Player movePlayer) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-    if (moveString.equals("O-O")) {
-        Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
-        Square end = new Square(6, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // g1 or g8
-        return new CastleMove(start, end);
-    } else if (moveString.equals("O-O-O")) {
-        Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
-        Square end = new Square(2, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // c1 or c8
-        return new CastleMove(start, end);
-    } else if (moveString.contains("=")) {
-        String[] parts = moveString.split("=");
-        Square start = convertToSquare(parts[0]);
-        Square end = convertToSquare(parts[1]);
-        Pieces targetPiece = Pieces.valueOf(parts[2]);
-        Piece targetPieceInstance = (Piece) Class.forName("ptp.core.data.pieces." + targetPiece.getClassName()).getConstructor(Player.class).newInstance(movePlayer);
-        return new PromotionMove(start, end, targetPieceInstance);
-    } else {
-        Square start = convertToSquare(moveString.substring(0, 2));
-        Square end = convertToSquare(moveString.substring(3, 5));
-        return new Move(start, end);
+    public static Move fromString(String moveString, Player movePlayer) {
+        if (moveString.equals("O-O")) {
+            Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
+            Square end = new Square(6, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // g1 or g8
+            return new CastleMove(start, end);
+        } else if (moveString.equals("O-O-O")) {
+            Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
+            Square end = new Square(2, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // c1 or c8
+            return new CastleMove(start, end);
+        } else if (moveString.contains("=")) {
+            String[] parts = moveString.split("=");
+            Square start = convertToSquare(parts[0]);
+            Square end = convertToSquare(parts[1]);
+            Pieces targetPiece = Pieces.valueOf(parts[2]);
+            Piece targetPieceInstance = switch (targetPiece) {
+                case QUEEN  -> new Queen(movePlayer);
+                case ROOK   -> new Rook(movePlayer);
+                case BISHOP -> new Bishop(movePlayer);
+                case KNIGHT -> new Knight(movePlayer);
+                default     -> null;
+            };
+            return new PromotionMove(start, end, targetPieceInstance);
+        } else {
+            Square start = convertToSquare(moveString.substring(0, 2));
+            Square end = convertToSquare(moveString.substring(3, 5));
+            return new Move(start, end);
+        }
     }
-}
 
     private static Square convertToSquare(String substring) {
         return new Square(substring.charAt(0) - 'a', substring.charAt(1) - '1');
