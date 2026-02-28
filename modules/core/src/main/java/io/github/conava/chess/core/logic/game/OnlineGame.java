@@ -145,6 +145,7 @@ public class OnlineGame extends Game {
     private void handleGameStatus(Message message) {
         LOGGER.log(Level.INFO, "Game status update: " + message.getParameterValue(GAME_STATE_PARAM));
         this.gameState = GameState.valueOf(message.getParameterValue(GAME_STATE_PARAM));
+        notifyObservers();
     }
 
     /**
@@ -239,7 +240,7 @@ public class OnlineGame extends Game {
      * @param move The move to be sent to the server.
      */
     private void sendMoveToServer(Move move) {
-        Message moveMessage = new Message(MessageType.MOVE, MOVE_PARAM + "=" + move + " " + PLAYER_COLOR_PARAM + "=" + localPlayerColor);
+        Message moveMessage = new Message(MessageType.MOVE, MOVE_PARAM + "=" + move.toProtocolString() + " " + PLAYER_COLOR_PARAM + "=" + localPlayerColor);
         sendMessageToServer(moveMessage);
     }
 

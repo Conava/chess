@@ -151,6 +151,21 @@ class OnlineGameServerConnectionTest {
         assertTrue(hasJOIN_GAME, "When a joinCode is provided, OnlineGame must send JOIN_GAME to the server");
     }
 
+    // ---- handleMessage() GAME_STATUS propagates to observers ----
+
+    @Test
+    void handleMessage_gameStatus_notifiesObservers() {
+        CapturingObserver observer = new CapturingObserver();
+        game.addObserver(observer);
+
+        // RUNNING is a valid GameState enum value
+        Message gameStatusMsg = new Message(MessageType.GAME_STATUS, "gameState=RUNNING");
+        game.handleMessage(gameStatusMsg);
+
+        assertTrue(observer.notified,
+                "onGameStateChanged() must be called when a GAME_STATUS message is received");
+    }
+
     // ---- handleMessage() dispatches JOIN_CODE without throwing ----
 
     @Test

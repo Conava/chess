@@ -77,6 +77,46 @@ public class Move {
         return sb.toString();
     }
 
+    /**
+     * Produces an unambiguous wire-safe representation of this move for network transmission.
+     * <p>
+     * Format:
+     * <ul>
+     *   <li>Castling kingside: {@code "O-O"}</li>
+     *   <li>Castling queenside: {@code "O-O-O"}</li>
+     *   <li>Regular move: {@code "<startFile><startRank>-<endFile><endRank>"} e.g. {@code "e2-e4"}</li>
+     *   <li>Promotion: {@code "<start>-<end>=<PIECES_ENUM_NAME>"} e.g. {@code "a7-a8=QUEEN"}</li>
+     * </ul>
+     * This format round-trips through {@link #fromString(String, Player)}.
+     * Do NOT use {@link #toString()} for wire transmission — it produces algebraic notation for UI display.
+     *
+     * @return the wire-safe protocol string
+     */
+    public String toProtocolString() {
+        if (this instanceof CastleMove) {
+            // Kingside: end column (getY()) is greater than start column; queenside: less.
+            return this.end.getY() > this.start.getY() ? "O-O" : "O-O-O";
+        }
+        String startProto = squareToProtocol(this.start);
+        String endProto = squareToProtocol(this.end);
+        if (this instanceof PromotionMove promotionMove) {
+            return startProto + "-" + endProto + "=" + promotionMove.getTargetPiece().getType().name();
+        }
+        return startProto + "-" + endProto;
+    }
+
+    /**
+     * Converts a square to a two-character protocol string that round-trips through
+     * {@link #convertToSquare(String)}.
+     * <p>
+     * {@code convertToSquare(s)} stores {@code s.charAt(0)-'a'} in the y-field (column/file)
+     * and {@code s.charAt(1)-'1'} in the x-field (row/rank). This method inverts that mapping:
+     * file char = {@code 'a' + square.getY()}, rank char = {@code '1' + square.getX()}.
+     */
+    private static String squareToProtocol(Square square) {
+        return "" + (char) ('a' + square.getY()) + (char) ('1' + square.getX());
+    }
+
     public static Move fromString(String moveString, Player movePlayer) {
         if (moveString.equals("O-O")) {
             Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
@@ -87,10 +127,13 @@ public class Move {
             Square end = new Square(2, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // c1 or c8
             return new CastleMove(start, end);
         } else if (moveString.contains("=")) {
-            String[] parts = moveString.split("=");
-            Square start = convertToSquare(parts[0]);
-            Square end = convertToSquare(parts[1]);
-            Pieces targetPiece = Pieces.valueOf(parts[2]);
+            // Protocol format: "<start>-<end>=<PIECES_ENUM_NAME>" e.g. "a7-a8=QUEEN"
+            String[] equalParts = moveString.split("=", 2);
+            String squarePart = equalParts[0]; // "a7-a8"
+            String pieceName = equalParts[1];  // "QUEEN"
+            Square start = convertToSquare(squarePart.substring(0, 2));
+            Square end = convertToSquare(squarePart.substring(3, 5));
+            Pieces targetPiece = Pieces.valueOf(pieceName);
             Piece targetPieceInstance = switch (targetPiece) {
                 case QUEEN  -> new Queen(movePlayer);
                 case ROOK   -> new Rook(movePlayer);
