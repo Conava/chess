@@ -182,7 +182,7 @@ public class ChessGame extends JPanel implements GameObserver {
 
     @Override
     public void onGameStateChanged() {
-        update(); //todo: implement the update from remote in a separate thread
+        SwingUtilities.invokeLater(this::update);
     }
 
     /**
