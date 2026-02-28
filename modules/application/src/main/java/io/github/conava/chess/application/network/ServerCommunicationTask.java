@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -21,10 +19,10 @@ import java.util.logging.Logger;
  * Implements {@link ServerConnection} so it can be passed into the core {@code OnlineGame}
  * without introducing I/O dependencies into the {@code core} module.
  *
- * <p>After construction, call {@link #setMessageHandler(Consumer)} to register the callback
- * that will receive parsed {@link Message} objects from the server, then start this task on
- * a new {@link Thread}. The provided {@link CountDownLatch} will be counted down once the
- * socket connection is established (or fails).</p>
+ * <p>The {@link Consumer} message handler is injected at construction time so that no
+ * messages can arrive before the handler is registered. The provided {@link CountDownLatch}
+ * is counted down once the socket connection is established (or fails). All resources
+ * (socket, reader, writer) are closed in a {@code finally} block on every exit path.</p>
  */
 public class ServerCommunicationTask implements Runnable, ServerConnection {
     private static final Logger LOGGER = Logger.getLogger(ServerCommunicationTask.class.getName());
@@ -32,10 +30,11 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
     private final String serverIP;
     private final int serverPort;
     private final CountDownLatch connectionLatch;
-    private Consumer<Message> messageHandler;
+    private final Consumer<Message> messageHandler;
 
     private Socket socket;
     private PrintWriter out;
+    private BufferedReader in;
     private volatile boolean running = true;
     private volatile boolean connected = false;
 
@@ -46,52 +45,63 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
      * @param serverPort      The port number of the server.
      * @param connectionLatch Counted down to 0 once the connection is established or has failed,
      *                        allowing the caller to block until connectivity is known.
+     * @param messageHandler  A {@link Consumer} that accepts parsed {@link Message} objects
+     *                        received from the server.
      */
-    public ServerCommunicationTask(String serverIP, int serverPort, CountDownLatch connectionLatch) {
+    public ServerCommunicationTask(String serverIP, int serverPort, CountDownLatch connectionLatch,
+                                   Consumer<Message> messageHandler) {
         this.serverIP = serverIP;
         this.serverPort = serverPort;
         this.connectionLatch = connectionLatch;
-    }
-
-    /**
-     * Sets the handler that will be invoked for each {@link Message} received from the server.
-     * Must be called before the task thread starts reading, or message delivery may be missed.
-     *
-     * @param messageHandler A {@link Consumer} that accepts parsed {@link Message} objects.
-     */
-    public void setMessageHandler(Consumer<Message> messageHandler) {
         this.messageHandler = messageHandler;
     }
 
     /**
      * Opens the socket connection, then loops reading lines from the server.
      * Each line is parsed into a {@link Message} and forwarded to the registered message handler.
-     * Duplicate messages (same raw string) within a connection are silently discarded.
+     * All resources are closed in a {@code finally} block on every exit path.
      */
     @Override
     public void run() {
-        Set<String> processedMessages = new HashSet<>();
         try {
             socket = new Socket(serverIP, serverPort);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
             connected = true;
             connectionLatch.countDown();
 
             String rawMessage = in.readLine();
             while (running && rawMessage != null) {
-                if (!processedMessages.contains(rawMessage)) {
-                    Message decoded = MessageParser.parse(rawMessage);
-                    if (messageHandler != null) {
-                        messageHandler.accept(decoded);
-                    }
-                    processedMessages.add(rawMessage);
-                }
+                Message decoded = MessageParser.parse(rawMessage);
+                messageHandler.accept(decoded);
                 rawMessage = in.readLine();
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Failed to connect to server", e);
             connectionLatch.countDown();
+        } finally {
+            connected = false;
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (Exception ignored) {
+                    // silently ignored
+                }
+            }
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException ignored) {
+                    // silently ignored
+                }
+            }
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException ignored) {
+                    // silently ignored
+                }
+            }
         }
     }
 
@@ -114,12 +124,12 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
     public void closeConnection() {
         LOGGER.info("Closing connection to server");
         running = false;
-        try {
-            if (socket != null && !socket.isClosed()) {
+        if (socket != null && !socket.isClosed()) {
+            try {
                 socket.close();
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Failed to close socket", e);
             }
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to close socket", e);
         }
     }
 

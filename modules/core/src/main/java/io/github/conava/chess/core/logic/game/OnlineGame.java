@@ -40,7 +40,7 @@ public class OnlineGame extends Game {
     private GameState backupGameState;
 
     /**
-     * Constructs an OnlineGame instance.
+     * Private constructor — use {@link #create} to obtain an instance.
      *
      * @param selectedRuleset    The selected ruleset for the game.
      * @param playerWhiteName    The name of the white player.
@@ -48,23 +48,43 @@ public class OnlineGame extends Game {
      * @param onlineGameSettings The settings for the online game, including join code.
      * @param connection         An already-established {@link ServerConnection} to the game server.
      */
-    public OnlineGame(RulesetOptions selectedRuleset,
-                      String playerWhiteName,
-                      String playerBlackName,
-                      Map<String, String> onlineGameSettings,
-                      ServerConnection connection) {
+    private OnlineGame(RulesetOptions selectedRuleset,
+                       String playerWhiteName,
+                       String playerBlackName,
+                       Map<String, String> onlineGameSettings,
+                       ServerConnection connection) {
         super(selectedRuleset, playerWhiteName, playerBlackName);
         this.gameState = GameState.NO_GAME;
         this.joinCode = onlineGameSettings.get("joinCode");
         this.selectedRuleset = selectedRuleset;
         this.connection = connection;
-        connectToServerGame();
+    }
+
+    /**
+     * Static factory method that constructs an {@link OnlineGame} without sending any network
+     * messages. The caller must invoke {@link #connectToServerGame()} separately once the
+     * connection has been confirmed to be live.
+     *
+     * @param selectedRuleset    The selected ruleset for the game.
+     * @param playerWhiteName    The name of the white player.
+     * @param playerBlackName    The name of the black player.
+     * @param onlineGameSettings The settings for the online game, including join code.
+     * @param connection         An already-established {@link ServerConnection} to the game server.
+     * @return A newly constructed {@link OnlineGame} instance.
+     */
+    public static OnlineGame create(RulesetOptions selectedRuleset,
+                                    String playerWhiteName,
+                                    String playerBlackName,
+                                    Map<String, String> onlineGameSettings,
+                                    ServerConnection connection) {
+        return new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings, connection);
     }
 
     /**
      * Connects to the server game using the join code or creates a new game.
+     * Must be called after the underlying {@link ServerConnection} is confirmed live.
      */
-    private void connectToServerGame() {
+    public void connectToServerGame() {
         Message connectMessage;
         if (joinCode != null && !joinCode.isEmpty()) {
             connectMessage = new Message(MessageType.JOIN_GAME, JOIN_CODE_PARAM + "=" + joinCode);

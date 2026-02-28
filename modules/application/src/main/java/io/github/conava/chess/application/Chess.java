@@ -16,10 +16,13 @@ import io.github.conava.chess.application.network.ServerCommunicationTask;
 import io.github.conava.chess.application.window.MainFrame;
 import io.github.conava.chess.application.components.ColorScheme;
 
+import io.github.conava.chess.core.data.io.Message;
+
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 import java.util.logging.*;
 import javax.swing.*;
 
@@ -148,7 +151,14 @@ public class Chess {
         int serverPort = Integer.parseInt(onlineGameSettings.get("port"));
 
         CountDownLatch connectionLatch = new CountDownLatch(1);
-        ServerCommunicationTask task = new ServerCommunicationTask(serverIP, serverPort, connectionLatch);
+
+        // Create a temporary holder so that the message handler lambda can reference the game
+        // once it is constructed. The array trick allows effective-final capture.
+        OnlineGame[] gameHolder = new OnlineGame[1];
+        Consumer<Message> handler = msg -> gameHolder[0].handleMessage(msg);
+
+        ServerCommunicationTask task = new ServerCommunicationTask(serverIP, serverPort,
+                connectionLatch, handler);
 
         Thread serverThread = new Thread(task);
         serverThread.setDaemon(true);
@@ -161,9 +171,16 @@ public class Chess {
             LOGGER.log(Level.SEVERE, "Thread interrupted while waiting for server connection", e);
         }
 
-        OnlineGame onlineGame = new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName,
+        OnlineGame onlineGame = OnlineGame.create(selectedRuleset, playerWhiteName, playerBlackName,
                 onlineGameSettings, task);
-        task.setMessageHandler(onlineGame::handleMessage);
+        gameHolder[0] = onlineGame;
+
+        if (!task.isConnected()) {
+            onlineGame.setGameState(GameState.SERVER_ERROR);
+            return onlineGame;
+        }
+
+        onlineGame.connectToServerGame();
         return onlineGame;
     }
 

@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * The ServerConnection interface was introduced to extract networking from core.
  * These tests verify the contract between OnlineGame and ServerConnection:
  * <p>
- * - OnlineGame calls sendMessage() on construction (to create/join the game)
+ * - OnlineGame calls sendMessage() when connectToServerGame() is invoked
  * - OnlineGame calls sendMessage() when a local player makes a move
  * - OnlineGame calls closeConnection() when endGame() is called
  * - OnlineGame does NOT call closeConnection() during normal game-play moves
@@ -54,32 +54,15 @@ class OnlineGameServerConnectionTest {
         }
     }
 
-    /**
-     * Subclass of OnlineGame that exposes the protected board so we can
-     * place pieces for move tests.
-     */
-    static class TestOnlineGame extends OnlineGame {
-        TestOnlineGame(ServerConnection conn) {
-            super(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
-        }
-
-        void clearSquare(int y, int x) {
-            board.getSquare(y, x).setPiece(null);
-        }
-
-        void placePiece(int y, int x, Piece piece) {
-            board.getSquare(y, x).setPiece(piece);
-        }
-    }
-
     private RecordingConnection connection;
-    private TestOnlineGame game;
+    private OnlineGame game;
 
     @BeforeEach
     void setUp() {
         connection = new RecordingConnection();
         // No joinCode → creating a new game; local player is WHITE
-        game = new TestOnlineGame(connection);
+        game = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), connection);
+        game.connectToServerGame();
     }
 
     // ---- sendMessage() is called on construction ----
@@ -145,7 +128,8 @@ class OnlineGameServerConnectionTest {
         RecordingConnection joiningConn = new RecordingConnection();
         Map<String, String> settings = new HashMap<>();
         settings.put("joinCode", "ABC123");
-        OnlineGame joiningGame = new OnlineGame(RulesetOptions.STANDARD, "Alice", "Bob", settings, joiningConn);
+        OnlineGame joiningGame = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", settings, joiningConn);
+        joiningGame.connectToServerGame();
 
         boolean hasJOIN_GAME = joiningConn.sentMessages.stream().anyMatch(m -> m.startsWith("JOIN_GAME"));
         assertTrue(hasJOIN_GAME, "When a joinCode is provided, OnlineGame must send JOIN_GAME to the server");
