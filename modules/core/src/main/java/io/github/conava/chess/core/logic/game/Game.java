@@ -35,7 +35,6 @@ public abstract class Game extends Observable {
     protected Board board;
     protected int turnCount;
     protected List<Move> moves;
-    protected GameType gameType;
 
     /**
      * Constructor for the Game class.
