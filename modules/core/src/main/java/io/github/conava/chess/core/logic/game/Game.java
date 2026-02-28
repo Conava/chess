@@ -260,7 +260,8 @@ public abstract class Game extends Observable {
             case ROOK   -> new Rook(player);
             case BISHOP -> new Bishop(player);
             case KNIGHT -> new Knight(player);
-            default     -> null;
+            default     -> throw new IllegalArgumentException(
+                    "Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
         };
     }
 

@@ -118,17 +118,18 @@ class MoveFromStringTest {
     }
 
     @Test
-    void fromString_promotionToKing_returnsNullTargetPiece() {
-        // KING and PAWN are non-promotable values; the switch returns null for them.
-        Move move = Move.fromString("a7=a8=KING", WHITE);
-        PromotionMove pm = (PromotionMove) move;
-        assertNull(pm.getTargetPiece(), "KING is not a valid promotion target; getNewPiece must return null");
+    void fromString_promotionToKing_throwsIllegalArgumentException() {
+        // KING is not a valid promotion target; fromString must now throw IllegalArgumentException.
+        assertThrows(IllegalArgumentException.class,
+                () -> Move.fromString("a7=a8=KING", WHITE),
+                "KING is not a valid promotion target; fromString must throw IllegalArgumentException");
     }
 
     @Test
-    void fromString_promotionToPawn_returnsNullTargetPiece() {
-        Move move = Move.fromString("a7=a8=PAWN", WHITE);
-        PromotionMove pm = (PromotionMove) move;
-        assertNull(pm.getTargetPiece(), "PAWN is not a valid promotion target; getNewPiece must return null");
+    void fromString_promotionToPawn_throwsIllegalArgumentException() {
+        // PAWN is not a valid promotion target; fromString must now throw IllegalArgumentException.
+        assertThrows(IllegalArgumentException.class,
+                () -> Move.fromString("a7=a8=PAWN", WHITE),
+                "PAWN is not a valid promotion target; fromString must throw IllegalArgumentException");
     }
 }

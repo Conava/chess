@@ -96,7 +96,8 @@ public class Move {
                 case ROOK   -> new Rook(movePlayer);
                 case BISHOP -> new Bishop(movePlayer);
                 case KNIGHT -> new Knight(movePlayer);
-                default     -> null;
+                default     -> throw new IllegalArgumentException(
+                        "Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
             };
             return new PromotionMove(start, end, targetPieceInstance);
         } else {

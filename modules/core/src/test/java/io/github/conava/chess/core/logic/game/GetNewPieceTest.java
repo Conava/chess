@@ -120,4 +120,18 @@ class GetNewPieceTest {
 
         assertNotEquals(beforeMove, afterMove, "After a promotion move the active player must switch");
     }
+
+    @Test
+    void promoteToKing_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.KING),
+                "KING is not a valid promotion target; promoteMove must throw IllegalArgumentException");
+    }
+
+    @Test
+    void promoteToPawn_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.PAWN),
+                "PAWN is not a valid promotion target; promoteMove must throw IllegalArgumentException");
+    }
 }
