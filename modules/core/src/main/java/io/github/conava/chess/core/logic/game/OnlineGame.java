@@ -276,7 +276,6 @@ public class OnlineGame extends Game {
      */
     private void executeMoveFromRemote(Move move) throws IllegalMoveException {
         super.executeMove(move);
-        notifyObservers();
     }
 
     /**

@@ -209,6 +209,7 @@ public abstract class Game extends Observable {
             board.executeMove(move);
             moves.add(move);
             turnCount++;
+            notifyObservers();
         } else {
             throw new IllegalMoveException(move);
         }
