@@ -4,26 +4,16 @@
 Modularized chess game. Java 17, Maven multi-module. Migrating UI from Swing to JavaFX.
 All packages under `io.github.conava.chess`.
 
-## Standard Operating Procedure (The 10-Step Pipeline)
-As the root orchestrator, you MUST drive every task through this exact pipeline:
+## How to Start Any Task
 
-**Phase 1: Planning & Alignment**
-1. **ARCHITECT (Initial):** Create branch, write initial plan.
-2. **HUMAN GATE:** Wait for answers to "Open Questions".
-3. **ARCHITECT (Update):** Apply human answers to the plan. Wait for "Start execution".
+Invoke the orchestrator agent. It handles the full pipeline.
+```
+Use the orchestrator agent to [describe your task]
+```
 
-**Phase 2: Execution (Implementation Only)**
-4. **EXECUTOR (Loop):** Feed the `executor` strictly ONE task at a time from the "Ordered Implementation Tasks" section ONLY.
-5. **EXECUTOR (Continuation):** Repeat until all tasks in that specific section are complete.
-
-**Phase 3: Quality Assurance & Docs**
-6. **TEST-WRITER:** Invoke `test-writer` and instruct it to implement the "Testing Requirements" section of the plan.
-7. **DOCS-KEEPER:** Invoke `docs-keeper` and instruct it to implement the "Documentation & Javadoc Requirements" section of the plan.
-
-**Phase 4: Review & Merge**
-8. **REVIEWER:** Invoke `reviewer` to analyze the branch against Architecture Laws. Write findings to `.claude/plans/YYYY-MM-DD-<slug>-review.md`.
-9. **HUMAN GATE (Review Loop):** Wait for human to read the review. Route fixes to the appropriate agent based on the feedback.
-10. **HUMAN GATE (Merge):** Wait for the human to manually merge.
+Do not invoke architect, executor, test-writer, docs-keeper, or reviewer
+directly — always go through the orchestrator. The orchestrator enforces
+the pipeline order, the human gates, and the agent boundaries.
 
 ## Build & Run Commands
 

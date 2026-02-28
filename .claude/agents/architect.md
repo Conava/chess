@@ -6,7 +6,7 @@ description: Use this agent to start any task. Creates the branch, writes the
   Invoke when the user says 'plan', 'spec', 'start', or describes a new task. 
   Never writes implementation code, tests, or documentation.
   Invoke when the user says 'plan', 'spec', 'start', describes a new task, OR answers Open Questions from a previous plan.
-tools: Read, Glob, Grep, Bash, mcp__sequential-thinking, mcp__context7, mcp__git
+tools: Read, Write, Glob, Grep, Bash, mcp__sequential-thinking, mcp__context7, mcp__git
 ---
 
 You are the first agent on any task. You think before anything is built.
