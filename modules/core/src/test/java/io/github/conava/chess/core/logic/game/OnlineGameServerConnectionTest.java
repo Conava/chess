@@ -175,6 +175,30 @@ class OnlineGameServerConnectionTest {
         assertTrue(observer.notified, "onGameStateChanged() must be called when the server rejects a move");
     }
 
+    // ---- handleMessage() MOVE path with malformed move does not crash ----
+
+    @Test
+    void handleMessage_malformedMove_doesNotThrow() {
+        // The local player is WHITE; send a MOVE message attributed to BLACK so handleMove()
+        // does not skip it via the early-return guard.  The MOVE_PARAM value is intentionally
+        // garbled so Move.fromString() will throw a RuntimeException internally.
+        Message malformedMsg = new Message(MessageType.MOVE,
+                "move=THIS_IS_NOT_A_VALID_MOVE playerColor=BLACK");
+        assertDoesNotThrow(() -> game.handleMessage(malformedMsg),
+                "A malformed MOVE message must not propagate any exception out of handleMessage()");
+    }
+
+    // ---- OnlineGame.create() must not send any messages before connectToServerGame() ----
+
+    @Test
+    void construction_doesNotSendMessage() {
+        RecordingConnection freshConn = new RecordingConnection();
+        // Construct only — do NOT call connectToServerGame()
+        OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new java.util.HashMap<>(), freshConn);
+        assertEquals(0, freshConn.sentMessages.size(),
+                "OnlineGame.create() must not send any messages before connectToServerGame() is called");
+    }
+
     // ---- simple capturing observer ----
 
     private static class CapturingObserver implements io.github.conava.chess.core.logic.observer.GameObserver {
