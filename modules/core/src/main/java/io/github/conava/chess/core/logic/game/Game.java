@@ -250,9 +250,13 @@ public abstract class Game extends Observable {
     /**
      * Creates a new piece of the given type for the given player.
      *
-     * @param targetPiece The type of piece to create.
+     * @param targetPiece The type of piece to create. Must be one of {@code QUEEN}, {@code ROOK},
+     *                    {@code BISHOP}, or {@code KNIGHT}. Passing {@code KING} or {@code PAWN}
+     *                    is not valid for promotion.
      * @param player      The player for whom the piece is created.
      * @return The new piece.
+     * @throws IllegalArgumentException if {@code targetPiece} is {@code KING} or {@code PAWN},
+     *                                  as neither is a valid promotion target.
      */
     private Piece getNewPiece(Pieces targetPiece, Player player) {
         return switch (targetPiece) {

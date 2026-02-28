@@ -71,7 +71,7 @@ io.github.conava.chess.core
 |---|---|---|
 | `Game` (abstract) | Owns board, players, ruleset, turn counter, and move history. Provides `movePiece`, `promoteMove`, `getLegalSquares`, `getCurrentPlayer`, `getBoard`, `getMoveList`. Validates moves via ruleset and detects king-capture game-end. Calls `notifyObservers()` after every successful `executeMove`. Extends `Observable`. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Board`, `Ruleset`, `Move`, `Observable`, `Player` |
 | `OfflineGame` | Concrete `Game` for local two-player play. `startGame()` sets state to `RUNNING`; `endGame()` is a no-op. | `Game`, `GameState` |
-| `OnlineGame` | Concrete `Game` for networked play. Accepts a `ServerConnection` in its constructor — no direct socket or thread creation. Overrides `executeMove` to enforce local-player-turn gating, backup/restore state on server rejection, and forward moves via `sendMessageToServer`. Handles incoming `Message` objects dispatched by the application layer via `handleMessage`. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Game`, `ServerConnection`, `Message`, `MessageType`, `Board` |
+| `OnlineGame` | Concrete `Game` for networked play. Uses a static factory method: `OnlineGame.create(...)` constructs the instance with a private constructor without sending any network messages. The application facade must then call `connectToServerGame()` after confirming the connection is live — this two-phase construction ensures the message handler is registered before the server's first reply can arrive. Overrides `executeMove` to enforce local-player-turn gating, backup/restore state on server rejection, and forward moves via `sendMessageToServer` (using `Move.toProtocolString()` for wire serialization). Handles incoming `Message` objects dispatched by the application layer via `handleMessage`. `handleMove` catches both `IllegalMoveException` and `RuntimeException` to prevent malformed server messages from crashing the handler thread. `handleGameStatus` calls `notifyObservers()` after updating state. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Game`, `ServerConnection`, `Message`, `MessageType`, `Board` |
 | `ServerGame` | Concrete `Game` intended for server-side use. `startGame()` sets state to `RUNNING`; `endGame()` body is empty. | `Game`, `GameState` |
 | `ServerConnection` | Interface that abstracts the networking transport. Methods: `sendMessage(String)`, `closeConnection()`, `isConnected()`. Allows `OnlineGame` to send/receive messages without importing any I/O classes. Implemented in the `application` module by `ServerCommunicationTask`. | — |
 | `GameState` | Enum of 14 game states (German-language display strings). Covers no-game, waiting, running, win-by-checkmate/resignation/timeout for each colour, and three draw variants. | — |
@@ -80,7 +80,7 @@ io.github.conava.chess.core
 
 | Class | Responsibility | Key collaborators |
 |---|---|---|
-| `Move` | Immutable pair of start/end `Square` references. Records piece type and capture flag at construction time. Serialises to algebraic notation in `toString()`. Static `fromString(String, Player)` reconstructs a `Move` from that notation; promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Square`, `Pieces`, `CastleMove`, `PromotionMove` |
+| `Move` | Immutable pair of start/end `Square` references. Records piece type and capture flag at construction time. Serialises to algebraic notation in `toString()` (for display only). `toProtocolString()` produces an unambiguous wire-safe format (`"e2-e4"`, `"O-O"`, `"O-O-O"`, `"a7-a8=QUEEN"`) that round-trips through `fromString(String, Player)`. Static `fromString` reconstructs a `Move` from the protocol format; promotion piece instantiation uses an enum switch on `Pieces` (no reflection). Passing `KING` or `PAWN` as a promotion target in either `fromString` or `Game.getNewPiece` throws `IllegalArgumentException`. | `Square`, `Pieces`, `CastleMove`, `PromotionMove` |
 | `CastleMove` | Marker subclass of `Move`. `Board.executeMove` uses `instanceof CastleMove` to trigger rook relocation. | `Move` |
 | `PromotionMove` | Subclass of `Move` that carries the `targetPiece` instance. `Board.executeMove` replaces the pawn with this piece. | `Move`, `Piece` |
 
@@ -89,7 +89,7 @@ io.github.conava.chess.core
 | Class | Responsibility | Key collaborators |
 |---|---|---|
 | `GameObserver` (interface) | Single-method contract: `onGameStateChanged()`. Implemented by UI components that need to react to any game state change (local move, remote move, or server rejection). | — |
-| `Observable` (abstract) | Maintains a `List<GameObserver>`. Provides `addObserver`, `removeObserver`, `notifyObservers`. `Game` extends this. | `GameObserver` |
+| `Observable` (abstract) | Maintains an observer list backed by `CopyOnWriteArrayList<GameObserver>`, which allows `notifyObservers()` to iterate safely while another thread concurrently adds or removes observers. Provides `addObserver`, `removeObserver`, `notifyObservers`. Both `addObserver` and `removeObserver` throw `NullPointerException` for a `null` argument (enforced via `Objects.requireNonNull`). `Game` extends this. | `GameObserver` |
 
 ### `logic.ruleset` layer
 
@@ -182,6 +182,8 @@ boolean isCheck(Board board, Player player, List<Move> moves)
 
 ### `OnlineGame` (additional public surface)
 ```java
+static OnlineGame create(RulesetOptions, String, String, Map<String,String>, ServerConnection)
+void connectToServerGame()     // must be called after handler is registered and connection confirmed
 void handleMessage(Message message)
 void sendMessageToServer(Message message)
 void backupGameState()
@@ -247,8 +249,9 @@ exceptions
 
 ### Law 3 — Observer pattern for all state propagation
 **COMPLIANT.** `Game.executeMove` calls `notifyObservers()` after every successful move,
-covering both offline and online paths. `OnlineGame.handleFailure` additionally calls
-`notifyObservers()` after rolling back a server-rejected move.
+covering both offline and online paths. `OnlineGame.handleFailure` calls `notifyObservers()`
+after rolling back a server-rejected move. `OnlineGame.handleGameStatus` calls `notifyObservers()`
+after updating state from a `GAME_STATUS` message.
 
 ### Law 4 — `core` is logic-only; no UI imports
 **COMPLIANT.**
@@ -298,10 +301,11 @@ covering both offline and online paths. `OnlineGame.handleFailure` additionally 
    guard on `getPiece()`. If the UI requests legal squares for an empty square in an online
    game, this will throw unchecked.
 
-7. **No unit tests exist.**
-   The `src/test` directory does not exist. Architecture Law (root CLAUDE.md) requires
-   every public class in `logic/` to have unit tests before a PR is done. This requirement
-   is completely unmet.
+7. **Unit test coverage is partial.**
+   Tests were added in branch `fix/core-violations` covering `Observable`, `Game.getNewPiece`,
+   `Move.fromString`/`toProtocolString`, and `OnlineGame` server-connection behaviour. However,
+   many public classes in `logic/` and `data/` still have no tests (e.g. `Board`, `StandardChessRuleset`,
+   individual piece generators). Full coverage required by Architecture Law is not yet achieved.
 
 8. **Default player names are in German.**
    `Game.getDefaultPlayerName` returns `"Spieler 0 (Weiß)"` and `"Spieler 1 (Schwarz)"`.

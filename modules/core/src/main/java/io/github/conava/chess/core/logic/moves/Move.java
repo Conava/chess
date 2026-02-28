@@ -117,6 +117,30 @@ public class Move {
         return "" + (char) ('a' + square.getY()) + (char) ('1' + square.getX());
     }
 
+    /**
+     * Reconstructs a {@link Move} from its protocol string representation as produced by
+     * {@link #toProtocolString()}.
+     *
+     * <p>Recognised formats:
+     * <ul>
+     *   <li>{@code "O-O"} — kingside castling</li>
+     *   <li>{@code "O-O-O"} — queenside castling</li>
+     *   <li>{@code "<startFile><startRank>-<endFile><endRank>"} — regular move, e.g. {@code "e2-e4"}</li>
+     *   <li>{@code "<start>-<end>=<PIECES_ENUM_NAME>"} — promotion, e.g. {@code "a7-a8=QUEEN"}</li>
+     * </ul>
+     * The promotion piece name must match a {@link Pieces} enum constant exactly. Passing
+     * {@code "KING"} or {@code "PAWN"} throws {@link IllegalArgumentException} because neither
+     * is a valid promotion target.
+     *
+     * @param moveString the protocol string to parse, as returned by {@link #toProtocolString()}
+     * @param movePlayer the {@link Player} who is making the move (used to construct piece instances)
+     * @return the reconstructed {@link Move} (may be a {@link CastleMove} or {@link PromotionMove}
+     *         subtype)
+     * @throws IllegalArgumentException if the promotion piece name is {@code KING} or {@code PAWN},
+     *                                  or if {@code pieceName} is not a valid {@link Pieces} enum name
+     * @throws NullPointerException     if {@code moveString} is {@code null}
+     * @throws StringIndexOutOfBoundsException if {@code moveString} is too short to parse
+     */
     public static Move fromString(String moveString, Player movePlayer) {
         if (moveString.equals("O-O")) {
             Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8

@@ -243,6 +243,10 @@ public class Chess {
     /**
      * Terminates the current game session and clears state.
      *
+     * <p>Calls {@link Game#endGame()} on the active game before nulling the reference.
+     * For an {@link OnlineGame} this closes the server connection and sends a resignation
+     * status message. This method is a no-op when no game is currently active ({@code game == null}).</p>
+     *
      * <p>Example:</p>
      * <pre>
      * chess.endGame();

@@ -81,8 +81,17 @@ public class OnlineGame extends Game {
     }
 
     /**
-     * Connects to the server game using the join code or creates a new game.
-     * Must be called after the underlying {@link ServerConnection} is confirmed live.
+     * Sends the initial handshake message to the server: either {@code CREATE_GAME} (when no
+     * join code is present) or {@code JOIN_GAME} (when a join code was supplied).
+     *
+     * <p>This method must be called by the application facade <em>after</em>:
+     * <ol>
+     *   <li>The {@link ServerConnection} has been confirmed live (i.e. {@code isConnected()} is true).</li>
+     *   <li>The message handler that forwards server responses to {@link #handleMessage} has been
+     *       registered with the underlying transport so that no server replies are lost.</li>
+     * </ol>
+     * It is intentionally not called from the constructor — see {@link #create} for the
+     * two-phase construction contract.
      */
     public void connectToServerGame() {
         Message connectMessage;

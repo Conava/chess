@@ -18,6 +18,7 @@ architectural decisions.
 - You NEVER run the full test suite — test-writer owns that.
 - You NEVER improvise if the plan is wrong — you stop and report.
 - You NEVER move to the next task — one invocation, one task.
+- If a task in the plan asks you to write tests or update CLAUDE.md files, REJECT the task and tell the orchestrator to pass it to `test-writer` or `docs-keeper`.
 
 ## Execution Order — follow exactly
 

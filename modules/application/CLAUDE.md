@@ -29,7 +29,7 @@ to the `core` module via the `Chess` facade class, which wraps `Game` instances.
 ## Key Classes
 
 ### `io.github.conava.chess.application.Chess`
-- **Responsibility:** Application entry point and facade. Contains `main()`. Wraps a `core.Game` instance and delegates all game operations (start, move, state query, observer management) to it. Initializes the Swing GUI via `MainFrame`. For online games, constructs and starts `ServerCommunicationTask` on a daemon thread, waits for connection confirmation via `CountDownLatch`, then passes the task (as a `ServerConnection`) into `OnlineGame` — keeping all socket I/O out of `core`.
+- **Responsibility:** Application entry point and facade. Contains `main()`. Wraps a `core.Game` instance and delegates all game operations (start, move, state query, observer management) to it. Initializes the Swing GUI via `MainFrame`. For online games, `createOnlineGame()` follows a three-step pattern: (1) construct `ServerCommunicationTask` with the message handler lambda and start it on a daemon thread; (2) wait on `CountDownLatch` until connection is confirmed, then check `task.isConnected()` — if not connected, set `SERVER_ERROR` state and return early; (3) call `OnlineGame.create(...)` followed by `onlineGame.connectToServerGame()` only after confirming the connection is live. This keeps all socket I/O out of `core`.
 - **Collaborators:** `MainFrame`, `ColorScheme`, core's `OfflineGame`, `OnlineGame`, `GameObserver`, `ServerCommunicationTask`.
 
 ### `io.github.conava.chess.application.window.MainFrame`
@@ -129,7 +129,7 @@ to the `core` module via the `Chess` facade class, which wraps `Game` instances.
 - **Collaborators:** `ColorScheme`.
 
 ### `io.github.conava.chess.application.network.ServerCommunicationTask`
-- **Responsibility:** Implements `core`'s `ServerConnection` interface and `Runnable`. Opens a TCP socket to the server, reads lines in a loop, parses each line into a `Message` via `MessageParser`, and dispatches to a registered `Consumer<Message>` handler. Deduplicates messages within a connection using a `HashSet`. The `Chess` facade constructs this, starts it on a daemon thread, and passes it to `OnlineGame` — keeping all socket I/O out of `core`.
+- **Responsibility:** Implements `core`'s `ServerConnection` interface and `Runnable`. Opens a TCP socket to the server, reads lines in a loop, parses each line into a `Message` via `MessageParser`, and dispatches to the `Consumer<Message>` handler injected at construction time. No message deduplication is performed — TCP guarantees ordering and the protocol defines no message IDs. All socket/stream resources (socket, `BufferedReader`, `PrintWriter`) are closed in a `finally` block on every exit path, including normal loop termination. The constructor requires the `messageHandler` as a final field so that no messages can arrive before a handler is registered. The `Chess` facade constructs this, starts it on a daemon thread, and passes it to `OnlineGame.create()` — keeping all socket I/O out of `core`.
 - **Collaborators:** `ServerConnection` (core interface), `MessageParser`, `Message`, `CountDownLatch` (signals connection established or failed to the `Chess` facade).
 
 ### `io.github.conava.chess.application.tasks.ExecuteMove`
@@ -144,7 +144,7 @@ to the `core` module via the `Chess` facade class, which wraps `Game` instances.
 
 ### Observer
 - **Classes:** `ChessGame` implements `GameObserver`; registers via `chess.addObserver(this)`.
-- **How it works:** After `startGame()`, `ChessGame` registers itself as a `GameObserver`. The `onGameStateChanged()` callback triggers `update()` which re-reads game state and refreshes all UI panels. Note: the callback currently calls `update()` synchronously on the calling thread rather than dispatching to the EDT.
+- **How it works:** After `startGame()`, `ChessGame` registers itself as a `GameObserver`. The `onGameStateChanged()` callback dispatches `update()` via `SwingUtilities.invokeLater`, ensuring all Swing UI mutations happen on the EDT even when the callback is triggered from the network thread.
 
 ### SwingWorker (Background Task)
 - **Classes:** `ExecuteMove` extends `SwingWorker<Void, Void>`.
@@ -168,7 +168,7 @@ way external code (or the UI internally) interacts with core game logic:
 | `getBoard` | `Board getBoard()` | Delegates to `game.getBoard()`. |
 | `addObserver` | `void addObserver(GameObserver)` | Delegates to `game.addObserver()`. |
 | `removeObserver` | `void removeObserver(GameObserver)` | Delegates to `game.removeObserver()`. |
-| `endGame` | `void endGame()` | Sets `game = null`. |
+| `endGame` | `void endGame()` | Calls `game.endGame()` (closing connection for online games) then sets `game = null`. No-op if `game` is already `null`. |
 | `getCurrentPlayer` | `Player getCurrentPlayer()` | Delegates to `game.getCurrentPlayer()`. |
 | `getPlayerWhite` | `Player getPlayerWhite()` | Delegates to `game.getPlayerWhite()`. |
 | `getPlayerBlack` | `Player getPlayerBlack()` | Delegates to `game.getPlayerBlack()`. |
@@ -177,7 +177,7 @@ way external code (or the UI internally) interacts with core game logic:
 | `getMoveList` | `List<String> getMoveList()` | Delegates to `game.getMoveList()`. |
 | `movePiece` | `void movePiece(Square, Square)` | Throws `IllegalMoveException`. |
 | `promoteMove` | `void promoteMove(Square, Square, Pieces)` | Throws `IllegalMoveException`. |
-| `getJoinCode` | `String getJoinCode()` | Unsafe cast to `OnlineGame`. Crashes if game is offline. |
+| `getJoinCode` | `String getJoinCode()` | Returns join code if game is an `OnlineGame` (safe `instanceof` pattern match); returns `null` for offline games. |
 
 ## Internal Dependencies
 
@@ -226,10 +226,10 @@ core `Board` object (line 331), bypassing the facade entirely.
 
 ### Law 3 -- Observer pattern for all state propagation
 **PARTIAL VIOLATION.** `ChessGame` does implement `GameObserver` and registers correctly.
-However, `ExecuteMove.done()` calls `chessGame.update()` directly rather than relying on the
-observer notification. The `onGameStateChanged()` implementation currently calls `update()`
-synchronously on the calling thread (no `Platform.runLater` or `SwingUtilities.invokeLater`
-guard). Additionally, `ChessGame.clickedOn()` eagerly mutates `localBoard` via
+`onGameStateChanged()` now correctly dispatches `update()` via `SwingUtilities.invokeLater`,
+ensuring EDT safety when callbacks arrive from the network thread. However, `ExecuteMove.done()`
+still calls `chessGame.update()` directly rather than relying solely on the observer notification.
+Additionally, `ChessGame.clickedOn()` eagerly mutates `localBoard` via
 `localBoard.executeMove(new Move(...))` before the actual move completes through the facade,
 which is a form of optimistic UI update that sidesteps the observer flow.
 
@@ -247,52 +247,44 @@ rules internally.
    no JavaFX imports, no `Application` subclass, and no `Platform.runLater()` calls. The
    `src/main/resources/fxml/` directory mentioned in the old CLAUDE.md does not exist.
 
-2. **`getJoinCode()` will crash for offline games.** It unconditionally casts `game` to
-   `OnlineGame` (line 307 of `Chess.java`). There is no guard; calling this on an offline game
-   throws `ClassCastException`.
-
-3. **`endGame()` is just `game = null`.** No observer cleanup, no `game.endGame()` call. Any
-   registered observers on the old `Game` instance will remain referenced by the now-orphaned
-   object, potentially causing issues if `GameObserver` implementations hold back-references.
-
-4. **`startGame()` silently refuses if a game already exists.** It logs a warning but does not
+2. **`startGame()` silently refuses if a game already exists.** It logs a warning but does not
    throw or return a status, so the caller has no way to know the start was rejected.
 
-5. **Tests are all empty.** `/home/marlon/source/chess/modules/application/src/test/java/io/github/conava/chess/application/ChessTest.java`
+3. **Tests are all empty.** `/home/marlon/source/chess/modules/application/src/test/java/io/github/conava/chess/application/ChessTest.java`
    has 10 `@Test` methods, all with empty bodies. Zero assertions.
 
-6. **Core tests are misplaced in the application module.** The test tree contains packages like
+4. **Core tests are misplaced in the application module.** The test tree contains packages like
    `io.github.conava.chess.application.core.data` and
    `io.github.conava.chess.application.core.logic.ruleset` with tests for `Board`, `Player`,
    `Square`, `StandardChessRuleset`, and piece-specific move tests. These test core logic but
    live under the application module's test source root. They should be in `modules/core`.
 
-7. **German UI strings are hardcoded.** Labels like "Spielzuge", "Am Zug", "Warten", "Spiel
+5. **German UI strings are hardcoded.** Labels like "Spielzuge", "Am Zug", "Warten", "Spiel
    Verlassen", "Einstellungen sind noch nicht implementiert" are scattered throughout components
    and windows with no i18n support.
 
-8. **`Settings` window is a stub.** It displays "Einstellungen sind noch nicht implementiert"
+6. **`Settings` window is a stub.** It displays "Einstellungen sind noch nicht implementiert"
    (Settings are not yet implemented) and only has an OK button to close.
 
-9. **`ChessGame.clickedOn()` mutates `localBoard` directly.** Line 331 calls
+7. **`ChessGame.clickedOn()` mutates `localBoard` directly.** Line 331 calls
    `localBoard.executeMove(new Move(selectedSquare, clickedSquare))` to optimistically update
    the UI board before the actual move executes through the facade. If the move fails, the
    local board and the real board will be out of sync.
 
-10. **`BottomPanel.addComponents()` adds panels to `middlePanel` twice.** Lines 82-84 and 86-88
-    of `/home/marlon/source/chess/modules/application/src/main/java/io/github/conava/chess/application/components/BottomPanel.java`
-    add `leftPlaceholder`, `roundedWhitePanel`, and `rightPlaceholder` to `middlePanel` twice.
+8. **`BottomPanel.addComponents()` adds panels to `middlePanel` twice.** Lines 82-84 and 86-88
+   of `/home/marlon/source/chess/modules/application/src/main/java/io/github/conava/chess/application/components/BottomPanel.java`
+   add `leftPlaceholder`, `roundedWhitePanel`, and `rightPlaceholder` to `middlePanel` twice.
 
-11. **`PromotionWindow` title border is overwritten.** Line 38-39 of `PromotionWindow.java` sets
-    a `MatteBorder` then immediately overwrites it with an `EmptyBorder`, so the matte border
-    never renders.
+9. **`PromotionWindow` title border is overwritten.** Line 38-39 of `PromotionWindow.java` sets
+   a `MatteBorder` then immediately overwrites it with an `EmptyBorder`, so the matte border
+   never renders.
 
-12. **`System.out.println` debug output remains.** `ChessGame.update()` line 194 prints state,
+10. **`System.out.println` debug output remains.** `ChessGame.update()` line 194 prints state,
     and `ChessGame.clickedOn()` line 321 prints piece info to stdout.
 
-13. **Unused title images.** Resources contain `newTitleImage1.png` through `newTitleImage9.png`
+11. **Unused title images.** Resources contain `newTitleImage1.png` through `newTitleImage9.png`
     but only `chessTitleImage.jpg` is referenced in code.
 
-14. **`ChessGame` imports `Move` from core.** Line 13 of `ChessGame.java` imports
+12. **`ChessGame` imports `Move` from core.** Line 13 of `ChessGame.java` imports
     `io.github.conava.chess.core.logic.moves.Move` and constructs `Move` objects directly,
     which reaches into core internals beyond the facade API.
