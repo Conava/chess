@@ -125,8 +125,11 @@ public class GameInstance {
                     Objects.equals(message.getParameterValue("playerColor"), "WHITE") ? game.getPlayerWhite() : game.getPlayerBlack());
             game.movePiece(move.getStart(), move.getEnd());
             LOGGER.log(Level.INFO, "Move executed: " + message.content());
+            sendMessageToPlayers(new Message(MessageType.MOVE, message.content()));
         } catch (IllegalMoveException e) {
             LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.SEVERE, "Failed to parse move: " + message.content(), e);
         }
     }
 
