@@ -15,15 +15,15 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for Game.getNewPiece() after the Task 2 fix:
  * the method now uses a switch on the Pieces enum instead of
  * stale Class.forName() reflection that silently returned null.
- *
+ * <p>
  * getNewPiece() is private; it is exercised via the public promoteMove() API.
  * We set up a controlled board position — white pawn at a7 (y=6, x=0),
  * destination a8 (y=7, x=0) cleared — so that promoteMove() succeeds and we
  * can inspect the resulting piece on the board.
- *
+ * <p>
  * Board coordinate convention used by Game / Board:
- *   board[y][x]:  y=0 is white's back rank, y=7 is black's back rank.
- *   Square(y, x) is the constructor used throughout the production code.
+ * board[y][x]:  y=0 is white's back rank, y=7 is black's back rank.
+ * Square(y, x) is the constructor used throughout the production code.
  */
 class GetNewPieceTest {
 
@@ -81,40 +81,35 @@ class GetNewPieceTest {
     void promoteToQueen_pieceOnBoardIsQueen() throws IllegalMoveException {
         game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.QUEEN);
         Piece result = game.getPieceAt(new Square(7, 0));
-        assertInstanceOf(Queen.class, result,
-                "After promoting to QUEEN, piece at a8 must be a Queen");
+        assertInstanceOf(Queen.class, result, "After promoting to QUEEN, piece at a8 must be a Queen");
     }
 
     @Test
     void promoteToRook_pieceOnBoardIsRook() throws IllegalMoveException {
         game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.ROOK);
         Piece result = game.getPieceAt(new Square(7, 0));
-        assertInstanceOf(Rook.class, result,
-                "After promoting to ROOK, piece at a8 must be a Rook");
+        assertInstanceOf(Rook.class, result, "After promoting to ROOK, piece at a8 must be a Rook");
     }
 
     @Test
     void promoteToBishop_pieceOnBoardIsBishop() throws IllegalMoveException {
         game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.BISHOP);
         Piece result = game.getPieceAt(new Square(7, 0));
-        assertInstanceOf(Bishop.class, result,
-                "After promoting to BISHOP, piece at a8 must be a Bishop");
+        assertInstanceOf(Bishop.class, result, "After promoting to BISHOP, piece at a8 must be a Bishop");
     }
 
     @Test
     void promoteToKnight_pieceOnBoardIsKnight() throws IllegalMoveException {
         game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.KNIGHT);
         Piece result = game.getPieceAt(new Square(7, 0));
-        assertInstanceOf(Knight.class, result,
-                "After promoting to KNIGHT, piece at a8 must be a Knight");
+        assertInstanceOf(Knight.class, result, "After promoting to KNIGHT, piece at a8 must be a Knight");
     }
 
     @Test
     void promotedPiece_belongsToWhitePlayer() throws IllegalMoveException {
         game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.QUEEN);
         Piece result = game.getPieceAt(new Square(7, 0));
-        assertEquals(PlayerColor.WHITE, result.getPlayer().color(),
-                "Promoted piece must belong to the white player");
+        assertEquals(PlayerColor.WHITE, result.getPlayer().color(), "Promoted piece must belong to the white player");
     }
 
     @Test
@@ -123,7 +118,6 @@ class GetNewPieceTest {
         game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.QUEEN);
         Player afterMove = game.getCurrentPlayer();
 
-        assertNotEquals(beforeMove, afterMove,
-                "After a promotion move the active player must switch");
+        assertNotEquals(beforeMove, afterMove, "After a promotion move the active player must switch");
     }
 }

@@ -11,13 +11,11 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for Move.fromString() after the Task 2 fix:
  * stale Class.forName() reflection replaced with an enum switch.
- *
  * The promotion format that fromString() accepts uses '=' as the field separator
  * and the full Pieces enum name as the piece token, e.g. "a7=a8=QUEEN".
  * The key regression being tested is that the code now uses a switch expression
  * on the Pieces enum rather than Class.forName(), so it never throws
  * ClassNotFoundException regardless of which promotable piece is requested.
- *
  * Castling and regular-move parsing are also covered here for completeness.
  */
 class MoveFromStringTest {
@@ -30,15 +28,13 @@ class MoveFromStringTest {
     @Test
     void fromString_kingsideCastle_isInstanceOfCastleMove() {
         Move move = Move.fromString("O-O", WHITE);
-        assertInstanceOf(CastleMove.class, move,
-                "O-O must deserialise to a CastleMove");
+        assertInstanceOf(CastleMove.class, move, "O-O must deserialise to a CastleMove");
     }
 
     @Test
     void fromString_queensideCastle_isInstanceOfCastleMove() {
         Move move = Move.fromString("O-O-O", WHITE);
-        assertInstanceOf(CastleMove.class, move,
-                "O-O-O must deserialise to a CastleMove");
+        assertInstanceOf(CastleMove.class, move, "O-O-O must deserialise to a CastleMove");
     }
 
     @Test
@@ -76,56 +72,49 @@ class MoveFromStringTest {
     @Test
     void fromString_promotionToQueen_returnsPromotionMove() {
         Move move = Move.fromString("a7=a8=QUEEN", WHITE);
-        assertInstanceOf(PromotionMove.class, move,
-                "Promotion notation must deserialise to a PromotionMove");
+        assertInstanceOf(PromotionMove.class, move, "Promotion notation must deserialise to a PromotionMove");
     }
 
     @Test
     void fromString_promotionToQueen_targetPieceIsQueen() {
         Move move = Move.fromString("a7=a8=QUEEN", WHITE);
         PromotionMove pm = (PromotionMove) move;
-        assertInstanceOf(Queen.class, pm.getTargetPiece(),
-                "Target piece for QUEEN must be a Queen instance");
+        assertInstanceOf(Queen.class, pm.getTargetPiece(), "Target piece for QUEEN must be a Queen instance");
     }
 
     @Test
     void fromString_promotionToRook_targetPieceIsRook() {
         Move move = Move.fromString("a7=a8=ROOK", WHITE);
         PromotionMove pm = (PromotionMove) move;
-        assertInstanceOf(Rook.class, pm.getTargetPiece(),
-                "Target piece for ROOK must be a Rook instance");
+        assertInstanceOf(Rook.class, pm.getTargetPiece(), "Target piece for ROOK must be a Rook instance");
     }
 
     @Test
     void fromString_promotionToBishop_targetPieceIsBishop() {
         Move move = Move.fromString("a7=a8=BISHOP", WHITE);
         PromotionMove pm = (PromotionMove) move;
-        assertInstanceOf(Bishop.class, pm.getTargetPiece(),
-                "Target piece for BISHOP must be a Bishop instance");
+        assertInstanceOf(Bishop.class, pm.getTargetPiece(), "Target piece for BISHOP must be a Bishop instance");
     }
 
     @Test
     void fromString_promotionToKnight_targetPieceIsKnight() {
         Move move = Move.fromString("a7=a8=KNIGHT", WHITE);
         PromotionMove pm = (PromotionMove) move;
-        assertInstanceOf(Knight.class, pm.getTargetPiece(),
-                "Target piece for KNIGHT must be a Knight instance");
+        assertInstanceOf(Knight.class, pm.getTargetPiece(), "Target piece for KNIGHT must be a Knight instance");
     }
 
     @Test
     void fromString_promotionToQueen_targetPieceBelongsToCorrectPlayer() {
         Move move = Move.fromString("a7=a8=QUEEN", WHITE);
         PromotionMove pm = (PromotionMove) move;
-        assertEquals(WHITE, pm.getTargetPiece().getPlayer(),
-                "Promoted piece must belong to the player passed to fromString");
+        assertEquals(WHITE, pm.getTargetPiece().getPlayer(), "Promoted piece must belong to the player passed to fromString");
     }
 
     @Test
     void fromString_promotionToQueen_black_targetPieceBelongsToBlack() {
         Move move = Move.fromString("a2=a1=QUEEN", BLACK);
         PromotionMove pm = (PromotionMove) move;
-        assertEquals(BLACK, pm.getTargetPiece().getPlayer(),
-                "Promoted piece must belong to the black player");
+        assertEquals(BLACK, pm.getTargetPiece().getPlayer(), "Promoted piece must belong to the black player");
     }
 
     @Test
@@ -133,15 +122,13 @@ class MoveFromStringTest {
         // KING and PAWN are non-promotable values; the switch returns null for them.
         Move move = Move.fromString("a7=a8=KING", WHITE);
         PromotionMove pm = (PromotionMove) move;
-        assertNull(pm.getTargetPiece(),
-                "KING is not a valid promotion target; getNewPiece must return null");
+        assertNull(pm.getTargetPiece(), "KING is not a valid promotion target; getNewPiece must return null");
     }
 
     @Test
     void fromString_promotionToPawn_returnsNullTargetPiece() {
         Move move = Move.fromString("a7=a8=PAWN", WHITE);
         PromotionMove pm = (PromotionMove) move;
-        assertNull(pm.getTargetPiece(),
-                "PAWN is not a valid promotion target; getNewPiece must return null");
+        assertNull(pm.getTargetPiece(), "PAWN is not a valid promotion target; getNewPiece must return null");
     }
 }

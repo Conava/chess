@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests the Task 3 fix: Game.executeMove() now calls notifyObservers() after
  * incrementing turnCount, so all registered GameObserver instances receive
  * onGameStateChanged() exactly once per successfully executed move.
- *
+ * <p>
  * Uses OfflineGame (concrete, no networking) and the standard starting position.
  * A white pawn advance from e2 (y=1,x=4) to e3 (y=2,x=4) is used as the
  * canonical "first valid move" throughout.
@@ -38,8 +38,7 @@ class ObserverNotificationTest {
         // White pawn e2 → e3 (y=1,x=4 → y=2,x=4)
         game.movePiece(new Square(1, 4), new Square(2, 4));
 
-        assertEquals(1, observer.callCount,
-                "onGameStateChanged() must be called exactly once after a valid move");
+        assertEquals(1, observer.callCount, "onGameStateChanged() must be called exactly once after a valid move");
     }
 
     @Test
@@ -51,8 +50,7 @@ class ObserverNotificationTest {
         game.movePiece(new Square(1, 4), new Square(2, 4));
         game.movePiece(new Square(6, 4), new Square(5, 4));
 
-        assertEquals(2, observer.callCount,
-                "onGameStateChanged() must be called once per executed move");
+        assertEquals(2, observer.callCount, "onGameStateChanged() must be called once per executed move");
     }
 
     @Test
@@ -66,11 +64,7 @@ class ObserverNotificationTest {
 
         game.movePiece(new Square(1, 4), new Square(2, 4));
 
-        assertAll(
-                () -> assertEquals(1, obs1.callCount, "Observer 1 must be notified"),
-                () -> assertEquals(1, obs2.callCount, "Observer 2 must be notified"),
-                () -> assertEquals(1, obs3.callCount, "Observer 3 must be notified")
-        );
+        assertAll(() -> assertEquals(1, obs1.callCount, "Observer 1 must be notified"), () -> assertEquals(1, obs2.callCount, "Observer 2 must be notified"), () -> assertEquals(1, obs3.callCount, "Observer 3 must be notified"));
     }
 
     @Test
@@ -79,11 +73,9 @@ class ObserverNotificationTest {
         game.addObserver(observer);
 
         // White pawn cannot jump from e2 to e6 in one move
-        assertThrows(IllegalMoveException.class,
-                () -> game.movePiece(new Square(1, 4), new Square(5, 4)));
+        assertThrows(IllegalMoveException.class, () -> game.movePiece(new Square(1, 4), new Square(5, 4)));
 
-        assertEquals(0, observer.callCount,
-                "onGameStateChanged() must not be called when a move is rejected");
+        assertEquals(0, observer.callCount, "onGameStateChanged() must not be called when a move is rejected");
     }
 
     @Test
@@ -94,8 +86,7 @@ class ObserverNotificationTest {
 
         game.movePiece(new Square(1, 4), new Square(2, 4));
 
-        assertEquals(0, observer.callCount,
-                "Removed observer must not receive any notifications");
+        assertEquals(0, observer.callCount, "Removed observer must not receive any notifications");
     }
 
     @Test
@@ -111,8 +102,7 @@ class ObserverNotificationTest {
         // Second move
         game.movePiece(new Square(6, 4), new Square(5, 4));
 
-        assertEquals(1, observer.callCount,
-                "Observer registered after first move must only be notified from second move onwards");
+        assertEquals(1, observer.callCount, "Observer registered after first move must only be notified from second move onwards");
     }
 
     // ---- simple counting observer ----

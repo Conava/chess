@@ -22,37 +22,37 @@ class PieceConstructorTest {
 
     @Test
     void bishop_hasNoGetIconMethod() {
-        assertFalse(hasMethod(new Bishop(whitePlayer), "getIcon"),
+        assertFalse(hasMethod(new Bishop(whitePlayer)),
                 "Bishop must not expose getIcon() — Swing removed from core");
     }
 
     @Test
     void king_hasNoGetIconMethod() {
-        assertFalse(hasMethod(new King(whitePlayer), "getIcon"),
+        assertFalse(hasMethod(new King(whitePlayer)),
                 "King must not expose getIcon() — Swing removed from core");
     }
 
     @Test
     void knight_hasNoGetIconMethod() {
-        assertFalse(hasMethod(new Knight(whitePlayer), "getIcon"),
+        assertFalse(hasMethod(new Knight(whitePlayer)),
                 "Knight must not expose getIcon() — Swing removed from core");
     }
 
     @Test
     void pawn_hasNoGetIconMethod() {
-        assertFalse(hasMethod(new Pawn(whitePlayer), "getIcon"),
+        assertFalse(hasMethod(new Pawn(whitePlayer)),
                 "Pawn must not expose getIcon() — Swing removed from core");
     }
 
     @Test
     void queen_hasNoGetIconMethod() {
-        assertFalse(hasMethod(new Queen(whitePlayer), "getIcon"),
+        assertFalse(hasMethod(new Queen(whitePlayer)),
                 "Queen must not expose getIcon() — Swing removed from core");
     }
 
     @Test
     void rook_hasNoGetIconMethod() {
-        assertFalse(hasMethod(new Rook(whitePlayer), "getIcon"),
+        assertFalse(hasMethod(new Rook(whitePlayer)),
                 "Rook must not expose getIcon() — Swing removed from core");
     }
 
@@ -128,9 +128,9 @@ class PieceConstructorTest {
 
     // ---- helper ----
 
-    private boolean hasMethod(Object obj, String methodName) {
+    private boolean hasMethod(Object obj) {
         for (Method m : obj.getClass().getMethods()) {
-            if (m.getName().equals(methodName)) {
+            if (m.getName().equals("getIcon")) {
                 return true;
             }
         }
