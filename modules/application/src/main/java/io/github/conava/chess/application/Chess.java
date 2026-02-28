@@ -12,12 +12,14 @@ import io.github.conava.chess.core.logic.observer.GameObserver;
 import io.github.conava.chess.core.logic.game.OfflineGame;
 import io.github.conava.chess.core.logic.game.OnlineGame;
 import io.github.conava.chess.core.data.pieces.Piece;
+import io.github.conava.chess.application.network.ServerCommunicationTask;
 import io.github.conava.chess.application.window.MainFrame;
 import io.github.conava.chess.application.components.ColorScheme;
 
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.*;
 import javax.swing.*;
 
@@ -111,14 +113,58 @@ public class Chess {
                           String playerBlackName,
                           Map<String, String> onlineGameSettings) {
         if (game == null) {
-            game = (online == 1)
-                    ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings)
-                    : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+            if (online == 1) {
+                game = createOnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings);
+            } else {
+                game = new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+            }
             game.startGame();
             LOGGER.log(Level.INFO, "Game started");
         } else {
             LOGGER.log(Level.WARNING, "Game is already running");
         }
+    }
+
+    /**
+     * Establishes a server connection and constructs an {@link OnlineGame}.
+     *
+     * <p>Networking setup is performed here in the application layer so that the {@code core}
+     * module remains I/O-free. The {@link ServerCommunicationTask} is started on a background
+     * thread, and this method blocks until the connection is confirmed (or fails). The task
+     * is then passed into {@link OnlineGame} as a {@link io.github.conava.chess.core.logic.game.ServerConnection}.</p>
+     *
+     * @param selectedRuleset    The ruleset to use.
+     * @param playerWhiteName    Name of the white player.
+     * @param playerBlackName    Name of the black player.
+     * @param onlineGameSettings Map containing at minimum {@code "ip"} and {@code "port"} keys.
+     * @return A fully initialised {@link OnlineGame}, or one in {@code SERVER_ERROR} state if
+     *         the connection could not be established.
+     */
+    private OnlineGame createOnlineGame(RulesetOptions selectedRuleset,
+                                        String playerWhiteName,
+                                        String playerBlackName,
+                                        Map<String, String> onlineGameSettings) {
+        String serverIP = onlineGameSettings.get("ip");
+        int serverPort = Integer.parseInt(onlineGameSettings.get("port"));
+
+        CountDownLatch connectionLatch = new CountDownLatch(1);
+        ServerCommunicationTask task = new ServerCommunicationTask(serverIP, serverPort, connectionLatch);
+
+        Thread serverThread = new Thread(task);
+        serverThread.setDaemon(true);
+        serverThread.start();
+
+        try {
+            connectionLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.log(Level.SEVERE, "Thread interrupted while waiting for server connection", e);
+        }
+
+        OnlineGame onlineGame = new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName,
+                onlineGameSettings, task);
+        task.setMessageHandler(onlineGame::handleMessage);
+        return onlineGame;
     }
 
     /**

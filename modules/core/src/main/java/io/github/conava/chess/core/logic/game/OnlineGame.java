@@ -3,6 +3,7 @@ package io.github.conava.chess.core.logic.game;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.io.Message;
+import io.github.conava.chess.core.data.io.MessageParser;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
@@ -13,13 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * The OnlineGame class represents an online game session.
  * It handles communication with the server, game state management, and player interactions.
+ * The networking connection is provided externally via the {@link ServerConnection} interface,
+ * keeping I/O out of the core module.
  */
 public class OnlineGame extends Game {
     private static final Logger LOGGER = Logger.getLogger(OnlineGame.class.getName());
@@ -28,62 +30,35 @@ public class OnlineGame extends Game {
     private static final String MOVE_PARAM = "move";
     private static final String GAME_STATE_PARAM = "gameState";
 
-    private final String serverIP;
-    private final int serverPort;
+    private final ServerConnection connection;
     private String joinCode;
-    private ServerCommunicationTask serverTask;
     private PlayerColor localPlayerColor;
     private final RulesetOptions selectedRuleset;
 
     private Board backupBoard;
     private List<Move> backupMoves;
     private GameState backupGameState;
-    private final CountDownLatch connectionLatch = new CountDownLatch(1);
 
     /**
      * Constructs an OnlineGame instance.
      *
-     * @param selectedRuleset The selected ruleset for the game.
-     * @param playerWhiteName The name of the white player.
-     * @param playerBlackName The name of the black player.
-     * @param onlineGameSettings The settings for the online game, including server IP, port, and join code.
+     * @param selectedRuleset    The selected ruleset for the game.
+     * @param playerWhiteName    The name of the white player.
+     * @param playerBlackName    The name of the black player.
+     * @param onlineGameSettings The settings for the online game, including join code.
+     * @param connection         An already-established {@link ServerConnection} to the game server.
      */
-    public OnlineGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings) {
+    public OnlineGame(RulesetOptions selectedRuleset,
+                      String playerWhiteName,
+                      String playerBlackName,
+                      Map<String, String> onlineGameSettings,
+                      ServerConnection connection) {
         super(selectedRuleset, playerWhiteName, playerBlackName);
         this.gameState = GameState.NO_GAME;
-        this.serverIP = onlineGameSettings.get("ip");
-        this.serverPort = Integer.parseInt(onlineGameSettings.get("port"));
         this.joinCode = onlineGameSettings.get("joinCode");
         this.selectedRuleset = selectedRuleset;
-        if (startServerCommunication()) {
-            connectToServerGame();
-        }
-    }
-
-    /**
-     * Starts the server communication task.
-     *
-     * @return true if the server communication was successfully started, false otherwise.
-     */
-    private boolean startServerCommunication() {
-        serverTask = new ServerCommunicationTask(serverIP, serverPort, this, connectionLatch);
-        Thread serverThread = new Thread(serverTask);
-        serverThread.start();
-
-        try {
-            connectionLatch.await(); // Wait for the connection to be established
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOGGER.log(Level.SEVERE, "Thread interrupted while waiting for server connection", e);
-            gameState = GameState.SERVER_ERROR;
-            return false;
-        }
-
-        if (!serverTask.isConnected()) {
-            gameState = GameState.SERVER_ERROR;
-            return false;
-        }
-        return true;
+        this.connection = connection;
+        connectToServerGame();
     }
 
     /**
@@ -212,8 +187,8 @@ public class OnlineGame extends Game {
      * @param message The message to be sent to the server.
      */
     public void sendMessageToServer(Message message) {
-        if (serverTask != null) {
-            serverTask.sendMessage(message);
+        if (connection != null) {
+            connection.sendMessage(MessageParser.serialize(message));
         }
     }
 
@@ -223,10 +198,10 @@ public class OnlineGame extends Game {
     @Override
     public void endGame() {
         gameState = localPlayerColor == PlayerColor.WHITE ? GameState.WHITE_WON_BY_RESIGNATION : GameState.BLACK_WON_BY_RESIGNATION;
-        if (serverTask != null) {
+        if (connection != null) {
             Message endGameMessage = new Message(MessageType.GAME_STATUS, GAME_STATE_PARAM + "=" + gameState);
             sendMessageToServer(endGameMessage);
-            serverTask.closeConnection();
+            connection.closeConnection();
         }
     }
 
