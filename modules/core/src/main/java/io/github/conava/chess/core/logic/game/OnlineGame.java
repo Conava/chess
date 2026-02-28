@@ -134,6 +134,8 @@ public class OnlineGame extends Game {
             executeMoveFromRemote(move);
         } catch (IllegalMoveException e) {
             LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.SEVERE, "Failed to parse move from server: " + message.content(), e);
         }
     }
 
