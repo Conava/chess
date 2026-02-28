@@ -191,7 +191,7 @@ public class ChessGame extends JPanel implements GameObserver {
     public void update() {
         LOGGER.log(Level.INFO, "Update Method called");
         GameState state = getState();
-        System.out.println("State: " + state);
+        LOGGER.info("State: " + state);
 
         if (state == GameState.SERVER_ERROR) {
             ConfirmDialog dialog = new ConfirmDialog(mainFrame, "Verbindung zum Server verloren\n\nZurück zum Menü?", "Serverfehler", colorScheme);
@@ -318,7 +318,7 @@ public class ChessGame extends JPanel implements GameObserver {
      */
     public void clickedOn(Square clickedSquare) {
         Optional<Piece> clickedPieceOptional = Optional.ofNullable(chess.getPieceAt(clickedSquare));
-        clickedPieceOptional.ifPresent(piece -> System.out.println("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().color()));
+        clickedPieceOptional.ifPresent(piece -> LOGGER.info("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().color()));
 
         if (clickedPieceOptional.isPresent() && clickedPieceOptional.get().getPlayer() == chess.getCurrentPlayer()) {
             // Update selectedSquare and legalSquaresForSelectedPiece only if the clicked square has a piece

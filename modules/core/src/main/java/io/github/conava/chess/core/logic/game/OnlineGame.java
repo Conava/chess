@@ -140,7 +140,7 @@ public class OnlineGame extends Game {
      */
     private void handleJoinCode(Message message) {
         joinCode = message.getParameterValue(JOIN_CODE_PARAM);
-        System.out.println("Join code received: " + joinCode + " - Please share this code with your friend to join the game");
+        LOGGER.info("Join code received: " + joinCode + " - Please share this code with your friend to join the game");
     }
 
     /**

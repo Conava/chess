@@ -21,11 +21,13 @@ import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardCh
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Abstract class representing a game instance.
  */
 public abstract class Game extends Observable {
+    private static final Logger LOGGER = Logger.getLogger(Game.class.getName());
     protected GameState gameState;
     protected Player player0;
     protected Player player1;
@@ -271,7 +273,7 @@ public abstract class Game extends Observable {
     private void checkForGameEnd(Move move) {
         Piece piece = toBoardSquare(move.getEnd()).getPiece();
         if (piece instanceof King king) {
-            System.out.println("King captured, changing gameState");
+            LOGGER.info("King captured, changing gameState");
             gameState = king.getPlayer().color() == PlayerColor.WHITE ? GameState.BLACK_WON_BY_CHECKMATE : GameState.WHITE_WON_BY_CHECKMATE;
         }
     }
