@@ -22,14 +22,15 @@ to the `core` module via the `Chess` facade class, which wraps `Game` instances.
 
 - `io.github.conava.chess.application` -- Entry point (`Chess.java`), facade wrapping core `Game`.
 - `io.github.conava.chess.application.components` -- Reusable Swing UI widgets: board buttons, panels, styled controls, color scheme configuration.
+- `io.github.conava.chess.application.network` -- Networking layer: `ServerCommunicationTask` implements `core`'s `ServerConnection` interface, managing the TCP socket to the chess server.
 - `io.github.conava.chess.application.tasks` -- Background task for move execution (`ExecuteMove`, a `SwingWorker`).
 - `io.github.conava.chess.application.window` -- Top-level windows and screens: main frame, main menu, chess game panel, dialogs (confirm, input, online input, promotion, settings, message, waiting).
 
 ## Key Classes
 
 ### `io.github.conava.chess.application.Chess`
-- **Responsibility:** Application entry point and facade. Contains `main()`. Wraps a `core.Game` instance and delegates all game operations (start, move, state query, observer management) to it. Initializes the Swing GUI via `MainFrame`.
-- **Collaborators:** `MainFrame`, `ColorScheme`, core's `OfflineGame`, `OnlineGame`, `GameObserver`.
+- **Responsibility:** Application entry point and facade. Contains `main()`. Wraps a `core.Game` instance and delegates all game operations (start, move, state query, observer management) to it. Initializes the Swing GUI via `MainFrame`. For online games, constructs and starts `ServerCommunicationTask` on a daemon thread, waits for connection confirmation via `CountDownLatch`, then passes the task (as a `ServerConnection`) into `OnlineGame` — keeping all socket I/O out of `core`.
+- **Collaborators:** `MainFrame`, `ColorScheme`, core's `OfflineGame`, `OnlineGame`, `GameObserver`, `ServerCommunicationTask`.
 
 ### `io.github.conava.chess.application.window.MainFrame`
 - **Responsibility:** The top-level `JFrame`. Manages screen transitions between `MainMenu` and `ChessGame` panels. Configures window sizing and launches dialogs for offline/online game setup.
@@ -80,7 +81,7 @@ to the `core` module via the `Chess` facade class, which wraps `Game` instances.
 - **Collaborators:** `BoardButton`, `ChessGame`, `ColorScheme`, core's `Board`, `Square`.
 
 ### `io.github.conava.chess.application.components.BoardButton`
-- **Responsibility:** A single `JButton` representing one board square. Renders piece icons and legal-move dot overlays.
+- **Responsibility:** A single `JButton` representing one board square. Renders piece icons (loaded locally from classpath resources using `Piece.getType()` and `Piece.getPlayer().color()`) and legal-move dot overlays. Icon loading was moved here from `core`'s `Piece` class when the Swing dependency was removed from `core`.
 - **Collaborators:** `ColorScheme`, core's `Piece`, `Square`.
 
 ### `io.github.conava.chess.application.components.TopPanel`
@@ -127,6 +128,10 @@ to the `core` module via the `Chess` facade class, which wraps `Game` instances.
 - **Responsibility:** Styled `JScrollPane` with custom scrollbar thumb rendering.
 - **Collaborators:** `ColorScheme`.
 
+### `io.github.conava.chess.application.network.ServerCommunicationTask`
+- **Responsibility:** Implements `core`'s `ServerConnection` interface and `Runnable`. Opens a TCP socket to the server, reads lines in a loop, parses each line into a `Message` via `MessageParser`, and dispatches to a registered `Consumer<Message>` handler. Deduplicates messages within a connection using a `HashSet`. The `Chess` facade constructs this, starts it on a daemon thread, and passes it to `OnlineGame` — keeping all socket I/O out of `core`.
+- **Collaborators:** `ServerConnection` (core interface), `MessageParser`, `Message`, `CountDownLatch` (signals connection established or failed to the `Chess` facade).
+
 ### `io.github.conava.chess.application.tasks.ExecuteMove`
 - **Responsibility:** `SwingWorker<Void, Void>` that runs `chess.movePiece()` or `chess.promoteMove()` off the EDT, then calls `chessGame.update()` on completion.
 - **Collaborators:** `Chess`, `ChessGame`.
@@ -139,7 +144,7 @@ to the `core` module via the `Chess` facade class, which wraps `Game` instances.
 
 ### Observer
 - **Classes:** `ChessGame` implements `GameObserver`; registers via `chess.addObserver(this)`.
-- **How it works:** After `startGame()`, `ChessGame` registers itself as a `GameObserver`. The `updateFromRemote()` callback triggers `update()` which re-reads game state and refreshes all UI panels. Note: `updateFromRemote()` has a TODO comment acknowledging it should run in a separate thread but currently just calls `update()` directly.
+- **How it works:** After `startGame()`, `ChessGame` registers itself as a `GameObserver`. The `onGameStateChanged()` callback triggers `update()` which re-reads game state and refreshes all UI panels. Note: the callback currently calls `update()` synchronously on the calling thread rather than dispatching to the EDT.
 
 ### SwingWorker (Background Task)
 - **Classes:** `ExecuteMove` extends `SwingWorker<Void, Void>`.
@@ -178,6 +183,9 @@ way external code (or the UI internally) interacts with core game logic:
 
 ```
 Chess (facade, entry point)
+  |
+  +--> network.ServerCommunicationTask (implements core's ServerConnection)
+  |      passed into core's OnlineGame constructor as ServerConnection
   |
   +--> window.MainFrame (top-level JFrame)
   |      |
@@ -219,11 +227,11 @@ core `Board` object (line 331), bypassing the facade entirely.
 ### Law 3 -- Observer pattern for all state propagation
 **PARTIAL VIOLATION.** `ChessGame` does implement `GameObserver` and registers correctly.
 However, `ExecuteMove.done()` calls `chessGame.update()` directly rather than relying on the
-observer notification. The `updateFromRemote()` implementation has a TODO noting it should use
-a separate thread but currently just calls `update()` synchronously. Additionally,
-`ChessGame.clickedOn()` eagerly mutates `localBoard` via `localBoard.executeMove(new Move(...))`
-before the actual move completes through the facade, which is a form of optimistic UI update
-that sidesteps the observer flow.
+observer notification. The `onGameStateChanged()` implementation currently calls `update()`
+synchronously on the calling thread (no `Platform.runLater` or `SwingUtilities.invokeLater`
+guard). Additionally, `ChessGame.clickedOn()` eagerly mutates `localBoard` via
+`localBoard.executeMove(new Move(...))` before the actual move completes through the facade,
+which is a form of optimistic UI update that sidesteps the observer flow.
 
 ### Law 4 -- core is logic-only
 **NOT APPLICABLE** to this module (this law constrains `core`, not `application`).
