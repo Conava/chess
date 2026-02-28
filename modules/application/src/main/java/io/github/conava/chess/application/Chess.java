@@ -249,7 +249,10 @@ public class Chess {
      * </pre>
      */
     public void endGame() {
-        game = null;
+        if (game != null) {
+            game.endGame();
+            game = null;
+        }
     }
 
     /**
@@ -367,6 +370,9 @@ public class Chess {
      * </pre>
      */
     public String getJoinCode() {
-        return ((OnlineGame) game).getJoinCode();
+        if (game instanceof OnlineGame onlineGame) {
+            return onlineGame.getJoinCode();
+        }
+        return null;
     }
 }
