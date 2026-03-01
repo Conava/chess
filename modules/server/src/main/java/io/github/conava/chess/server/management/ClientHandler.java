@@ -228,9 +228,15 @@ public class ClientHandler implements Runnable {
 
     /**
      * Releases the game slot if a game instance exists.
+     *
+     * <p>Before removing the game from the active games map and releasing the semaphore
+     * permit, {@link GameInstance#disconnectPlayer(ClientHandler)} is called so that the
+     * remaining connected player is notified of the disconnection and the observer
+     * registration is cleaned up to prevent memory leaks.</p>
      */
     public void releaseGameSlot() {
         if (gameInstance != null) {
+            gameInstance.disconnectPlayer(this);
             Integer gameId = gameInstance.getGameId();
             server.getGamesList().remove(gameId);
             server.getGameSemaphore().release();

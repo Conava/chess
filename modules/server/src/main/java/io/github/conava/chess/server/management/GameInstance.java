@@ -318,6 +318,53 @@ public class GameInstance implements GameObserver {
     }
 
     /**
+     * Handles a player disconnecting from this game session.
+     *
+     * <p>If the game exists and is in a non-terminal state, the disconnecting player's
+     * side is awarded a resignation loss: white's disconnect results in
+     * {@link GameState#BLACK_WON_BY_RESIGNATION} and black's disconnect results in
+     * {@link GameState#WHITE_WON_BY_RESIGNATION}. A {@code GAME_STATUS} message is then
+     * sent to the remaining connected player so they are informed of the outcome.</p>
+     *
+     * <p>After notification, the disconnected player's handler reference is nulled out and
+     * the observer is removed from the underlying {@link Game} (if one exists) to prevent
+     * memory leaks from dangling observer registrations.</p>
+     *
+     * <p>This method is {@code synchronized} on this instance to prevent concurrent
+     * disconnect and move-processing races.</p>
+     *
+     * @param clientHandler The {@link ClientHandler} of the player who disconnected;
+     *                      must not be {@code null}.
+     */
+    public synchronized void disconnectPlayer(ClientHandler clientHandler) {
+        if (game != null && !isTerminalState(game.getState())) {
+            if (clientHandler == whitePlayerHandler) {
+                game.setGameState(GameState.BLACK_WON_BY_RESIGNATION);
+                if (blackPlayerHandler != null) {
+                    blackPlayerHandler.sendMessage(new Message(MessageType.GAME_STATUS,
+                            "gameState=" + GameState.BLACK_WON_BY_RESIGNATION.name()));
+                }
+            } else if (clientHandler == blackPlayerHandler) {
+                game.setGameState(GameState.WHITE_WON_BY_RESIGNATION);
+                if (whitePlayerHandler != null) {
+                    whitePlayerHandler.sendMessage(new Message(MessageType.GAME_STATUS,
+                            "gameState=" + GameState.WHITE_WON_BY_RESIGNATION.name()));
+                }
+            }
+        }
+
+        if (clientHandler == whitePlayerHandler) {
+            whitePlayerHandler = null;
+        } else if (clientHandler == blackPlayerHandler) {
+            blackPlayerHandler = null;
+        }
+
+        if (game != null) {
+            game.removeObserver(this);
+        }
+    }
+
+    /**
      * Returns the numeric identifier for this game session.
      *
      * @return The game ID assigned at construction time.
