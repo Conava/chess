@@ -88,9 +88,13 @@ public abstract class Game extends Observable {
      * @param playerBlackName      The name of the black player.
      * @param onlineGameSettings   Key-value settings for online games (e.g. join code).
      *                             Ignored when {@code online} is {@code false}.
+     *                             Must not be {@code null} when {@code online} is {@code true}.
      * @param connection           The {@link ServerConnection} for online communication.
      *                             Ignored when {@code online} is {@code false}.
+     *                             Must not be {@code null} when {@code online} is {@code true}.
      * @return A new {@link Game} instance of the appropriate subtype.
+     * @throws IllegalArgumentException if {@code online} is {@code true} and either
+     *                                  {@code onlineGameSettings} or {@code connection} is {@code null}.
      */
     public static Game createGame(boolean online,
                                   RulesetOptions selectedRuleset,
@@ -99,6 +103,12 @@ public abstract class Game extends Observable {
                                   Map<String, String> onlineGameSettings,
                                   ServerConnection connection) {
         if (online) {
+            if (onlineGameSettings == null) {
+                throw new IllegalArgumentException("onlineGameSettings must not be null for an online game");
+            }
+            if (connection == null) {
+                throw new IllegalArgumentException("connection must not be null for an online game");
+            }
             return OnlineGame.create(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings, connection);
         } else {
             return new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
