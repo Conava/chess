@@ -1,6 +1,10 @@
 package io.github.conava.chess.core.logic.game;
 
+import io.github.conava.chess.core.data.pieces.Bishop;
 import io.github.conava.chess.core.data.pieces.King;
+import io.github.conava.chess.core.data.pieces.Knight;
+import io.github.conava.chess.core.data.pieces.Queen;
+import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.pieces.Piece;
@@ -15,15 +19,15 @@ import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Abstract class representing a game instance.
  */
 public abstract class Game extends Observable {
+    private static final Logger LOGGER = Logger.getLogger(Game.class.getName());
     protected GameState gameState;
     protected Player player0;
     protected Player player1;
@@ -31,7 +35,6 @@ public abstract class Game extends Observable {
     protected Board board;
     protected int turnCount;
     protected List<Move> moves;
-    protected GameType gameType;
 
     /**
      * Constructor for the Game class.
@@ -207,6 +210,7 @@ public abstract class Game extends Observable {
             board.executeMove(move);
             moves.add(move);
             turnCount++;
+            notifyObservers();
         } else {
             throw new IllegalMoveException(move);
         }
@@ -246,19 +250,23 @@ public abstract class Game extends Observable {
     /**
      * Creates a new piece of the given type for the given player.
      *
-     * @param targetPiece The type of piece to create.
+     * @param targetPiece The type of piece to create. Must be one of {@code QUEEN}, {@code ROOK},
+     *                    {@code BISHOP}, or {@code KNIGHT}. Passing {@code KING} or {@code PAWN}
+     *                    is not valid for promotion.
      * @param player      The player for whom the piece is created.
      * @return The new piece.
+     * @throws IllegalArgumentException if {@code targetPiece} is {@code KING} or {@code PAWN},
+     *                                  as neither is a valid promotion target.
      */
     private Piece getNewPiece(Pieces targetPiece, Player player) {
-        try {
-            Class<?> pieceClass = Class.forName("ptp.core.data.pieces." + targetPiece.getClassName());
-            Constructor<?> pieceConstructor = pieceClass.getConstructor(Player.class);
-            return (Piece) pieceConstructor.newInstance(player);
-        } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException |
-                 IllegalAccessException | InvocationTargetException e) {
-            return null;
-        }
+        return switch (targetPiece) {
+            case QUEEN  -> new Queen(player);
+            case ROOK   -> new Rook(player);
+            case BISHOP -> new Bishop(player);
+            case KNIGHT -> new Knight(player);
+            default     -> throw new IllegalArgumentException(
+                    "Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
+        };
     }
 
     /**
@@ -269,7 +277,7 @@ public abstract class Game extends Observable {
     private void checkForGameEnd(Move move) {
         Piece piece = toBoardSquare(move.getEnd()).getPiece();
         if (piece instanceof King king) {
-            System.out.println("King captured, changing gameState");
+            LOGGER.info("King captured, changing gameState");
             gameState = king.getPlayer().color() == PlayerColor.WHITE ? GameState.BLACK_WON_BY_CHECKMATE : GameState.WHITE_WON_BY_CHECKMATE;
         }
     }

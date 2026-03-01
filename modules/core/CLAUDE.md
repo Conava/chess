@@ -2,9 +2,7 @@
 
 ## Status
 
-Active but with known violations. The logic backbone is stable and in regular use.
-Two confirmed architecture law violations exist (see "Architecture Law Compliance" below)
-that must be resolved before this module can be considered clean.
+Active. The logic backbone is stable and in regular use.
 
 ---
 
@@ -29,10 +27,10 @@ io.github.conava.chess.core
 │   ├── io                  Message, MessageParser, MessageType — wire protocol types
 │   ├── pieces              Piece (abstract) + six concrete piece classes + Pieces enum
 │   └── player              Player record + PlayerColor enum
-├── exceptions              IllegalMoveException, IsCheckException — checked exceptions
+├── exceptions              IllegalMoveException — checked exception
 └── logic
     ├── game                Game (abstract), OfflineGame, OnlineGame, ServerGame,
-    │                       GameState enum, GameType enum, ServerCommunicationTask
+    │                       GameState enum, ServerConnection interface
     ├── moves               Move, CastleMove, PromotionMove
     ├── observer            GameObserver interface, Observable abstract class
     └── ruleset
@@ -50,14 +48,14 @@ io.github.conava.chess.core
 
 | Class | Responsibility | Key collaborators |
 |---|---|---|
-| `Square` | Immutable coordinates (x, y) with a mutable `Piece` slot. Equality is coordinate-only — does not consider piece. | `Piece`, `Player` |
+| `Square` | Immutable coordinates with a mutable `Piece` slot. Constructor is `Square(y, x)` where `y` = row/rank (0 = white's back rank) and `x` = column/file (0 = a-file). Equality is coordinate-only — does not consider piece. | `Piece`, `Player` |
 | `Board` | Holds the `Square[][]` grid; maintains two live piece lists (white/black) updated on every `executeMove`. Provides `getCopy()` (shallow — same `Square` references). | `Square`, `Piece`, `Move`, `CastleMove`, `PromotionMove`, `King`, `Rook` |
 | `Message` | Immutable record: a `MessageType` + a string content payload in `key=value` space-separated format. Provides `getParameterValue(String)`. | `MessageType` |
 | `MessageParser` | Stateless utility: `parse(String)` splits on the first `:`, `serialize(Message)` reconstitutes the string. | `Message`, `MessageType` |
 | `MessageType` | Enum of wire protocol verbs: `CREATE_GAME`, `JOIN_GAME`, `JOIN_CODE`, `MOVE`, `GAME_STATUS`, `SUCCESS`, `ERROR`, `FAILURE`. | — |
-| `Piece` (abstract) | Holds owning `Player` and an `iconPath` string. Exposes `getIcon()` (returns a scaled `javax.swing.ImageIcon`) and `getType()` via reflection on class name. | `Player`, `javax.swing.ImageIcon` |
-| `Bishop`, `Knight`, `Queen`, `Pawn`, `Rook`, `King` | Concrete pieces. Set `iconPath` by player color. `King` and `Rook` carry a `hasMoved` boolean for castling legality. `Pawn` adds `hasMoveJustMovedTwoSquares(List<Move>)` for en passant detection. | `Piece`, `Player`, `PlayerColor` |
-| `Pieces` | Enum of the six piece type identifiers. Each carries a `className` string used in reflection. | — |
+| `Piece` (abstract) | Holds owning `Player`. Exposes `getPlayer()` and `getType()` (derived via `Pieces.valueOf(getClass().getSimpleName().toUpperCase())`). No icon fields or UI imports. | `Player` |
+| `Bishop`, `Knight`, `Queen`, `Pawn`, `Rook`, `King` | Concrete pieces. `King` and `Rook` carry a `hasMoved` boolean for castling legality. `Pawn` adds `hasMoveJustMovedTwoSquares(List<Move>)` for en passant detection. No `iconPath` field or icon loading. | `Piece`, `Player`, `PlayerColor` |
+| `Pieces` | Enum of the six piece type identifiers. | — |
 | `Player` | Immutable record: `name` + `PlayerColor`. | `PlayerColor` |
 | `PlayerColor` | Enum: `WHITE`, `BLACK`. | — |
 
@@ -66,25 +64,23 @@ io.github.conava.chess.core
 | Class | Responsibility |
 |---|---|
 | `IllegalMoveException` | Thrown by `Game.executeMove` when a move fails validation. Accepts a `Move` argument but does not store it — message is empty. |
-| `IsCheckException` | Declared but **never thrown** in any current code path. Accepts a `Square` but does not store it. |
 
 ### `logic.game` layer
 
 | Class | Responsibility | Key collaborators |
 |---|---|---|
-| `Game` (abstract) | Owns board, players, ruleset, turn counter, and move history. Provides `movePiece`, `promoteMove`, `getLegalSquares`, `getCurrentPlayer`, `getBoard`, `getMoveList`. Validates moves via ruleset and detects king-capture game-end. Extends `Observable`. | `Board`, `Ruleset`, `Move`, `Observable`, `Player` |
+| `Game` (abstract) | Owns board, players, ruleset, turn counter, and move history. Provides `movePiece`, `promoteMove`, `getLegalSquares`, `getCurrentPlayer`, `getBoard`, `getMoveList`. Validates moves via ruleset and detects king-capture game-end. Calls `notifyObservers()` after every successful `executeMove`. Extends `Observable`. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Board`, `Ruleset`, `Move`, `Observable`, `Player` |
 | `OfflineGame` | Concrete `Game` for local two-player play. `startGame()` sets state to `RUNNING`; `endGame()` is a no-op. | `Game`, `GameState` |
-| `OnlineGame` | Concrete `Game` for networked play. On construction it spawns `ServerCommunicationTask` on a new thread and blocks on a `CountDownLatch` until connection is confirmed. Overrides `executeMove` to enforce local-player-turn gating, backup/restore state on server rejection, and forward moves via `sendMessageToServer`. Handles incoming `Message` objects from the server thread via `handleMessage`. | `Game`, `ServerCommunicationTask`, `Message`, `MessageType`, `Board`, `CountDownLatch` |
-| `ServerGame` | Concrete `Game` intended for server-side use. `startGame()` sets state to `RUNNING`; `endGame()` is a no-op (has a `// todo` comment). | `Game`, `GameState`, `GameType` |
-| `ServerCommunicationTask` | `Runnable` that opens a TCP socket to the server, reads lines in a loop, deduplicates messages using a `HashSet`, parses them with `MessageParser`, and dispatches to `OnlineGame.handleMessage`. Provides `sendMessage` and `closeConnection`. | `OnlineGame`, `MessageParser`, `Socket` |
+| `OnlineGame` | Concrete `Game` for networked play. Uses a static factory method: `OnlineGame.create(...)` constructs the instance with a private constructor without sending any network messages. The application facade must then call `connectToServerGame()` after confirming the connection is live — this two-phase construction ensures the message handler is registered before the server's first reply can arrive. Overrides `executeMove` to enforce local-player-turn gating, backup/restore state on server rejection, and forward moves via `sendMessageToServer` (using `Move.toProtocolString()` for wire serialization). Handles incoming `Message` objects dispatched by the application layer via `handleMessage`. `handleMove` catches both `IllegalMoveException` and `RuntimeException` to prevent malformed server messages from crashing the handler thread. `handleGameStatus` calls `notifyObservers()` after updating state. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Game`, `ServerConnection`, `Message`, `MessageType`, `Board` |
+| `ServerGame` | Concrete `Game` intended for server-side use. `startGame()` sets state to `RUNNING`; `endGame()` body is empty. | `Game`, `GameState` |
+| `ServerConnection` | Interface that abstracts the networking transport. Methods: `sendMessage(String)`, `closeConnection()`, `isConnected()`. Allows `OnlineGame` to send/receive messages without importing any I/O classes. Implemented in the `application` module by `ServerCommunicationTask`. | — |
 | `GameState` | Enum of 14 game states (German-language display strings). Covers no-game, waiting, running, win-by-checkmate/resignation/timeout for each colour, and three draw variants. | — |
-| `GameType` | Enum: `OFFLINE`, `ONLINE`, `SERVER`. Set only by `ServerGame`; the field in `Game` is never read back by the module itself. | — |
 
 ### `logic.moves` layer
 
 | Class | Responsibility | Key collaborators |
 |---|---|---|
-| `Move` | Immutable pair of start/end `Square` references. Records piece type and capture flag at construction time. Serialises to algebraic notation in `toString()`. Static `fromString(String, Player)` reconstructs a `Move` from that notation using reflection for promotion piece instantiation (hardcoded stale package path — see Debt). | `Square`, `Pieces`, `CastleMove`, `PromotionMove` |
+| `Move` | Immutable pair of start/end `Square` references. Records piece type and capture flag at construction time. Serialises to algebraic notation in `toString()` (for display only). `toProtocolString()` produces an unambiguous wire-safe format (`"e2-e4"`, `"O-O"`, `"O-O-O"`, `"a7-a8=QUEEN"`) that round-trips through `fromString(String, Player)`. Static `fromString` reconstructs a `Move` from the protocol format; promotion piece instantiation uses an enum switch on `Pieces` (no reflection). Passing `KING` or `PAWN` as a promotion target in either `fromString` or `Game.getNewPiece` throws `IllegalArgumentException`. | `Square`, `Pieces`, `CastleMove`, `PromotionMove` |
 | `CastleMove` | Marker subclass of `Move`. `Board.executeMove` uses `instanceof CastleMove` to trigger rook relocation. | `Move` |
 | `PromotionMove` | Subclass of `Move` that carries the `targetPiece` instance. `Board.executeMove` replaces the pawn with this piece. | `Move`, `Piece` |
 
@@ -92,8 +88,8 @@ io.github.conava.chess.core
 
 | Class | Responsibility | Key collaborators |
 |---|---|---|
-| `GameObserver` (interface) | Single-method contract: `updateFromRemote()`. Implemented by UI components that need to react to server-pushed state changes. | — |
-| `Observable` (abstract) | Maintains a `List<GameObserver>`. Provides `addObserver`, `removeObserver`, `notifyObservers`. `Game` extends this. | `GameObserver` |
+| `GameObserver` (interface) | Single-method contract: `onGameStateChanged()`. Implemented by UI components that need to react to any game state change (local move, remote move, or server rejection). | — |
+| `Observable` (abstract) | Maintains an observer list backed by `CopyOnWriteArrayList<GameObserver>`, which allows `notifyObservers()` to iterate safely while another thread concurrently adds or removes observers. Provides `addObserver`, `removeObserver`, `notifyObservers`. Both `addObserver` and `removeObserver` throw `NullPointerException` for a `null` argument (enforced via `Objects.requireNonNull`). `Game` extends this. | `GameObserver` |
 
 ### `logic.ruleset` layer
 
@@ -117,12 +113,11 @@ io.github.conava.chess.core
 ### Observer
 - `Observable` (abstract class in `logic.observer`) maintains the observer list and calls
   `notifyObservers()`.
-- `GameObserver` (interface) defines `updateFromRemote()`.
-- `Game` extends `Observable`. `OnlineGame.executeMoveFromRemote` and
-  `OnlineGame.handleFailure` both call `notifyObservers()` directly.
+- `GameObserver` (interface) defines `onGameStateChanged()`.
+- `Game` extends `Observable`. `Game.executeMove` calls `notifyObservers()` after every
+  successful move (both offline and online). `OnlineGame.handleFailure` also calls
+  `notifyObservers()` directly after a server-rejected move is rolled back.
 - Callers outside `core` implement `GameObserver` and register via `Observable.addObserver`.
-- **Scope limitation:** `notifyObservers` is only called on remote move and server rejection
-  paths inside `OnlineGame`. Offline moves do not trigger observer notification.
 
 ### Strategy
 - `Ruleset` interface is the strategy contract.
@@ -171,7 +166,7 @@ void notifyObservers()
 
 ### `GameObserver` (interface to be implemented by callers)
 ```java
-void updateFromRemote()
+void onGameStateChanged()
 ```
 
 ### `Ruleset` (interface)
@@ -187,6 +182,8 @@ boolean isCheck(Board board, Player player, List<Move> moves)
 
 ### `OnlineGame` (additional public surface)
 ```java
+static OnlineGame create(RulesetOptions, String, String, Map<String,String>, ServerConnection)
+void connectToServerGame()     // must be called after handler is registered and connection confirmed
 void handleMessage(Message message)
 void sendMessageToServer(Message message)
 void backupGameState()
@@ -211,10 +208,11 @@ logic.game
     depends on --> logic.ruleset       (Game holds Ruleset)
     depends on --> logic.moves         (Game uses Move / CastleMove / PromotionMove)
     depends on --> data.board          (Game holds Board)
-    depends on --> data.pieces         (Game uses Piece, Pieces, King)
+    depends on --> data.pieces         (Game uses Piece, Pieces, King, Bishop, Knight, Queen, Rook)
     depends on --> data.player         (Game uses Player, PlayerColor)
-    depends on --> data.io             (OnlineGame, ServerCommunicationTask use Message/MessageParser)
+    depends on --> data.io             (OnlineGame uses Message/MessageParser/MessageType)
     depends on --> exceptions          (Game throws IllegalMoveException)
+    ServerConnection (interface in logic.game) — no external deps; implemented in application module
 
 logic.ruleset.standardChessRuleset
     depends on --> logic.ruleset.possibleMoves
@@ -222,7 +220,7 @@ logic.ruleset.standardChessRuleset
     depends on --> data.*
 
 logic.moves
-    depends on --> data.Square, data.pieces, data.player
+    depends on --> data.Square, data.pieces (Bishop/Knight/Queen/Rook for fromString switch), data.player
 
 data.board
     depends on --> data.pieces (instanceof checks on King/Rook)
@@ -233,11 +231,10 @@ data.board
 data.pieces
     depends on --> data.player
     depends on --> logic.moves (Pawn references Move for en passant check)
-    depends on --> javax.swing (VIOLATION — see below)
+    No UI or I/O imports.
 
 exceptions
     depends on --> logic.moves (IllegalMoveException takes a Move)
-    depends on --> data.Square (IsCheckException takes a Square)
 ```
 
 ---
@@ -245,60 +242,34 @@ exceptions
 ## Architecture Law Compliance
 
 ### Law 1 — Module boundaries are hard
-**COMPLIANT.** `core/pom.xml` has no dependency on `application` or `server`.
+**COMPLIANT.**
 
 ### Law 2 — Chess facade is the only API surface
-**COMPLIANT** within `core`. Enforcement on the caller side is the `application`/`server`
-modules' responsibility.
+**COMPLIANT**
 
 ### Law 3 — Observer pattern for all state propagation
-**PARTIAL VIOLATION.** The `GameObserver` / `Observable` infrastructure exists and is
-correctly used for remote moves in `OnlineGame`. However, `notifyObservers()` is never
-called after a local (offline) move completes. Any observer registered on an `OfflineGame`
-instance will never receive a notification after `movePiece` or `promoteMove`.
+**COMPLIANT.** `Game.executeMove` calls `notifyObservers()` after every successful move,
+covering both offline and online paths. `OnlineGame.handleFailure` calls `notifyObservers()`
+after rolling back a server-rejected move. `OnlineGame.handleGameStatus` calls `notifyObservers()`
+after updating state from a `GAME_STATUS` message.
 
 ### Law 4 — `core` is logic-only; no UI imports
-**VIOLATION.** `Piece.java` imports `javax.swing.ImageIcon` and `java.awt.Image` and
-contains a method `getIcon()` that scales and returns a Swing `ImageIcon`. This is a
-direct, confirmed Swing import inside a `core` class.
+**COMPLIANT.**
 
 ### Law 5 — Strategy pattern owns ruleset variation
-**COMPLIANT.** `StandardChessRuleset` implements `Ruleset`. New variants must implement
-`Ruleset` and be registered in `Game.createRuleset`.
+**COMPLIANT.**
 
 ---
 
 ## Known Debt / Gotchas
 
-1. **Swing import in `Piece.java`.**
-   `Piece` imports `javax.swing.ImageIcon` and `java.awt.Image` and exposes `getIcon()`.
-   This directly violates Architecture Law 4. The icon path field and `getIcon()` method
-   belong in the UI layer, not in the domain model. The `iconPath` field is currently
-   `protected` and set inside each concrete piece constructor, coupling piece construction
-   to icon resource layout.
-
-2. **Stale reflection package path in `Game.getNewPiece` and `Move.fromString`.**
-   Both methods contain hardcoded class-name strings that reference the old package
-   `ptp.core.data.pieces.*` rather than the current `io.github.conava.chess.core.data.pieces.*`.
-   `Game.getNewPiece` will return `null` silently on every pawn promotion (caught exception
-   is swallowed). `Move.fromString` will throw `ClassNotFoundException` on any promotion
-   received over the network.
-
-3. **`getLegalSquares` does not filter moves that leave the king in check.**
+1. **`getLegalSquares` does not filter moves that leave the king in check.**
    `StandardChessRuleset.getLegalSquares` delegates directly to `getSudoLegalSquares`, which
    generates pseudo-legal moves only. The `isCheck` method exists and works, but it is never
    called as part of move generation or validation. Players can make moves that leave their
    own king in check.
 
-4. **`IsCheckException` is declared but never thrown.**
-   The exception class exists but has zero call sites. It is dead code.
-
-5. **`GameType` field in `Game` is never read.**
-   `ServerGame` sets `this.gameType = GameType.SERVER` in its constructor. No code in the
-   module reads `gameType` back. `OfflineGame` and `OnlineGame` never set it. The field
-   serves no runtime purpose.
-
-6. **`Board.getCopy()` is a shallow copy.**
+2. **`Board.getCopy()` is a shallow copy.**
    `getCopy()` constructs a new `Board` from the same `Square[][]` reference, not a deep
    copy. Because `Square` is mutable (it has `setPiece`), the "copy" and the original share
    the same `Square` objects. Any mutation to the copy's squares will affect the original.
@@ -306,17 +277,12 @@ direct, confirmed Swing import inside a `core` class.
    but does not replace square instances. It is fragile and will break if any code path
    creates new squares during a move.
 
-7. **`Board.handleCastleMove` uses hardcoded column indices.**
-   Castling logic uses literal column values (0, 2, 3, 5, 7) rather than deriving them from
-   board dimensions or rook positions. This ties castling logic to a standard 8×8 board and
-   will produce incorrect results if the `Ruleset` ever returns a non-standard board width.
-
-8. **En passant is not implemented.**
+3. **En passant is not implemented.**
    `PossibleStandardPawnMoves` accepts the move history list and has a comment placeholder,
    but the en passant logic is entirely absent. `Pawn.hasMoveJustMovedTwoSquares` exists
    but is never called.
 
-9. **`getLeftEmpty` / `getRightEmpty` logic in `PossibleStandardKingMoves` appears incorrect.**
+4. **`getLeftEmpty` / `getRightEmpty` logic in `PossibleStandardKingMoves` appears incorrect.**
    `getLeftEmpty` returns `false` unless every square from column 0 to `rowCount/2` either
    has an unmoved rook or is empty, but the condition uses `||` with `!board.getSquare(...).isEmpty()`,
    meaning any non-rook, non-empty square causes an immediate false return. In practice the
@@ -325,22 +291,24 @@ direct, confirmed Swing import inside a `core` class.
    will return false even when castling should be legal. Castling is likely broken in
    practice.
 
-10. **`OnlineGame.isLocalPlayerPiece` will throw `NullPointerException` on an empty square.**
-    The method calls `board.getSquare(...).getPiece().getPlayer().color()` without a null
-    guard on `getPiece()`. If the UI requests legal squares for an empty square in an online
-    game, this will throw unchecked.
+5. **`OnlineGame.isLocalPlayerPiece` will throw `NullPointerException` on an empty square.**
+   The method calls `board.getSquare(...).getPiece().getPlayer().color()` without a null
+   guard on `getPiece()`. If the UI requests legal squares for an empty square in an online
+   game, this will throw unchecked.
 
-11. **`ServerCommunicationTask` deduplicates messages using an unbounded `HashSet`.**
-    `processedMessages` grows indefinitely for the lifetime of the connection. In a long
-    game this is a memory leak. Identical move strings (e.g., the same square moved back
-    and forth) will also be silently dropped after the first occurrence.
+6. **Unit test coverage is partial.**
+   Tests cover `Observable`, `Game.getNewPiece`, `Move.fromString`/`toProtocolString`, and
+   `OnlineGame` server-connection behaviour. Many public classes in `logic/` and `data/` still
+   have no tests (e.g. `Board`, `StandardChessRuleset`, individual piece generators). Full
+   coverage required by Architecture Law is not yet achieved.
 
-12. **No unit tests exist.**
-    The `src/test` directory does not exist. Architecture Law (root CLAUDE.md) requires
-    every public class in `logic/` to have unit tests before a PR is done. This requirement
-    is completely unmet.
+7. **`Board.getRowCount()` and `Board.getColCount()` names are swapped relative to what they return.**
+   `getRowCount()` returns `board[0].length` (the inner array = columns) and `getColCount()`
+   returns `board.length` (the outer array = rows). `PossibleStandardKingMoves` double-swaps
+   them which cancels out, so behaviour is currently correct by accident. Out of scope for
+   this branch — document only.
 
-13. **Default player names are in German.**
-    `Game.getDefaultPlayerName` returns `"Spieler 0 (Weiß)"` and `"Spieler 1 (Schwarz)"`.
-    This is a localisation inconsistency with the rest of the codebase (English identifiers,
-    English comments).
+8. **Default player names are in German.**
+   `Game.getDefaultPlayerName` returns `"Spieler 0 (Weiß)"` and `"Spieler 1 (Schwarz)"`.
+   This is a localisation inconsistency with the rest of the codebase (English identifiers,
+   English comments).

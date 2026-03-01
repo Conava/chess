@@ -22,7 +22,7 @@ This module owns the multiplayer server: accepting TCP client connections, creat
 - **Collaborators:** `Server` (registers/unregisters itself), `GameInstance` (delegates game-scoped messages), core's `Message`, `MessageParser`, `MessageType`, `RulesetOptions`.
 
 ### `GameInstance` (io.github.conava.chess.server.management)
-- **Responsibility:** Wraps a single `ServerGame` from core. Manages two player slots (white/black). When both players connect, starts the game. Processes in-game messages: `MOVE` (deserializes and executes), `GAME_STATUS` (handles resignation and status queries), and logs `SUCCESS`/`ERROR`/`FAILURE`/`JOIN_CODE` messages.
+- **Responsibility:** Wraps a single `ServerGame` from core. Manages two player slots (white/black). When both players connect, starts the game. Processes in-game messages: `MOVE` (deserializes via `Move.fromString()`, executes, then relays the executed move to both players), `GAME_STATUS` (handles resignation and status queries), and logs `SUCCESS`/`ERROR`/`FAILURE`/`JOIN_CODE` messages. `handleMove()` catches both `IllegalMoveException` and `RuntimeException` so that malformed move strings from a client do not crash the handler thread.
 - **Collaborators:** `ClientHandler` (the two connected players), core's `ServerGame`, `Move`, `GameState`, `RulesetOptions`, `Message`, `MessageType`.
 
 ## Design Patterns Identified
@@ -98,7 +98,7 @@ The server delegates ruleset selection via `RulesetOptions`, which is the core-d
 
 1. **No tests.** The `src/test` directory does not exist. Zero test coverage.
 
-2. **Moves are not relayed to the opponent.** When `handleMove()` executes a move on the `ServerGame`, the result is never sent back to either player. The move is applied server-side silently. This means the multiplayer protocol is incomplete -- clients have no way to learn about their opponent's moves.
+2. **Move relay is present but not fully validated.** `handleMove()` now relays the executed move to both players after a successful `game.movePiece()` call. However, the relay sends the raw move string received from the client rather than a normalized form, and the relay to the sending client is redundant (the client already applied the move locally).
 
 3. **Stale pom.xml artifact reference.** The maven-shade-plugin filter references `ptp:core` (line 66: `<artifact>ptp:core</artifact>`) which appears to be a leftover from the pre-rebrand package name. The current group/artifact is `io.github.conava:core`.
 
@@ -110,8 +110,6 @@ The server delegates ruleset selection via `RulesetOptions`, which is the core-d
 
 7. **No graceful handling of malformed messages.** `MessageParser.parse()` failures, `Integer.parseInt()` in `joinGame()`, and `RulesetOptions.valueOf()` in `createGame()` will throw unchecked exceptions that crash the handler thread.
 
-8. **`handleMove` catches reflection exceptions.** The catch block includes `ClassNotFoundException`, `NoSuchMethodException`, `InstantiationException`, `IllegalAccessException`, `InvocationTargetException` -- suggesting `Move.fromString()` uses reflection internally. These are caught and logged but no error message is sent back to the client.
+8. **Synchronization inconsistency.** `connectPlayer()` on `GameInstance` is `synchronized`, but `processMessage()` is not. Concurrent message processing for the same game instance could cause race conditions on the `ServerGame`.
 
-9. **Synchronization inconsistency.** `connectPlayer()` on `GameInstance` is `synchronized`, but `processMessage()` is not. Concurrent message processing for the same game instance could cause race conditions on the `ServerGame`.
-
-10. **Console command thread is a raw `Thread`, not submitted to the executor.** It will not be shut down by `executorService.shutdown()` and could keep the JVM alive after stop. It is also not a daemon thread.
+9. **Console command thread is a raw `Thread`, not submitted to the executor.** It will not be shut down by `executorService.shutdown()` and could keep the JVM alive after stop. It is also not a daemon thread.

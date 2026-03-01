@@ -6,6 +6,7 @@ import io.github.conava.chess.core.data.pieces.Piece;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Objects;
 
 public class BoardButton extends JButton {
     private final int row;
@@ -118,7 +119,16 @@ public class BoardButton extends JButton {
             this.setIcon(null);
             return;
         }
-        originalPieceIcon = piece.getIcon();
+        originalPieceIcon = loadPieceIcon(piece);
         this.setIcon(originalPieceIcon);
+    }
+
+    private ImageIcon loadPieceIcon(Piece piece) {
+        String iconPath = "/icon/" + piece.getType().name().toLowerCase() + "_"
+                + piece.getPlayer().color().name().toLowerCase() + ".png";
+        ImageIcon baseIcon = new ImageIcon(Objects.requireNonNull(getClass().getResource(iconPath)));
+        Image baseImage = baseIcon.getImage();
+        Image scaledImage = baseImage.getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaledImage);
     }
 }

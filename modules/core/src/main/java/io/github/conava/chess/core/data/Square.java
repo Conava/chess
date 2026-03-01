@@ -11,8 +11,8 @@ public class Square {
     /**
      * Initiates a square.
      *
-     * @param y Column of the square, starting at 0
-     * @param x Row of the square, starting at 0
+     * @param y Row/rank of the square, starting at 0
+     * @param x Column/file of the square, starting at 0
      */
     public Square(int y, int x) {
         this.x = x;
@@ -23,8 +23,8 @@ public class Square {
     /**
      * Initiates a square.
      *
-     * @param y     Column of the square, starting at 0
-     * @param x     Row of the square, starting at 0
+     * @param y     Row/rank of the square, starting at 0
+     * @param x     Column/file of the square, starting at 0
      * @param piece Piece pre-placed on the square
      */
     public Square(int y, int x, Piece piece) { //this should not be a thing (only the board should know where what piece is)
@@ -34,18 +34,18 @@ public class Square {
     }
 
     /**
-     * Returns row of the square.
+     * Returns column/file of the square.
      *
-     * @return Int of the row of the square, starts at 0
+     * @return Int of the column/file of the square, starts at 0
      */
     public int getX() {
         return x;
     }
 
     /**
-     * Returns column of the square.
+     * Returns row/rank of the square.
      *
-     * @return Int of the column of the square, starts at 0
+     * @return Int of the row/rank of the square, starts at 0
      */
     public int getY() {
         return y;

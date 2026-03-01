@@ -12,12 +12,17 @@ import io.github.conava.chess.core.logic.observer.GameObserver;
 import io.github.conava.chess.core.logic.game.OfflineGame;
 import io.github.conava.chess.core.logic.game.OnlineGame;
 import io.github.conava.chess.core.data.pieces.Piece;
+import io.github.conava.chess.application.network.ServerCommunicationTask;
 import io.github.conava.chess.application.window.MainFrame;
 import io.github.conava.chess.application.components.ColorScheme;
+
+import io.github.conava.chess.core.data.io.Message;
 
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 import java.util.logging.*;
 import javax.swing.*;
 
@@ -111,14 +116,72 @@ public class Chess {
                           String playerBlackName,
                           Map<String, String> onlineGameSettings) {
         if (game == null) {
-            game = (online == 1)
-                    ? new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings)
-                    : new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+            if (online == 1) {
+                game = createOnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings);
+            } else {
+                game = new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+            }
             game.startGame();
             LOGGER.log(Level.INFO, "Game started");
         } else {
             LOGGER.log(Level.WARNING, "Game is already running");
         }
+    }
+
+    /**
+     * Establishes a server connection and constructs an {@link OnlineGame}.
+     *
+     * <p>Networking setup is performed here in the application layer so that the {@code core}
+     * module remains I/O-free. The {@link ServerCommunicationTask} is started on a background
+     * thread, and this method blocks until the connection is confirmed (or fails). The task
+     * is then passed into {@link OnlineGame} as a {@link io.github.conava.chess.core.logic.game.ServerConnection}.</p>
+     *
+     * @param selectedRuleset    The ruleset to use.
+     * @param playerWhiteName    Name of the white player.
+     * @param playerBlackName    Name of the black player.
+     * @param onlineGameSettings Map containing at minimum {@code "ip"} and {@code "port"} keys.
+     * @return A fully initialised {@link OnlineGame}, or one in {@code SERVER_ERROR} state if
+     *         the connection could not be established.
+     */
+    private OnlineGame createOnlineGame(RulesetOptions selectedRuleset,
+                                        String playerWhiteName,
+                                        String playerBlackName,
+                                        Map<String, String> onlineGameSettings) {
+        String serverIP = onlineGameSettings.get("ip");
+        int serverPort = Integer.parseInt(onlineGameSettings.get("port"));
+
+        CountDownLatch connectionLatch = new CountDownLatch(1);
+
+        // Create a temporary holder so that the message handler lambda can reference the game
+        // once it is constructed. The array trick allows effective-final capture.
+        OnlineGame[] gameHolder = new OnlineGame[1];
+        Consumer<Message> handler = msg -> gameHolder[0].handleMessage(msg);
+
+        ServerCommunicationTask task = new ServerCommunicationTask(serverIP, serverPort,
+                connectionLatch, handler);
+
+        Thread serverThread = new Thread(task);
+        serverThread.setDaemon(true);
+        serverThread.start();
+
+        try {
+            connectionLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.log(Level.SEVERE, "Thread interrupted while waiting for server connection", e);
+        }
+
+        OnlineGame onlineGame = OnlineGame.create(selectedRuleset, playerWhiteName, playerBlackName,
+                onlineGameSettings, task);
+        gameHolder[0] = onlineGame;
+
+        if (!task.isConnected()) {
+            onlineGame.setGameState(GameState.SERVER_ERROR);
+            return onlineGame;
+        }
+
+        onlineGame.connectToServerGame();
+        return onlineGame;
     }
 
     /**
@@ -180,13 +243,20 @@ public class Chess {
     /**
      * Terminates the current game session and clears state.
      *
+     * <p>Calls {@link Game#endGame()} on the active game before nulling the reference.
+     * For an {@link OnlineGame} this closes the server connection and sends a resignation
+     * status message. This method is a no-op when no game is currently active ({@code game == null}).</p>
+     *
      * <p>Example:</p>
      * <pre>
      * chess.endGame();
      * </pre>
      */
     public void endGame() {
-        game = null;
+        if (game != null) {
+            game.endGame();
+            game = null;
+        }
     }
 
     /**
@@ -304,6 +374,9 @@ public class Chess {
      * </pre>
      */
     public String getJoinCode() {
-        return ((OnlineGame) game).getJoinCode();
+        if (game instanceof OnlineGame onlineGame) {
+            return onlineGame.getJoinCode();
+        }
+        return null;
     }
 }

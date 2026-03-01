@@ -3,24 +3,27 @@ package io.github.conava.chess.core.logic.game;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.io.Message;
+import io.github.conava.chess.core.data.io.MessageParser;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
+import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
+import io.github.conava.chess.core.logic.moves.PromotionMove;
 import io.github.conava.chess.core.data.io.MessageType;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * The OnlineGame class represents an online game session.
  * It handles communication with the server, game state management, and player interactions.
+ * The networking connection is provided externally via the {@link ServerConnection} interface,
+ * keeping I/O out of the core module.
  */
 public class OnlineGame extends Game {
     private static final Logger LOGGER = Logger.getLogger(OnlineGame.class.getName());
@@ -29,68 +32,70 @@ public class OnlineGame extends Game {
     private static final String MOVE_PARAM = "move";
     private static final String GAME_STATE_PARAM = "gameState";
 
-    private final String serverIP;
-    private final int serverPort;
+    private final ServerConnection connection;
     private String joinCode;
-    private ServerCommunicationTask serverTask;
     private PlayerColor localPlayerColor;
     private final RulesetOptions selectedRuleset;
 
     private Board backupBoard;
     private List<Move> backupMoves;
     private GameState backupGameState;
-    private final CountDownLatch connectionLatch = new CountDownLatch(1);
 
     /**
-     * Constructs an OnlineGame instance.
+     * Private constructor — use {@link #create} to obtain an instance.
      *
-     * @param selectedRuleset The selected ruleset for the game.
-     * @param playerWhiteName The name of the white player.
-     * @param playerBlackName The name of the black player.
-     * @param onlineGameSettings The settings for the online game, including server IP, port, and join code.
+     * @param selectedRuleset    The selected ruleset for the game.
+     * @param playerWhiteName    The name of the white player.
+     * @param playerBlackName    The name of the black player.
+     * @param onlineGameSettings The settings for the online game, including join code.
+     * @param connection         An already-established {@link ServerConnection} to the game server.
      */
-    public OnlineGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings) {
+    private OnlineGame(RulesetOptions selectedRuleset,
+                       String playerWhiteName,
+                       String playerBlackName,
+                       Map<String, String> onlineGameSettings,
+                       ServerConnection connection) {
         super(selectedRuleset, playerWhiteName, playerBlackName);
         this.gameState = GameState.NO_GAME;
-        this.serverIP = onlineGameSettings.get("ip");
-        this.serverPort = Integer.parseInt(onlineGameSettings.get("port"));
         this.joinCode = onlineGameSettings.get("joinCode");
         this.selectedRuleset = selectedRuleset;
-        if (startServerCommunication()) {
-            connectToServerGame();
-        }
+        this.connection = connection;
     }
 
     /**
-     * Starts the server communication task.
+     * Static factory method that constructs an {@link OnlineGame} without sending any network
+     * messages. The caller must invoke {@link #connectToServerGame()} separately once the
+     * connection has been confirmed to be live.
      *
-     * @return true if the server communication was successfully started, false otherwise.
+     * @param selectedRuleset    The selected ruleset for the game.
+     * @param playerWhiteName    The name of the white player.
+     * @param playerBlackName    The name of the black player.
+     * @param onlineGameSettings The settings for the online game, including join code.
+     * @param connection         An already-established {@link ServerConnection} to the game server.
+     * @return A newly constructed {@link OnlineGame} instance.
      */
-    private boolean startServerCommunication() {
-        serverTask = new ServerCommunicationTask(serverIP, serverPort, this, connectionLatch);
-        Thread serverThread = new Thread(serverTask);
-        serverThread.start();
-
-        try {
-            connectionLatch.await(); // Wait for the connection to be established
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOGGER.log(Level.SEVERE, "Thread interrupted while waiting for server connection", e);
-            gameState = GameState.SERVER_ERROR;
-            return false;
-        }
-
-        if (!serverTask.isConnected()) {
-            gameState = GameState.SERVER_ERROR;
-            return false;
-        }
-        return true;
+    public static OnlineGame create(RulesetOptions selectedRuleset,
+                                    String playerWhiteName,
+                                    String playerBlackName,
+                                    Map<String, String> onlineGameSettings,
+                                    ServerConnection connection) {
+        return new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings, connection);
     }
 
     /**
-     * Connects to the server game using the join code or creates a new game.
+     * Sends the initial handshake message to the server: either {@code CREATE_GAME} (when no
+     * join code is present) or {@code JOIN_GAME} (when a join code was supplied).
+     *
+     * <p>This method must be called by the application facade <em>after</em>:
+     * <ol>
+     *   <li>The {@link ServerConnection} has been confirmed live (i.e. {@code isConnected()} is true).</li>
+     *   <li>The message handler that forwards server responses to {@link #handleMessage} has been
+     *       registered with the underlying transport so that no server replies are lost.</li>
+     * </ol>
+     * It is intentionally not called from the constructor — see {@link #create} for the
+     * two-phase construction contract.
      */
-    private void connectToServerGame() {
+    public void connectToServerGame() {
         Message connectMessage;
         if (joinCode != null && !joinCode.isEmpty()) {
             connectMessage = new Message(MessageType.JOIN_GAME, JOIN_CODE_PARAM + "=" + joinCode);
@@ -141,7 +146,7 @@ public class OnlineGame extends Game {
      */
     private void handleJoinCode(Message message) {
         joinCode = message.getParameterValue(JOIN_CODE_PARAM);
-        System.out.println("Join code received: " + joinCode + " - Please share this code with your friend to join the game");
+        LOGGER.info("Join code received: " + joinCode + " - Please share this code with your friend to join the game");
     }
 
     /**
@@ -158,9 +163,10 @@ public class OnlineGame extends Game {
             Move move = Move.fromString(Objects.requireNonNull(message.getParameterValue(MOVE_PARAM)),
                     Objects.equals(message.getParameterValue(PLAYER_COLOR_PARAM), "WHITE") ? player0 : player1);
             executeMoveFromRemote(move);
-        } catch (IllegalMoveException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException |
-                 InstantiationException | IllegalAccessException e) {
+        } catch (IllegalMoveException e) {
             LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.SEVERE, "Failed to parse move from server: " + message.content(), e);
         }
     }
 
@@ -172,6 +178,7 @@ public class OnlineGame extends Game {
     private void handleGameStatus(Message message) {
         LOGGER.log(Level.INFO, "Game status update: " + message.getParameterValue(GAME_STATE_PARAM));
         this.gameState = GameState.valueOf(message.getParameterValue(GAME_STATE_PARAM));
+        notifyObservers();
     }
 
     /**
@@ -214,8 +221,8 @@ public class OnlineGame extends Game {
      * @param message The message to be sent to the server.
      */
     public void sendMessageToServer(Message message) {
-        if (serverTask != null) {
-            serverTask.sendMessage(message);
+        if (connection != null) {
+            connection.sendMessage(MessageParser.serialize(message));
         }
     }
 
@@ -225,10 +232,10 @@ public class OnlineGame extends Game {
     @Override
     public void endGame() {
         gameState = localPlayerColor == PlayerColor.WHITE ? GameState.WHITE_WON_BY_RESIGNATION : GameState.BLACK_WON_BY_RESIGNATION;
-        if (serverTask != null) {
+        if (connection != null) {
             Message endGameMessage = new Message(MessageType.GAME_STATUS, GAME_STATE_PARAM + "=" + gameState);
             sendMessageToServer(endGameMessage);
-            serverTask.closeConnection();
+            connection.closeConnection();
         }
     }
 
@@ -266,19 +273,37 @@ public class OnlineGame extends Game {
      * @param move The move to be sent to the server.
      */
     private void sendMoveToServer(Move move) {
-        Message moveMessage = new Message(MessageType.MOVE, MOVE_PARAM + "=" + move + " " + PLAYER_COLOR_PARAM + "=" + localPlayerColor);
+        Message moveMessage = new Message(MessageType.MOVE, MOVE_PARAM + "=" + move.toProtocolString() + " " + PLAYER_COLOR_PARAM + "=" + localPlayerColor);
         sendMessageToServer(moveMessage);
     }
 
     /**
      * Executes a move received from the server.
+     * <p>
+     * {@link Move#fromString} produces fresh {@link Square} instances that are not the same
+     * objects as the squares held in the board's grid. Passing those disconnected squares
+     * directly to {@link Game#executeMove} would mutate the wrong objects and leave the
+     * board state unchanged. This method therefore translates the move's start and end
+     * squares to the board's canonical {@link Square} instances via {@link #toBoardSquare},
+     * then reconstructs the correct {@link Move} subtype ({@link CastleMove},
+     * {@link PromotionMove}, or plain {@link Move}) before delegating to
+     * {@link Game#executeMove}.
      *
-     * @param move The move to be executed.
-     * @throws IllegalMoveException If the move is illegal.
+     * @param move The move received from the server (with fresh, non-canonical squares).
+     * @throws IllegalMoveException If the move is illegal according to the current board state.
      */
     private void executeMoveFromRemote(Move move) throws IllegalMoveException {
-        super.executeMove(move);
-        notifyObservers();
+        Square boardStart = toBoardSquare(move.getStart());
+        Square boardEnd   = toBoardSquare(move.getEnd());
+        Move canonical;
+        if (move instanceof CastleMove) {
+            canonical = new CastleMove(boardStart, boardEnd);
+        } else if (move instanceof PromotionMove pm) {
+            canonical = new PromotionMove(boardStart, boardEnd, pm.getTargetPiece());
+        } else {
+            canonical = new Move(boardStart, boardEnd);
+        }
+        super.executeMove(canonical);
     }
 
     /**

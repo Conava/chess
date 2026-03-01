@@ -15,7 +15,6 @@ public class ServerGame extends Game {
      */
     public ServerGame(RulesetOptions selectedRuleset) {
         super(selectedRuleset, "Player 1", "Player 2");
-        this.gameType = GameType.SERVER;
     }
 
     /**
