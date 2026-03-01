@@ -6,6 +6,7 @@ import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.game.Game;
 import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.moves.Move;
+import io.github.conava.chess.core.logic.observer.GameObserver;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 
 import java.util.Objects;
@@ -13,88 +14,191 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The GameInstance class represents an instance of a game.
- * It manages the connection state of players and initializes the game state based on the provided ruleset.
+ * Represents a single server-side game session, managing two player slots (white and black),
+ * deferred game creation, and in-game message routing.
+ *
+ * <p>Game creation is deferred until both players have connected via
+ * {@link #connectPlayer(ClientHandler, String)}. Until that point the internal {@link Game}
+ * reference is {@code null} and move messages are silently ignored. This avoids the need to
+ * store placeholder player names and keeps the {@link Game} superclass in a consistent state
+ * from the moment it is constructed.</p>
+ *
+ * <p>This class implements {@link GameObserver} to receive state-change notifications from
+ * the underlying {@link Game}. The observer is used exclusively for terminal state transitions
+ * (checkmate, resignation, timeout, draw). Move relay is handled explicitly in
+ * {@link #handleMove(ClientHandler, Message)} because the move data is only available at the
+ * call site, not in the signal-only {@link #onGameStateChanged()} callback.</p>
+ *
+ * <p>Both {@link #connectPlayer(ClientHandler, String)} and {@link #processMessage(ClientHandler, Message)}
+ * are {@code synchronized} on this instance to prevent race conditions between the two player
+ * threads sharing the same game.</p>
  */
-public class GameInstance {
+public class GameInstance implements GameObserver {
+
     private static final Logger LOGGER = Logger.getLogger(GameInstance.class.getName());
-    private final Game game;
+
     private final int gameId;
+    private final RulesetOptions ruleset;
+
+    private Game game;
+    private GameState previousState;
+
+    private String whitePlayerName;
+    private String blackPlayerName;
+
     private ClientHandler whitePlayerHandler;
     private ClientHandler blackPlayerHandler;
 
     /**
-     * Constructs a GameInstance with the specified ruleset.
+     * Constructs a new {@code GameInstance} in the {@code WAITING_FOR_PLAYER} state.
      *
-     * @param gameId The unique ID of the game.
-     * @param ruleset The ruleset options for the game.
+     * <p>No {@link Game} object is created at this point. Game creation is deferred until
+     * both players have connected via {@link #connectPlayer(ClientHandler, String)}, so that
+     * both player names are available before the {@link Game} superclass constructor runs.</p>
+     *
+     * @param gameId  The unique numeric identifier for this game session.
+     * @param ruleset The ruleset variant to use when the game is eventually created.
      */
     public GameInstance(int gameId, RulesetOptions ruleset) {
         this.gameId = gameId;
-        this.game = Game.createServerGame(ruleset, "Player 1", "Player 2");
-        this.game.setGameState(GameState.WAITING_FOR_PLAYER);
+        this.ruleset = ruleset;
+        this.game = null;
+        this.previousState = null;
     }
 
     /**
-     * Connects a player to the game instance.
+     * Connects a player to this game instance and, when both slots are filled, creates the
+     * underlying {@link Game} and starts play.
      *
-     * @param clientHandler The client handler for the player.
+     * <p>The first call fills the white (creator) slot; the second call fills the black
+     * (joiner) slot. On the second call, the {@link Game} is created via
+     * {@link Game#createServerGame(RulesetOptions, String, String)}, this instance is
+     * registered as a {@link GameObserver}, and a single {@code GAME_STATUS gameState=RUNNING}
+     * message is broadcast to both players.</p>
+     *
+     * @param clientHandler The {@link ClientHandler} for the connecting player; must not be {@code null}.
+     * @param playerName    The display name for the connecting player. A blank or {@code null}
+     *                      value causes the {@link Game} superclass to substitute a default name.
      */
-    public synchronized void connectPlayer(ClientHandler clientHandler) {
+    public synchronized void connectPlayer(ClientHandler clientHandler, String playerName) {
         if (whitePlayerHandler == null) {
             whitePlayerHandler = clientHandler;
+            whitePlayerName = (playerName != null && !playerName.isBlank()) ? playerName : "Player 1";
             clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=white"));
         } else if (blackPlayerHandler == null) {
             blackPlayerHandler = clientHandler;
+            blackPlayerName = (playerName != null && !playerName.isBlank()) ? playerName : "Player 2";
             clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=black"));
-            sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=RUNNING"));
             startGame();
         }
     }
 
     /**
-     * Starts the game and notifies players.
+     * Compatibility overload for callers that do not yet supply a player name.
+     *
+     * <p>Delegates to {@link #connectPlayer(ClientHandler, String)} with a {@code null}
+     * player name, which causes default names ("Player 1" / "Player 2") to be used.
+     * This overload will be removed once all callers (specifically {@link ClientHandler})
+     * are updated to supply a name as part of Task 5.</p>
+     *
+     * @param clientHandler The {@link ClientHandler} for the connecting player; must not be {@code null}.
      */
-    private void startGame() {
-        game.startGame();
-        sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=running"));
+    public synchronized void connectPlayer(ClientHandler clientHandler) {
+        connectPlayer(clientHandler, null);
     }
 
     /**
-     * Processes a message from a client.
+     * Creates the {@link Game} via the factory, registers this instance as observer, and
+     * notifies both players that the game is now {@code RUNNING}.
      *
-     * @param clientHandler The client handler sending the message.
-     * @param message The message to process.
+     * <p>Only one {@code GAME_STATUS gameState=RUNNING} message is sent. The observer
+     * callback {@link #onGameStateChanged()} is NOT triggered for the RUNNING transition
+     * because RUNNING is not a terminal state, so there is no risk of a duplicate message
+     * from the observer path.</p>
      */
-    public void processMessage(ClientHandler clientHandler, Message message) {
+    private void startGame() {
+        this.game = Game.createServerGame(ruleset, whitePlayerName, blackPlayerName);
+        this.game.addObserver(this);
+        this.game.startGame();
+        this.previousState = this.game.getState();
+        sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=RUNNING"));
+    }
+
+    /**
+     * Observer callback invoked by the underlying {@link Game} whenever its state changes.
+     *
+     * <p>This method handles terminal state transitions only. If the new game state differs
+     * from the previously observed state and is a terminal state (checkmate, resignation,
+     * timeout, or draw), a {@code GAME_STATUS} message is sent to both connected players.
+     * The RUNNING state is intentionally excluded: its notification is sent once in
+     * {@link #startGame()} so that this observer never sends a duplicate.</p>
+     *
+     * <p>This method is safe to call from any thread because {@link #processMessage} is
+     * synchronized on this instance, and {@code notifyObservers()} is called only from
+     * within synchronized contexts.</p>
+     */
+    @Override
+    public void onGameStateChanged() {
+        if (game == null) {
+            return;
+        }
+        GameState currentState = game.getState();
+        if (currentState != previousState && isTerminalState(currentState)) {
+            sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=" + currentState.name()));
+        }
+        previousState = currentState;
+    }
+
+    /**
+     * Returns {@code true} if the given {@link GameState} represents the end of the game
+     * (checkmate, resignation, timeout, or draw of any variant).
+     *
+     * @param state The state to test; must not be {@code null}.
+     * @return {@code true} if {@code state} is a terminal state, {@code false} otherwise.
+     */
+    private boolean isTerminalState(GameState state) {
+        return switch (state) {
+            case WHITE_WON_BY_CHECKMATE,
+                 BLACK_WON_BY_CHECKMATE,
+                 WHITE_WON_BY_RESIGNATION,
+                 BLACK_WON_BY_RESIGNATION,
+                 WHITE_WON_BY_TIMEOUT,
+                 BLACK_WON_BY_TIMEOUT,
+                 DRAW_BY_STALEMATE,
+                 DRAW_BY_INSUFFICIENT_MATERIAL,
+                 DRAW_BY_THREEFOLD_REPETITION,
+                 DRAW_BY_FIFTY_MOVE_RULE -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * Dispatches an in-game message from a client to the appropriate handler.
+     *
+     * <p>This method is {@code synchronized} on this instance so that concurrent messages
+     * from both player threads are processed serially, preventing race conditions on the
+     * underlying {@link Game} object.</p>
+     *
+     * @param clientHandler The {@link ClientHandler} that sent the message.
+     * @param message       The message to process; must not be {@code null}.
+     */
+    public synchronized void processMessage(ClientHandler clientHandler, Message message) {
         switch (message.type()) {
-            case JOIN_CODE:
-                handleJoinCode(message);
-                break;
-            case MOVE:
-                handleMove(message);
-                break;
-            case GAME_STATUS:
-                handleGameStatus(clientHandler, message);
-                break;
-            case SUCCESS:
-                handleSuccess(message);
-                break;
-            case ERROR:
-                handleError(message);
-                break;
-            case FAILURE:
-                handleFailure(message);
-                break;
-            default:
-                LOGGER.log(Level.WARNING, "Unsupported message type: " + message.type());
+            case JOIN_CODE -> handleJoinCode(message);
+            case MOVE -> handleMove(clientHandler, message);
+            case GAME_STATUS -> handleGameStatus(clientHandler, message);
+            case SUCCESS -> handleSuccess(message);
+            case ERROR -> handleError(message);
+            case FAILURE -> handleFailure(message);
+            default -> LOGGER.log(Level.WARNING, "Unsupported message type: {0}", message.type());
         }
     }
 
     /**
-     * Sends a message to both players.
+     * Sends a message to both connected players. Silently skips a slot if the handler
+     * for that slot is {@code null} (player not yet connected or already disconnected).
      *
-     * @param message The message to send.
+     * @param message The message to broadcast; must not be {@code null}.
      */
     private void sendMessageToPlayers(Message message) {
         if (whitePlayerHandler != null) {
@@ -106,103 +210,137 @@ public class GameInstance {
     }
 
     /**
-     * Handles a join code message.
+     * Handles a {@code JOIN_CODE} message by logging its content.
      *
      * @param message The message containing the join code.
      */
     private void handleJoinCode(Message message) {
-        LOGGER.log(Level.INFO, "Join code received: " + message.content());
+        LOGGER.log(Level.INFO, "Join code received: {0}", message.content());
     }
 
     /**
-     * Handles a move message.
+     * Handles a {@code MOVE} message: parses the move, executes it on the game, then
+     * relays it to both players on success, or sends an {@code ERROR} to the sender on
+     * failure.
      *
-     * @param message The message containing the move details.
+     * <p>Move relay is explicit (not observer-driven) because the move payload is only
+     * available at this call site -- the {@link GameObserver#onGameStateChanged()} callback
+     * carries no parameters.</p>
+     *
+     * <p>If the game has not yet been created (no players connected yet), the message is
+     * silently ignored to keep the handler thread alive during setup.</p>
+     *
+     * @param clientHandler The {@link ClientHandler} that sent the move; used to send
+     *                      an error response on illegal or malformed input.
+     * @param message       The message carrying the move in {@code move=<notation> playerColor=<COLOR>} format.
      */
-    private void handleMove(Message message) {
+    private void handleMove(ClientHandler clientHandler, Message message) {
+        if (game == null) {
+            LOGGER.log(Level.WARNING, "MOVE received but game not yet created (gameId={0})", gameId);
+            return;
+        }
         try {
             Move move = Move.fromString(Objects.requireNonNull(message.getParameterValue("move")),
-                    Objects.equals(message.getParameterValue("playerColor"), "WHITE") ? game.getPlayerWhite() : game.getPlayerBlack());
+                    Objects.equals(message.getParameterValue("playerColor"), "WHITE")
+                            ? game.getPlayerWhite()
+                            : game.getPlayerBlack());
             game.movePiece(move.getStart(), move.getEnd());
-            LOGGER.log(Level.INFO, "Move executed: " + message.content());
+            LOGGER.log(Level.INFO, "Move executed: {0}", message.content());
             sendMessageToPlayers(new Message(MessageType.MOVE, message.content()));
         } catch (IllegalMoveException e) {
-            LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
+            LOGGER.log(Level.WARNING, "Illegal move received: {0}", message.content());
+            if (clientHandler != null) {
+                clientHandler.sendMessage(new Message(MessageType.ERROR, "Illegal move: " + message.content()));
+            }
         } catch (RuntimeException e) {
             LOGGER.log(Level.SEVERE, "Failed to parse move: " + message.content(), e);
+            if (clientHandler != null) {
+                clientHandler.sendMessage(new Message(MessageType.ERROR, "Malformed move: " + message.content()));
+            }
         }
     }
 
     /**
-     * Handles a game status request.
+     * Handles a {@code GAME_STATUS} message from a client.
      *
-     * @param clientHandler The client handler requesting the game status.
+     * <p>If the message body is non-empty, it is treated as a resignation request.
+     * White may resign (sending {@code BLACK_WON_BY_RESIGNATION}) and black may resign
+     * (sending {@code WHITE_WON_BY_RESIGNATION}). If the body is empty, the current
+     * game state is returned to the requesting client.</p>
+     *
+     * @param clientHandler The {@link ClientHandler} requesting status or submitting a resignation.
+     * @param message       The {@code GAME_STATUS} message; content may be empty for a status query.
      */
     private void handleGameStatus(ClientHandler clientHandler, Message message) {
-        if(!message.content().isEmpty()) {
-            LOGGER.log(Level.INFO, "Game status update from Player: " + message.content());
+        if (game == null) {
+            LOGGER.log(Level.WARNING, "GAME_STATUS received but game not yet created (gameId={0})", gameId);
+            return;
+        }
+        if (!message.content().isEmpty()) {
+            LOGGER.log(Level.INFO, "Game status update from player: {0}", message.content());
             GameState newGameState = GameState.valueOf(message.getParameterValue("gameState"));
             if (clientHandler == whitePlayerHandler && newGameState == GameState.BLACK_WON_BY_RESIGNATION) {
                 game.setGameState(newGameState);
             } else if (clientHandler == blackPlayerHandler && newGameState == GameState.WHITE_WON_BY_RESIGNATION) {
                 game.setGameState(newGameState);
             }
-        }
-        else {
+        } else {
             LOGGER.log(Level.INFO, "Current game status requested");
             clientHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + game.getState()));
         }
     }
 
     /**
-     * Handles a success message.
+     * Handles a {@code SUCCESS} message by logging it.
      *
      * @param message The success message.
      */
     private void handleSuccess(Message message) {
-        LOGGER.log(Level.INFO, "Success: " + message);
+        LOGGER.log(Level.INFO, "Success: {0}", message);
     }
 
     /**
-     * Handles an error message.
+     * Handles an {@code ERROR} message by logging it.
      *
      * @param message The error message.
      */
     private void handleError(Message message) {
-        LOGGER.log(Level.SEVERE, "Error: " + message.content());
+        LOGGER.log(Level.SEVERE, "Error: {0}", message.content());
     }
 
     /**
-     * Handles a failure message.
+     * Handles a {@code FAILURE} message by logging it.
      *
      * @param message The failure message.
      */
     private void handleFailure(Message message) {
-        LOGGER.log(Level.SEVERE, "Failure: " + message.content());
+        LOGGER.log(Level.SEVERE, "Failure: {0}", message.content());
     }
 
     /**
-     * Gets the game ID.
+     * Returns the numeric identifier for this game session.
      *
-     * @return The game ID.
+     * @return The game ID assigned at construction time.
      */
     public int getGameId() {
         return gameId;
     }
 
     /**
-     * Gets the white player handler.
+     * Returns the {@link ClientHandler} for the white player, or {@code null} if the
+     * white slot has not yet been filled.
      *
-     * @return The white player handler.
+     * @return The white player's handler, or {@code null}.
      */
     public ClientHandler getWhitePlayerHandler() {
         return whitePlayerHandler;
     }
 
     /**
-     * Gets the black player handler.
+     * Returns the {@link ClientHandler} for the black player, or {@code null} if the
+     * black slot has not yet been filled.
      *
-     * @return The black player handler.
+     * @return The black player's handler, or {@code null}.
      */
     public ClientHandler getBlackPlayerHandler() {
         return blackPlayerHandler;
