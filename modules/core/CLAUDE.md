@@ -48,7 +48,7 @@ io.github.conava.chess.core
 
 | Class | Responsibility | Key collaborators |
 |---|---|---|
-| `Square` | Immutable coordinates (x, y) with a mutable `Piece` slot. Equality is coordinate-only — does not consider piece. | `Piece`, `Player` |
+| `Square` | Immutable coordinates with a mutable `Piece` slot. Constructor is `Square(y, x)` where `y` = row/rank (0 = white's back rank) and `x` = column/file (0 = a-file). Equality is coordinate-only — does not consider piece. | `Piece`, `Player` |
 | `Board` | Holds the `Square[][]` grid; maintains two live piece lists (white/black) updated on every `executeMove`. Provides `getCopy()` (shallow — same `Square` references). | `Square`, `Piece`, `Move`, `CastleMove`, `PromotionMove`, `King`, `Rook` |
 | `Message` | Immutable record: a `MessageType` + a string content payload in `key=value` space-separated format. Provides `getParameterValue(String)`. | `MessageType` |
 | `MessageParser` | Stateless utility: `parse(String)` splits on the first `:`, `serialize(Message)` reconstitutes the string. | `Message`, `MessageType` |
@@ -277,10 +277,12 @@ after updating state from a `GAME_STATUS` message.
    but does not replace square instances. It is fragile and will break if any code path
    creates new squares during a move.
 
-3. **`Board.handleCastleMove` uses hardcoded column indices.**
-   Castling logic uses literal column values (0, 2, 3, 5, 7) rather than deriving them from
-   board dimensions or rook positions. This ties castling logic to a standard 8×8 board and
-   will produce incorrect results if the `Ruleset` ever returns a non-standard board width.
+3. **`Board.handleCastleMove` uses hardcoded column indices. FIXED.**
+   The pre-existing direction/coordinate bug (axis swap in the queenside check and rook
+   lookup) is resolved. Castling logic still uses literal column values (0, 2, 3, 5, 7)
+   rather than deriving them from board dimensions or rook positions. This ties castling
+   logic to a standard 8×8 board and will produce incorrect results if the `Ruleset` ever
+   returns a non-standard board width.
 
 4. **En passant is not implemented.**
    `PossibleStandardPawnMoves` accepts the move history list and has a comment placeholder,
@@ -302,12 +304,18 @@ after updating state from a `GAME_STATUS` message.
    game, this will throw unchecked.
 
 7. **Unit test coverage is partial.**
-   Tests were added in branch `fix/core-violations` covering `Observable`, `Game.getNewPiece`,
-   `Move.fromString`/`toProtocolString`, and `OnlineGame` server-connection behaviour. However,
-   many public classes in `logic/` and `data/` still have no tests (e.g. `Board`, `StandardChessRuleset`,
-   individual piece generators). Full coverage required by Architecture Law is not yet achieved.
+   Tests cover `Observable`, `Game.getNewPiece`, `Move.fromString`/`toProtocolString`, and
+   `OnlineGame` server-connection behaviour. Many public classes in `logic/` and `data/` still
+   have no tests (e.g. `Board`, `StandardChessRuleset`, individual piece generators). Full
+   coverage required by Architecture Law is not yet achieved.
 
-8. **Default player names are in German.**
+8. **`Board.getRowCount()` and `Board.getColCount()` names are swapped relative to what they return.**
+   `getRowCount()` returns `board[0].length` (the inner array = columns) and `getColCount()`
+   returns `board.length` (the outer array = rows). `PossibleStandardKingMoves` double-swaps
+   them which cancels out, so behaviour is currently correct by accident. Out of scope for
+   this branch — document only.
+
+9. **Default player names are in German.**
    `Game.getDefaultPlayerName` returns `"Spieler 0 (Weiß)"` and `"Spieler 1 (Schwarz)"`.
    This is a localisation inconsistency with the rest of the codebase (English identifiers,
    English comments).

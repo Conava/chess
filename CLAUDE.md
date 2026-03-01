@@ -45,6 +45,7 @@ These apply to ALL tasks. Never violate without explicit human approval.
 - No test code in `src/main`. No production logic in `src/test`.
 - Every new public class in `core` needs a unit test.
 - CLAUDE.md files are living documents — update them when architecture decisions are made.
+- **Square coordinate convention:** `Square(y, x)` where `y` = row/rank (0 = rank 1 = white's back rank, 7 = rank 8) and `x` = column/file (0 = a-file, 7 = h-file). This is the convention used throughout `core` (Board, Game, piece move generators, protocol methods).
 
 ## Branch Strategy
 
