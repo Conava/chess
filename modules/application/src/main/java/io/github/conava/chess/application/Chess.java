@@ -148,6 +148,14 @@ public class Chess {
      * is then passed into the game factory as a
      * {@link io.github.conava.chess.core.logic.game.ServerConnection}.</p>
      *
+     * <p>Two {@link CountDownLatch} instances synchronize the handoff:
+     * <ol>
+     *   <li>{@code connectionLatch} — blocks the calling thread until the TCP socket is open.</li>
+     *   <li>{@code gameReadyLatch} — blocks the message-handler lambda on the server thread
+     *       until {@code gameHolder[0]} has been assigned, preventing a {@link NullPointerException}
+     *       if the server sends a message before {@link Game} construction completes.</li>
+     * </ol>
+     *
      * @param selectedRuleset    The ruleset to use.
      * @param playerWhiteName    Name of the white player.
      * @param playerBlackName    Name of the black player.
@@ -163,11 +171,23 @@ public class Chess {
         int serverPort = Integer.parseInt(onlineGameSettings.get("port"));
 
         CountDownLatch connectionLatch = new CountDownLatch(1);
+        CountDownLatch gameReadyLatch = new CountDownLatch(1);
 
         // Create a temporary holder so that the message handler lambda can reference the game
         // once it is constructed. The array trick allows effective-final capture.
+        // The gameReadyLatch ensures the handler blocks until gameHolder[0] is assigned,
+        // preventing NPE if the server sends a message before Game construction completes.
         Game[] gameHolder = new Game[1];
-        Consumer<Message> handler = msg -> gameHolder[0].handleMessage(msg);
+        Consumer<Message> handler = msg -> {
+            try {
+                gameReadyLatch.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.log(Level.SEVERE, "Handler thread interrupted while waiting for game reference", e);
+                return;
+            }
+            gameHolder[0].handleMessage(msg);
+        };
 
         ServerCommunicationTask task = new ServerCommunicationTask(serverIP, serverPort,
                 connectionLatch, handler);
@@ -186,6 +206,7 @@ public class Chess {
         Game onlineGame = Game.createGame(true, selectedRuleset, playerWhiteName, playerBlackName,
                 onlineGameSettings, task);
         gameHolder[0] = onlineGame;
+        gameReadyLatch.countDown();
 
         if (!task.isConnected()) {
             onlineGame.setGameState(GameState.SERVER_ERROR);
