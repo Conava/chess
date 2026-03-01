@@ -176,7 +176,7 @@ public class ClientHandler implements Runnable {
         int gameId = server.getGameIdCounter().incrementAndGet();
         gameInstance = new GameInstance(gameId, ruleset);
         gameInstance.connectPlayer(this, playerName);
-        server.getGamesList().put(gameId, gameInstance);
+        server.addGame(gameId, gameInstance);
         sendMessage(new Message(MessageType.JOIN_CODE, "joinCode=" + gameId));
     }
 
@@ -204,7 +204,7 @@ public class ClientHandler implements Runnable {
             sendMessage(new Message(MessageType.ERROR, "Invalid or missing gameId"));
             return;
         }
-        GameInstance foundGame = server.getGamesList().get(gameId);
+        GameInstance foundGame = server.getGame(gameId);
         if (foundGame == null) {
             sendMessage(new Message(MessageType.ERROR, "Invalid join code"));
             return;
@@ -238,7 +238,7 @@ public class ClientHandler implements Runnable {
         if (gameInstance != null) {
             gameInstance.disconnectPlayer(this);
             Integer gameId = gameInstance.getGameId();
-            server.getGamesList().remove(gameId);
+            server.removeGame(gameId);
             server.getGameSemaphore().release();
         }
     }

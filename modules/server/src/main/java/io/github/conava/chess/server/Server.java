@@ -8,6 +8,7 @@ import io.github.conava.chess.server.management.GameInstance;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -243,16 +244,66 @@ public class Server {
     }
 
     /**
-     * Returns the active-games map shared across all {@link ClientHandler} instances.
+     * Returns an unmodifiable view of the active-games map.
      *
      * <p>Keys are game IDs; values are the corresponding {@link GameInstance} objects.
-     * The returned map is a {@link ConcurrentHashMap} and is safe to read and write from
-     * multiple threads.
+     * The returned map is an unmodifiable wrapper around the internal
+     * {@link ConcurrentHashMap}; callers may safely iterate or look up entries but
+     * cannot call {@code put}, {@code remove}, or any other mutating operation (those
+     * throw {@link UnsupportedOperationException}).</p>
      *
-     * @return the live map of game ID to {@link GameInstance}
+     * <p>To add or remove games, use {@link #addGame(int, GameInstance)} and
+     * {@link #removeGame(int)} respectively. To look up a single game by ID, prefer
+     * {@link #getGame(int)}.</p>
+     *
+     * @return an unmodifiable view of the game ID to {@link GameInstance} map
      */
     public Map<Integer, GameInstance> getGamesList() {
-        return gamesList;
+        return Collections.unmodifiableMap(gamesList);
+    }
+
+    /**
+     * Adds a {@link GameInstance} to the active-games map.
+     *
+     * <p>This method is the only sanctioned way to insert a new entry into the internal
+     * games map. It must be called after a game is created and before the join code is
+     * sent to the client so that a second client can look up the game via
+     * {@link #getGame(int)}.</p>
+     *
+     * @param gameId the unique numeric identifier for the game; must be positive
+     * @param game   the {@link GameInstance} to register; must not be {@code null}
+     */
+    public void addGame(int gameId, GameInstance game) {
+        gamesList.put(gameId, game);
+    }
+
+    /**
+     * Removes a {@link GameInstance} from the active-games map.
+     *
+     * <p>This method is the only sanctioned way to remove an entry from the internal
+     * games map. It is called during client cleanup after the game has ended or the
+     * player has disconnected. If no entry exists for the given {@code gameId} this
+     * method is a no-op.</p>
+     *
+     * @param gameId the unique numeric identifier of the game to remove
+     */
+    public void removeGame(int gameId) {
+        gamesList.remove(gameId);
+    }
+
+    /**
+     * Returns the {@link GameInstance} associated with the given game ID, or
+     * {@code null} if no such game is currently active.
+     *
+     * <p>This method is the preferred alternative to
+     * {@code getGamesList().get(gameId)} because it does not expose the internal map
+     * reference to callers.</p>
+     *
+     * @param gameId the unique numeric identifier of the game to retrieve
+     * @return the {@link GameInstance} for that ID, or {@code null} if not found
+     */
+    public GameInstance getGame(int gameId) {
+        return gamesList.get(gameId);
     }
 
     /**
