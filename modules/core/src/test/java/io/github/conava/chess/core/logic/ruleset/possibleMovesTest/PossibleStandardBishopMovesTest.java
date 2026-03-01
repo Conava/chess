@@ -1,4 +1,4 @@
-package io.github.conava.chess.application.core.logic.ruleset.possibleMovesTest;
+package io.github.conava.chess.core.logic.ruleset.possibleMovesTest;
 
 import io.github.conava.chess.core.data.pieces.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,14 +7,13 @@ import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.player.PlayerColor;
-import io.github.conava.chess.core.logic.moves.Move;
-import io.github.conava.chess.core.logic.ruleset.possibleMoves.PossibleStandardPawnMoves;
+import io.github.conava.chess.core.logic.ruleset.possibleMoves.PossibleStandardBishopMoves;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PossibleStandardPawnMovesTest {
+public class PossibleStandardBishopMovesTest {
     @BeforeEach
     public void setUp() {
     }
@@ -24,7 +23,6 @@ public class PossibleStandardPawnMovesTest {
         Player playerW = new Player("W", PlayerColor.WHITE);
         Player playerB = new Player("B", PlayerColor.BLACK);
 
-        //q3nrk1/4bppp/3p4/4nPP1/r2BP2P/Np6/1P1Q4/1K1R1B1R w - - 0 1
         Square[][] startBoard = new Square[8][8];
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
@@ -60,18 +58,15 @@ public class PossibleStandardPawnMovesTest {
         Board board = new Board(startBoard);
 
         List<Square> possibleSquares;
-        List<Move> lastMoves = null;
 
-        PossibleStandardPawnMoves movesP1 = new PossibleStandardPawnMoves(startBoard[2][1], board, lastMoves);
-        possibleSquares = movesP1.possibleMoves();
-
-        assertTrue(possibleSquares.isEmpty());
-
-        PossibleStandardPawnMoves movesP2 = new PossibleStandardPawnMoves(startBoard[6][7], board, lastMoves);
-        possibleSquares = movesP2.possibleMoves();
+        PossibleStandardBishopMoves movesBB = new PossibleStandardBishopMoves(startBoard[6][4], board);
+        possibleSquares = movesBB.getPossibleSquares();
 
         assertFalse(possibleSquares.isEmpty());
-        assertTrue(possibleSquares.contains(startBoard[4][7]));
-        assertEquals(2, possibleSquares.size());
+        assertTrue(possibleSquares.contains(startBoard[5][5]));
+        assertTrue(possibleSquares.contains(startBoard[4][6]));
+        assertTrue(possibleSquares.contains(startBoard[7][3]));
+        assertFalse(possibleSquares.contains(startBoard[5][3]));
+        assertEquals(3, possibleSquares.size());
     }
 }

@@ -1,4 +1,4 @@
-package io.github.conava.chess.application.core.logic.ruleset.possibleMovesTest;
+package io.github.conava.chess.core.logic.ruleset.possibleMovesTest;
 
 import io.github.conava.chess.core.data.pieces.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,13 +7,13 @@ import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.player.PlayerColor;
-import io.github.conava.chess.core.logic.ruleset.possibleMoves.PossibleStandardBishopMoves;
+import io.github.conava.chess.core.logic.ruleset.possibleMoves.PossibleStandardKnightMoves;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PossibleStandardBishopMovesTest {
+public class PossibleStandardKnightMovesTest {
     @BeforeEach
     public void setUp() {
     }
@@ -59,14 +59,20 @@ public class PossibleStandardBishopMovesTest {
 
         List<Square> possibleSquares;
 
-        PossibleStandardBishopMoves movesBB = new PossibleStandardBishopMoves(startBoard[6][4], board);
-        possibleSquares = movesBB.getPossibleSquares();
+        PossibleStandardKnightMoves movesK1B = new PossibleStandardKnightMoves(startBoard[4][4], board);
+        possibleSquares = movesK1B.getPossibleSquares();
 
         assertFalse(possibleSquares.isEmpty());
-        assertTrue(possibleSquares.contains(startBoard[5][5]));
-        assertTrue(possibleSquares.contains(startBoard[4][6]));
-        assertTrue(possibleSquares.contains(startBoard[7][3]));
+        assertTrue(possibleSquares.contains(startBoard[2][3]));
+        assertFalse(possibleSquares.contains(startBoard[6][5]));
+        assertEquals(7, possibleSquares.size());
+
+        PossibleStandardKnightMoves movesK2B = new PossibleStandardKnightMoves(startBoard[7][4], board);
+        possibleSquares = movesK2B.getPossibleSquares();
+
+        assertFalse(possibleSquares.isEmpty());
+        assertTrue(possibleSquares.contains(startBoard[6][2]));
         assertFalse(possibleSquares.contains(startBoard[5][3]));
-        assertEquals(3, possibleSquares.size());
+        assertEquals(2, possibleSquares.size());
     }
 }

@@ -72,7 +72,7 @@ class ChessTest {
 
     @Test
     void getJoinCode_offlineGame_returnsNull() {
-        chess.startGame(0, RulesetOptions.STANDARD, "Alice", "Bob", Collections.emptyMap());
+        chess.startGame(false, RulesetOptions.STANDARD, "Alice", "Bob", Collections.emptyMap());
         assertNull(chess.getJoinCode(),
                 "getJoinCode() must return null for an offline game without throwing ClassCastException");
     }

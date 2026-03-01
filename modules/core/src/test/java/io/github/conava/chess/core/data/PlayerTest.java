@@ -1,4 +1,4 @@
-package io.github.conava.chess.application.core.data;
+package io.github.conava.chess.core.data;
 
 import io.github.conava.chess.core.data.player.PlayerColor;
 

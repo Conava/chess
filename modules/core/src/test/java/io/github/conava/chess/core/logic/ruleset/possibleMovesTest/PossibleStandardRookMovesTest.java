@@ -1,4 +1,4 @@
-package io.github.conava.chess.application.core.logic.ruleset.possibleMovesTest;
+package io.github.conava.chess.core.logic.ruleset.possibleMovesTest;
 
 import io.github.conava.chess.core.data.pieces.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,13 +7,13 @@ import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.player.PlayerColor;
-import io.github.conava.chess.core.logic.ruleset.possibleMoves.PossibleStandardKnightMoves;
+import io.github.conava.chess.core.logic.ruleset.possibleMoves.PossibleStandardRookMoves;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PossibleStandardKnightMovesTest {
+public class PossibleStandardRookMovesTest {
     @BeforeEach
     public void setUp() {
     }
@@ -59,20 +59,19 @@ public class PossibleStandardKnightMovesTest {
 
         List<Square> possibleSquares;
 
-        PossibleStandardKnightMoves movesK1B = new PossibleStandardKnightMoves(startBoard[4][4], board);
-        possibleSquares = movesK1B.getPossibleSquares();
+        PossibleStandardRookMoves movesR1B = new PossibleStandardRookMoves(startBoard[3][0], board);
+        possibleSquares = movesR1B.getPossibleSquares();
 
         assertFalse(possibleSquares.isEmpty());
-        assertTrue(possibleSquares.contains(startBoard[2][3]));
-        assertFalse(possibleSquares.contains(startBoard[6][5]));
+        assertTrue(possibleSquares.contains(startBoard[2][0]));
+        assertFalse(possibleSquares.contains(startBoard[1][0]));
+        assertTrue(possibleSquares.contains(startBoard[6][0]));
+        assertFalse(possibleSquares.contains(startBoard[7][0]));
         assertEquals(7, possibleSquares.size());
 
-        PossibleStandardKnightMoves movesK2B = new PossibleStandardKnightMoves(startBoard[7][4], board);
-        possibleSquares = movesK2B.getPossibleSquares();
+        PossibleStandardRookMoves movesR2B = new PossibleStandardRookMoves(startBoard[7][5], board);
+        possibleSquares = movesR2B.getPossibleSquares();
 
-        assertFalse(possibleSquares.isEmpty());
-        assertTrue(possibleSquares.contains(startBoard[6][2]));
-        assertFalse(possibleSquares.contains(startBoard[5][3]));
-        assertEquals(2, possibleSquares.size());
+        assertTrue(possibleSquares.isEmpty());
     }
 }
