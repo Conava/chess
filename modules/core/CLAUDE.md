@@ -277,19 +277,12 @@ after updating state from a `GAME_STATUS` message.
    but does not replace square instances. It is fragile and will break if any code path
    creates new squares during a move.
 
-3. **`Board.handleCastleMove` uses hardcoded column indices. FIXED.**
-   The pre-existing direction/coordinate bug (axis swap in the queenside check and rook
-   lookup) is resolved. Castling logic still uses literal column values (0, 2, 3, 5, 7)
-   rather than deriving them from board dimensions or rook positions. This ties castling
-   logic to a standard 8×8 board and will produce incorrect results if the `Ruleset` ever
-   returns a non-standard board width.
-
-4. **En passant is not implemented.**
+3. **En passant is not implemented.**
    `PossibleStandardPawnMoves` accepts the move history list and has a comment placeholder,
    but the en passant logic is entirely absent. `Pawn.hasMoveJustMovedTwoSquares` exists
    but is never called.
 
-5. **`getLeftEmpty` / `getRightEmpty` logic in `PossibleStandardKingMoves` appears incorrect.**
+4. **`getLeftEmpty` / `getRightEmpty` logic in `PossibleStandardKingMoves` appears incorrect.**
    `getLeftEmpty` returns `false` unless every square from column 0 to `rowCount/2` either
    has an unmoved rook or is empty, but the condition uses `||` with `!board.getSquare(...).isEmpty()`,
    meaning any non-rook, non-empty square causes an immediate false return. In practice the
@@ -298,24 +291,24 @@ after updating state from a `GAME_STATUS` message.
    will return false even when castling should be legal. Castling is likely broken in
    practice.
 
-6. **`OnlineGame.isLocalPlayerPiece` will throw `NullPointerException` on an empty square.**
+5. **`OnlineGame.isLocalPlayerPiece` will throw `NullPointerException` on an empty square.**
    The method calls `board.getSquare(...).getPiece().getPlayer().color()` without a null
    guard on `getPiece()`. If the UI requests legal squares for an empty square in an online
    game, this will throw unchecked.
 
-7. **Unit test coverage is partial.**
+6. **Unit test coverage is partial.**
    Tests cover `Observable`, `Game.getNewPiece`, `Move.fromString`/`toProtocolString`, and
    `OnlineGame` server-connection behaviour. Many public classes in `logic/` and `data/` still
    have no tests (e.g. `Board`, `StandardChessRuleset`, individual piece generators). Full
    coverage required by Architecture Law is not yet achieved.
 
-8. **`Board.getRowCount()` and `Board.getColCount()` names are swapped relative to what they return.**
+7. **`Board.getRowCount()` and `Board.getColCount()` names are swapped relative to what they return.**
    `getRowCount()` returns `board[0].length` (the inner array = columns) and `getColCount()`
    returns `board.length` (the outer array = rows). `PossibleStandardKingMoves` double-swaps
    them which cancels out, so behaviour is currently correct by accident. Out of scope for
    this branch — document only.
 
-9. **Default player names are in German.**
+8. **Default player names are in German.**
    `Game.getDefaultPlayerName` returns `"Spieler 0 (Weiß)"` and `"Spieler 1 (Schwarz)"`.
    This is a localisation inconsistency with the rest of the codebase (English identifiers,
    English comments).
