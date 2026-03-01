@@ -84,10 +84,11 @@ For each non-obvious decision: what, why, what was rejected and why.
 
 #### Ordered Implementation Tasks (EXECUTOR ONLY)
 Each Task must:
-- STRICT RULE: NEVER include test writing, or documentation updates in this list. Production code changes only.
+- STRICT RULE: NEVER include test writing, or documentation updates in this list except for JavaDoc. Production code changes only.
 - Each task must declare exact files to touch and leave the project compilable.
 - Leave the project in a compilable state when complete
 - Declare exact files to touch
+- Declare overlap with other tasks, if any, and coordinate on order to avoid merge conflicts and state a execution order and parallel execution plan.
 - Declare acceptance criteria
 - Declare required Javadoc: list every public class/method/interface that is new or changed and needs a Javadoc comment written or updated
 
