@@ -1,17 +1,15 @@
 package io.github.conava.chess.application;
 
 import io.github.conava.chess.core.data.board.Board;
-import io.github.conava.chess.core.logic.game.GameState;
+import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.pieces.Pieces;
-import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
-import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
+import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.game.Game;
+import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.observer.GameObserver;
-import io.github.conava.chess.core.logic.game.OfflineGame;
-import io.github.conava.chess.core.logic.game.OnlineGame;
-import io.github.conava.chess.core.data.pieces.Piece;
+import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.application.network.ServerCommunicationTask;
 import io.github.conava.chess.application.window.MainFrame;
 import io.github.conava.chess.application.components.ColorScheme;
@@ -19,6 +17,7 @@ import io.github.conava.chess.application.components.ColorScheme;
 import io.github.conava.chess.core.data.io.Message;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -28,7 +27,12 @@ import javax.swing.*;
 
 /**
  * Entry point and façade for the Chess application.
- * Manages game lifecycle, GUI initialization, and delegates core logic to {@code OfflineGame} or {@code OnlineGame}.
+ *
+ * <p>This class is the single approved API surface between the UI layer and the {@code core}
+ * module. All game interaction (start, move, query, observe) must go through this class.
+ * Direct instantiation of {@code Game} subclasses by other application code is prohibited
+ * (Architecture Law 2). Game instances are created exclusively via
+ * {@link Game#createGame(boolean, RulesetOptions, String, String, Map, io.github.conava.chess.core.logic.game.ServerConnection)}.
  *
  * <p>Usage examples:</p>
  * <pre>
@@ -92,34 +96,39 @@ public class Chess {
     /**
      * Initializes and starts a new game instance.
      *
-     * @param online             0 for offline play, 1 for online play
+     * <p>Game construction is delegated to
+     * {@link Game#createGame(boolean, RulesetOptions, String, String, Map, io.github.conava.chess.core.logic.game.ServerConnection)}.
+     * No {@code Game} subclass is instantiated directly in this method.
+     *
+     * @param online             {@code true} for online play, {@code false} for offline play
      * @param selectedRuleset    configuration options for the game rules
      * @param playerWhiteName    display name of the white player
      * @param playerBlackName    display name of the black player
-     * @param onlineGameSettings key-value settings for online matchmaking or server connection
+     * @param onlineGameSettings key-value settings for online matchmaking or server connection;
+     *                           may be {@code null} when {@code online} is {@code false}
      *
      * <p>Example for offline:</p>
      * <pre>
-     * RulesetOptions opts = RulesetOptions.standard();
-     * chess.startGame(0, opts, "Alice", "Bob", Collections.emptyMap());
+     * RulesetOptions opts = RulesetOptions.STANDARD;
+     * chess.startGame(false, opts, "Alice", "Bob", null);
      * </pre>
      *
      * <p>Example for online:</p>
      * <pre>
-     * Map<String,String> settings = Map.of("host","game.example.com","port","1234");
-     * chess.startGame(1, opts, "Alice", "Bob", settings);
+     * Map&lt;String,String&gt; settings = Map.of("ip","game.example.com","port","1234");
+     * chess.startGame(true, opts, "Alice", "Bob", settings);
      * </pre>
      */
-    public void startGame(int online,
+    public void startGame(boolean online,
                           RulesetOptions selectedRuleset,
                           String playerWhiteName,
                           String playerBlackName,
                           Map<String, String> onlineGameSettings) {
         if (game == null) {
-            if (online == 1) {
+            if (online) {
                 game = createOnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings);
             } else {
-                game = new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+                game = Game.createGame(false, selectedRuleset, playerWhiteName, playerBlackName, null, null);
             }
             game.startGame();
             LOGGER.log(Level.INFO, "Game started");
@@ -129,24 +138,27 @@ public class Chess {
     }
 
     /**
-     * Establishes a server connection and constructs an {@link OnlineGame}.
+     * Establishes a server connection and constructs a {@link Game} for online play via the
+     * {@link Game#createGame(boolean, RulesetOptions, String, String, Map, io.github.conava.chess.core.logic.game.ServerConnection)}
+     * factory.
      *
      * <p>Networking setup is performed here in the application layer so that the {@code core}
      * module remains I/O-free. The {@link ServerCommunicationTask} is started on a background
      * thread, and this method blocks until the connection is confirmed (or fails). The task
-     * is then passed into {@link OnlineGame} as a {@link io.github.conava.chess.core.logic.game.ServerConnection}.</p>
+     * is then passed into the game factory as a
+     * {@link io.github.conava.chess.core.logic.game.ServerConnection}.</p>
      *
      * @param selectedRuleset    The ruleset to use.
      * @param playerWhiteName    Name of the white player.
      * @param playerBlackName    Name of the black player.
      * @param onlineGameSettings Map containing at minimum {@code "ip"} and {@code "port"} keys.
-     * @return A fully initialised {@link OnlineGame}, or one in {@code SERVER_ERROR} state if
-     *         the connection could not be established.
+     * @return A fully initialised {@link Game} for online play, or one in {@code SERVER_ERROR}
+     *         state if the connection could not be established.
      */
-    private OnlineGame createOnlineGame(RulesetOptions selectedRuleset,
-                                        String playerWhiteName,
-                                        String playerBlackName,
-                                        Map<String, String> onlineGameSettings) {
+    private Game createOnlineGame(RulesetOptions selectedRuleset,
+                                  String playerWhiteName,
+                                  String playerBlackName,
+                                  Map<String, String> onlineGameSettings) {
         String serverIP = onlineGameSettings.get("ip");
         int serverPort = Integer.parseInt(onlineGameSettings.get("port"));
 
@@ -154,7 +166,7 @@ public class Chess {
 
         // Create a temporary holder so that the message handler lambda can reference the game
         // once it is constructed. The array trick allows effective-final capture.
-        OnlineGame[] gameHolder = new OnlineGame[1];
+        Game[] gameHolder = new Game[1];
         Consumer<Message> handler = msg -> gameHolder[0].handleMessage(msg);
 
         ServerCommunicationTask task = new ServerCommunicationTask(serverIP, serverPort,
@@ -171,7 +183,7 @@ public class Chess {
             LOGGER.log(Level.SEVERE, "Thread interrupted while waiting for server connection", e);
         }
 
-        OnlineGame onlineGame = OnlineGame.create(selectedRuleset, playerWhiteName, playerBlackName,
+        Game onlineGame = Game.createGame(true, selectedRuleset, playerWhiteName, playerBlackName,
                 onlineGameSettings, task);
         gameHolder[0] = onlineGame;
 
@@ -187,7 +199,7 @@ public class Chess {
     /**
      * Retrieves the current {@link GameState}.
      *
-     * @return current state of the running game
+     * @return current state of the running game, or {@code null} if no game is active
      *
      * <p>Example:</p>
      * <pre>
@@ -195,13 +207,14 @@ public class Chess {
      * </pre>
      */
     public GameState getState() {
+        if (game == null) return null;
         return game.getState();
     }
 
     /**
      * Retrieves the current {@link Board}.
      *
-     * @return board representation of the game
+     * @return board representation of the game, or {@code null} if no game is active
      *
      * <p>Example:</p>
      * <pre>
@@ -209,6 +222,7 @@ public class Chess {
      * </pre>
      */
     public Board getBoard() {
+        if (game == null) return null;
         return game.getBoard();
     }
 
@@ -216,6 +230,7 @@ public class Chess {
      * Attaches an observer to receive game updates.
      *
      * @param observer implementation of {@link GameObserver}
+     * @throws IllegalStateException if no game is currently active
      *
      * <p>Example:</p>
      * <pre>
@@ -223,6 +238,7 @@ public class Chess {
      * </pre>
      */
     public void addObserver(GameObserver observer) {
+        if (game == null) throw new IllegalStateException("No active game");
         game.addObserver(observer);
     }
 
@@ -230,6 +246,7 @@ public class Chess {
      * Detaches a previously added observer.
      *
      * @param observer the observer to remove
+     * @throws IllegalStateException if no game is currently active
      *
      * <p>Example:</p>
      * <pre>
@@ -237,6 +254,7 @@ public class Chess {
      * </pre>
      */
     public void removeObserver(GameObserver observer) {
+        if (game == null) throw new IllegalStateException("No active game");
         game.removeObserver(observer);
     }
 
@@ -244,7 +262,7 @@ public class Chess {
      * Terminates the current game session and clears state.
      *
      * <p>Calls {@link Game#endGame()} on the active game before nulling the reference.
-     * For an {@link OnlineGame} this closes the server connection and sends a resignation
+     * For an online game this closes the server connection and sends a resignation
      * status message. This method is a no-op when no game is currently active ({@code game == null}).</p>
      *
      * <p>Example:</p>
@@ -262,7 +280,7 @@ public class Chess {
     /**
      * Returns the player whose turn it is.
      *
-     * @return current {@link Player}
+     * @return current {@link Player}, or {@code null} if no game is active
      *
      * <p>Example:</p>
      * <pre>
@@ -270,24 +288,27 @@ public class Chess {
      * </pre>
      */
     public Player getCurrentPlayer() {
+        if (game == null) return null;
         return game.getCurrentPlayer();
     }
 
     /**
      * Returns the white player.
      *
-     * @return white {@link Player}
+     * @return white {@link Player}, or {@code null} if no game is active
      */
     public Player getPlayerWhite() {
+        if (game == null) return null;
         return game.getPlayerWhite();
     }
 
     /**
      * Returns the black player.
      *
-     * @return black {@link Player}
+     * @return black {@link Player}, or {@code null} if no game is active
      */
     public Player getPlayerBlack() {
+        if (game == null) return null;
         return game.getPlayerBlack();
     }
 
@@ -295,14 +316,15 @@ public class Chess {
      * Retrieves the {@link Piece} at a given board position.
      *
      * @param position target {@link Square}
-     * @return piece occupying that square, or {@code null} if empty
+     * @return piece occupying that square, {@code null} if empty, or {@code null} if no game is active
      *
      * <p>Example:</p>
      * <pre>
-     * Piece p = chess.getPieceAt(new Square("e4"));
+     * Piece p = chess.getPieceAt(new Square(1, 4));
      * </pre>
      */
     public Piece getPieceAt(Square position) {
+        if (game == null) return null;
         return game.getPieceAt(position);
     }
 
@@ -310,23 +332,25 @@ public class Chess {
      * Computes all legal target squares for a piece at the given position.
      *
      * @param position start {@link Square} of the piece
-     * @return list of legal {@link Square} destinations
+     * @return list of legal {@link Square} destinations, or an empty list if no game is active
      *
      * <p>Example:</p>
      * <pre>
-     * List<Square> moves = chess.getLegalSquares(new Square("d2"));
+     * List&lt;Square&gt; moves = chess.getLegalSquares(new Square(6, 4));
      * </pre>
      */
     public List<Square> getLegalSquares(Square position) {
+        if (game == null) return Collections.emptyList();
         return game.getLegalSquares(position);
     }
 
     /**
      * Returns the list of moves made so far in algebraic notation.
      *
-     * @return move list as {@link List} of {@link String}
+     * @return move list as {@link List} of {@link String}, or an empty list if no game is active
      */
     public List<String> getMoveList() {
+        if (game == null) return Collections.emptyList();
         return game.getMoveList();
     }
 
@@ -335,14 +359,16 @@ public class Chess {
      *
      * @param start source {@link Square}
      * @param end   destination {@link Square}
-     * @throws IllegalMoveException if the move violates game rules
+     * @throws IllegalMoveException  if the move violates game rules
+     * @throws IllegalStateException if no game is currently active
      *
      * <p>Example:</p>
      * <pre>
-     * chess.movePiece(new Square("e2"), new Square("e4"));
+     * chess.movePiece(new Square(6, 4), new Square(4, 4));
      * </pre>
      */
     public void movePiece(Square start, Square end) throws IllegalMoveException {
+        if (game == null) throw new IllegalStateException("No active game");
         game.movePiece(start, end);
     }
 
@@ -352,21 +378,27 @@ public class Chess {
      * @param start       source {@link Square}
      * @param end         destination {@link Square}
      * @param targetPiece piece type to promote to (e.g., {@link Pieces#QUEEN})
-     * @throws IllegalMoveException if promotion is invalid
+     * @throws IllegalMoveException  if promotion is invalid
+     * @throws IllegalStateException if no game is currently active
      *
      * <p>Example:</p>
      * <pre>
-     * chess.promoteMove(new Square("e7"), new Square("e8"), Pieces.QUEEN);
-     *</pre>
+     * chess.promoteMove(new Square(1, 4), new Square(0, 4), Pieces.QUEEN);
+     * </pre>
      */
     public void promoteMove(Square start, Square end, Pieces targetPiece) throws IllegalMoveException {
+        if (game == null) throw new IllegalStateException("No active game");
         game.promoteMove(start, end, targetPiece);
     }
 
     /**
      * Retrieves the join code for an online game session.
      *
-     * @return join code string, or {@code null} if offline
+     * <p>Delegates to {@link Game#getJoinCode()}, which returns {@code null} for offline
+     * games by default and the actual join code for online games.</p>
+     *
+     * @return join code string if this is an online game, or {@code null} if offline or
+     *         if no game is currently active
      *
      * <p>Example:</p>
      * <pre>
@@ -374,9 +406,6 @@ public class Chess {
      * </pre>
      */
     public String getJoinCode() {
-        if (game instanceof OnlineGame onlineGame) {
-            return onlineGame.getJoinCode();
-        }
-        return null;
+        return game != null ? game.getJoinCode() : null;
     }
 }
