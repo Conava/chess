@@ -37,26 +37,42 @@ class MoveFromStringTest {
     @Test
     void fromString_kingsideCastle_white_correctSquares() {
         Move move = Move.fromString("O-O", WHITE);
-        // fromString uses new Square(col, row) with the literal values 4 and 6.
-        // Square constructor is Square(y, x), so the actual squares are y=4,x=0 and y=6,x=0.
-        assertEquals(new Square(4, 0), move.getStart());
-        assertEquals(new Square(6, 0), move.getEnd());
+        // White kingside: e1 = row 0 (rank 1), col 4 (e-file) → g1 = row 0, col 6 (g-file)
+        // Square(y, x): y = row/rank, x = column/file
+        assertEquals(new Square(0, 4), move.getStart(), "White kingside castle start must be e1 (row=0, col=4)");
+        assertEquals(new Square(0, 6), move.getEnd(), "White kingside castle end must be g1 (row=0, col=6)");
     }
 
     @Test
     void fromString_kingsideCastle_black_correctSquares() {
         Move move = Move.fromString("O-O", BLACK);
-        // For black the row parameter is 7, so squares are y=4,x=7 and y=6,x=7.
-        assertEquals(new Square(4, 7), move.getStart());
-        assertEquals(new Square(6, 7), move.getEnd());
+        // Black kingside: e8 = row 7 (rank 8), col 4 (e-file) → g8 = row 7, col 6 (g-file)
+        // Square(y, x): y = row/rank, x = column/file
+        assertEquals(new Square(7, 4), move.getStart(), "Black kingside castle start must be e8 (row=7, col=4)");
+        assertEquals(new Square(7, 6), move.getEnd(), "Black kingside castle end must be g8 (row=7, col=6)");
     }
 
     @Test
     void fromString_queensideCastle_white_correctSquares() {
         Move move = Move.fromString("O-O-O", WHITE);
-        // White queenside: y=4,x=0 → y=2,x=0
-        assertEquals(new Square(4, 0), move.getStart());
-        assertEquals(new Square(2, 0), move.getEnd());
+        // White queenside: e1 = row 0 (rank 1), col 4 (e-file) → c1 = row 0, col 2 (c-file)
+        // Square(y, x): y = row/rank, x = column/file
+        assertEquals(new Square(0, 4), move.getStart(), "White queenside castle start must be e1 (row=0, col=4)");
+        assertEquals(new Square(0, 2), move.getEnd(), "White queenside castle end must be c1 (row=0, col=2)");
+    }
+
+    // ---- coordinate-verified regular move parsing ----
+
+    @Test
+    void fromString_regularMove_producesCorrectBoardCoordinates() {
+        // e2-e4: e2 = rank 2 = row 1 (y=1), file e = col 4 (x=4)
+        //        e4 = rank 4 = row 3 (y=3), file e = col 4 (x=4)
+        // Square(y, x): y = row/rank, x = column/file
+        Move move = Move.fromString("e2-e4", WHITE);
+        assertEquals(new Square(1, 4), move.getStart(),
+                "e2 must map to Square(y=1, x=4): rank 2 = row index 1, file e = col index 4");
+        assertEquals(new Square(3, 4), move.getEnd(),
+                "e4 must map to Square(y=3, x=4): rank 4 = row index 3, file e = col index 4");
     }
 
     // ---- promotion parsing ----

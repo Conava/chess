@@ -65,17 +65,17 @@ class OnlineGameServerConnectionTest {
         game.connectToServerGame();
     }
 
-    // ---- sendMessage() is called on construction ----
+    // ---- sendMessage() is called on connectToServerGame() ----
 
     @Test
-    void construction_sendsAtLeastOneMessage() {
-        assertFalse(connection.sentMessages.isEmpty(), "OnlineGame must send at least one message to the server on construction");
+    void connectToServerGame_sendsAtLeastOneMessage() {
+        assertFalse(connection.sentMessages.isEmpty(), "OnlineGame must send at least one message to the server when connectToServerGame() is called");
     }
 
     @Test
-    void construction_sendsCreateGameMessage() {
+    void connectToServerGame_sendsCreateGameMessage() {
         boolean hasCREATE_GAME = connection.sentMessages.stream().anyMatch(m -> m.startsWith("CREATE_GAME"));
-        assertTrue(hasCREATE_GAME, "When no joinCode is provided, OnlineGame must send CREATE_GAME to the server");
+        assertTrue(hasCREATE_GAME, "When no joinCode is provided, OnlineGame must send CREATE_GAME to the server when connectToServerGame() is called");
     }
 
     // ---- sendMessage() is called when local player makes a move ----

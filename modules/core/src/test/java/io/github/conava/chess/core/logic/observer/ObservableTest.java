@@ -106,6 +106,7 @@ class ObservableTest {
                 "notifyObservers() must not throw when observers are added concurrently");
 
         writer.join(5_000);
+        assertFalse(writer.isAlive(), "Writer thread must have terminated within the join timeout — possible deadlock");
         assertFalse(writerFailed.get(), "Writer thread must not encounter any exception");
     }
 }
