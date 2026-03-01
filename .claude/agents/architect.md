@@ -101,6 +101,10 @@ Each Task must:
 - List any files in the `docs/` directory that must be created or updated, with a in-depth summary of the content for each.
 - List any changes to the README.md that must be made, with a in-depth summary of the content to add.
 
+#### Execution Notes
+- Note which tasks can be done in parallel and which must be done sequentially and order them.
+- Note any tasks that require special attention to avoid merge conflicts.
+
 #### Open Questions
 Anything requiring human decision before execution starts.
 Format: numbered list. Do not proceed to execution until answered.
