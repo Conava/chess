@@ -142,6 +142,10 @@ facade wraps.
 
 ### `Game` (via its concrete subclasses)
 ```java
+static Game createGame(boolean online, RulesetOptions selectedRuleset,
+                       String playerWhiteName, String playerBlackName,
+                       Map<String, String> onlineGameSettings,
+                       ServerConnection connection)
 void startGame()
 void endGame()
 void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException
@@ -155,6 +159,9 @@ List<String> getMoveList()
 Piece getPieceAt(Square position)
 Board getBoard()
 void setGameState(GameState gameState)
+String getJoinCode()                          // returns null for non-online games
+void connectToServerGame()                    // no-op for non-online games
+void handleMessage(Message message)           // no-op for non-online games
 ```
 
 ### `Observable` (inherited by `Game`)
@@ -183,13 +190,12 @@ boolean isCheck(Board board, Player player, List<Move> moves)
 ### `OnlineGame` (additional public surface)
 ```java
 static OnlineGame create(RulesetOptions, String, String, Map<String,String>, ServerConnection)
-void connectToServerGame()     // must be called after handler is registered and connection confirmed
-void handleMessage(Message message)
 void sendMessageToServer(Message message)
 void backupGameState()
 void restoreGameState()
-String getJoinCode()
 ```
+`connectToServerGame()`, `handleMessage(Message)`, and `getJoinCode()` are overrides of `Game`
+base methods and are callable through `Game` references without casting.
 
 ### Data types used at the boundary
 - `Square(int y, int x)` — coordinate pair; callers construct these to address board cells.

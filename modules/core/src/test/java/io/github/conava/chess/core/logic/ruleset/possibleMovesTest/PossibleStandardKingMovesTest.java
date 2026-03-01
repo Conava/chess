@@ -1,4 +1,4 @@
-package io.github.conava.chess.application.core.logic.ruleset.possibleMovesTest;
+package io.github.conava.chess.core.logic.ruleset.possibleMovesTest;
 
 import io.github.conava.chess.core.data.pieces.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,13 +7,13 @@ import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.player.PlayerColor;
-import io.github.conava.chess.core.logic.ruleset.possibleMoves.PossibleStandardRookMoves;
+import io.github.conava.chess.core.logic.ruleset.possibleMoves.PossibleStandardKingMoves;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PossibleStandardRookMovesTest {
+public class PossibleStandardKingMovesTest {
     @BeforeEach
     public void setUp() {
     }
@@ -29,7 +29,12 @@ public class PossibleStandardRookMovesTest {
                 startBoard[y][x] = new Square(y, x);
             }
         }
-        startBoard[0][1].setPiece(new King(playerW));
+        King kingW = new King(playerW);
+        kingW.setHasMoved();
+        King kingB = new King(playerB);
+        kingB.setHasMoved();
+
+        startBoard[0][1].setPiece(kingW);
         startBoard[0][3].setPiece(new Rook(playerW));
         startBoard[0][5].setPiece(new Bishop(playerW));
         startBoard[0][7].setPiece(new Rook(playerW));
@@ -53,25 +58,18 @@ public class PossibleStandardRookMovesTest {
         startBoard[7][0].setPiece(new Queen(playerB));
         startBoard[7][4].setPiece(new Knight(playerB));
         startBoard[7][5].setPiece(new Rook(playerB));
-        startBoard[7][6].setPiece(new King(playerB));
+        startBoard[7][6].setPiece(kingB);
 
         Board board = new Board(startBoard);
 
         List<Square> possibleSquares;
 
-        PossibleStandardRookMoves movesR1B = new PossibleStandardRookMoves(startBoard[3][0], board);
-        possibleSquares = movesR1B.getPossibleSquares();
+        PossibleStandardKingMoves movesKB = new PossibleStandardKingMoves(startBoard[7][6], board);
+        possibleSquares = movesKB.getPossibleSquares();
 
         assertFalse(possibleSquares.isEmpty());
-        assertTrue(possibleSquares.contains(startBoard[2][0]));
-        assertFalse(possibleSquares.contains(startBoard[1][0]));
-        assertTrue(possibleSquares.contains(startBoard[6][0]));
-        assertFalse(possibleSquares.contains(startBoard[7][0]));
-        assertEquals(7, possibleSquares.size());
-
-        PossibleStandardRookMoves movesR2B = new PossibleStandardRookMoves(startBoard[7][5], board);
-        possibleSquares = movesR2B.getPossibleSquares();
-
-        assertTrue(possibleSquares.isEmpty());
+        assertTrue(possibleSquares.contains(startBoard[7][7]));
+        assertFalse(possibleSquares.contains(startBoard[6][6]));
+        assertEquals(1, possibleSquares.size());
     }
 }

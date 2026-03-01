@@ -100,6 +100,7 @@ These apply to ALL tasks. Never violate without explicit human approval.
 - No test code in `src/main`. No production logic in `src/test`.
 - Every new public class in `core` needs a unit test.
 - CLAUDE.md files are living documents — update them when architecture decisions are made.
+- Javadoc is owned by the executor agent. Docs-keeper never writes or modifies Javadoc.
 
 ## Branch Strategy
 All work happens in feature branches. No agent ever commits to `main` directly.
@@ -119,6 +120,100 @@ All agents that need to verify library APIs MUST use Context7 with two steps:
 1. Call `mcp__context7__resolve-library-id` with `libraryName` and `query` to get the library ID.
 2. Call `mcp__context7__query-docs` with the returned `libraryId` and your `query`.
 Never guess API signatures. Never call `query-docs` without first resolving the library ID.
+
+---
+
+## Project Documentation (`docs/`)
+
+All project documentation beyond code-level Javadoc lives in the `docs/` folder
+at the repo root. The root README.md links into each section. Docs-keeper owns
+this folder and keeps it accurate.
+
+### Folder Structure
+```
+docs/
+├── architecture/
+│   ├── overview.md              # High-level system architecture, module diagram
+│   ├── module-boundaries.md     # Dependency rules, what goes where, what is banned
+│   └── design-patterns.md       # Observer, Strategy, Façade — how they work here
+├── decisions/                   # Architecture Decision Records (MADR format)
+│   ├── NNNN-short-title.md      # One file per decision, numbered sequentially
+│   └── ...
+├── api/
+│   └── chess-facade.md          # Public API reference for the Chess façade
+├── guides/
+│   ├── getting-started.md       # Prerequisites, build, run, first steps
+│   ├── contributing.md          # Conventions, workflow, how to submit changes
+│   └── adding-a-ruleset.md     # How to extend via the Strategy pattern
+└── migration/
+    └── swing-to-javafx.md       # Current migration status, what's done, what's left
+```
+
+### What goes where
+- **architecture/**: Explains HOW the system is built. For developers and AI agents
+  who need to understand the structure before making changes.
+- **decisions/**: Explains WHY choices were made. ADRs capture design decisions,
+  technology choices, and trade-offs. Uses MADR format (see below).
+- **api/**: Reference documentation for public interfaces. What methods exist,
+  what they accept, what they return, what can go wrong.
+- **guides/**: Step-by-step instructions for common tasks. For new developers,
+  users, and AI agents who need to DO something.
+- **migration/**: Temporary section for the Swing→JavaFX migration. Remove
+  when migration is complete.
+
+### ADR Format (MADR-based)
+Each ADR is a file in `docs/decisions/` named `NNNN-short-title.md`:
+```markdown
+# NNNN: Short Title
+
+Status: proposed | accepted | deprecated | superseded by NNNN
+Date: YYYY-MM-DD
+Deciders: [who was involved]
+
+## Context and Problem Statement
+What is the issue? What forces are at play?
+
+## Considered Options
+1. Option A
+2. Option B
+3. Option C
+
+## Decision Outcome
+Chosen option: "Option B", because [justification].
+
+### Consequences
+- Good: [positive outcome]
+- Bad: [negative outcome or trade-off]
+- Neutral: [side effect]
+
+## Pros and Cons of the Options
+
+### Option A
+- Good: ...
+- Bad: ...
+
+### Option B
+- Good: ...
+- Bad: ...
+```
+
+ADR statuses:
+- **proposed**: Under discussion, not yet decided.
+- **accepted**: Decision is active and applies.
+- **deprecated**: Decision is no longer relevant (e.g., feature removed).
+- **superseded by NNNN**: Replaced by a newer decision. Link to replacement.
+
+ADRs are append-only: never delete or rewrite an accepted ADR. To change a
+decision, create a new ADR that supersedes the old one, and update the old
+ADR's status to "superseded by NNNN".
+
+### Documentation Principles
+- Write for three audiences: new developers, end users, AI agents.
+- Present tense only. Describe what IS, not what WAS.
+- Keep each document focused on one topic. Link instead of duplicating.
+- Every document must be reachable from the root README.md.
+- Only create documents that are relevant to this project. Not every template
+  section needs to exist — create it when there's content worth documenting.
 
 ---
 
@@ -159,14 +254,11 @@ For each task (or parallel batch):
 #### Phase 3 — Quality (auto, parallel)
 Invoke `test-writer` and `docs-keeper` in parallel:
 - test-writer: "Implement the Testing Requirements section of [plan path] on branch [branch]."
-- docs-keeper: "Implement the Documentation & Javadoc Requirements section of [plan path] on branch [branch]."
+- docs-keeper: "Implement the Documentation Updates & ADR section of [plan path] on branch [branch]. Ensure everything in /docs is accurate and up-to-date."
 
 Wait for both. If test-writer reports implementation bugs:
 - Invoke `executor` to fix each bug (one per invocation).
 - Re-invoke `test-writer` after fixes.
-
-If test-writer reports logic errors or executor can't fix it the first time:
-- Invoke `architect` to assess the bug and contine the pipeline from Phase 1 again.
 
 #### Phase 4 — Review (auto)
 Invoke `reviewer`: "Review branch [branch] against main."

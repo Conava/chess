@@ -1,4 +1,4 @@
-package io.github.conava.chess.application.core.logic.ruleset;
+package io.github.conava.chess.core.logic.ruleset;
 
 import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import org.junit.jupiter.api.BeforeEach;

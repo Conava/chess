@@ -1,5 +1,6 @@
 package io.github.conava.chess.core.logic.game;
 
+import io.github.conava.chess.core.data.io.Message;
 import io.github.conava.chess.core.data.pieces.Bishop;
 import io.github.conava.chess.core.data.pieces.King;
 import io.github.conava.chess.core.data.pieces.Knight;
@@ -21,6 +22,7 @@ import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardCh
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -67,6 +69,91 @@ public abstract class Game extends Observable {
         };
     }
 
+    /**
+     * Static factory method that creates either an {@link OfflineGame} or an {@link OnlineGame}
+     * depending on the {@code online} flag. This is the only approved way to construct a game
+     * instance from outside the {@code core} module; direct subclass instantiation by callers
+     * in {@code application} or {@code server} is prohibited (Architecture Law 2).
+     *
+     * <p>When {@code online} is {@code false}, the {@code onlineGameSettings} and
+     * {@code connection} parameters are ignored and may be {@code null}.
+     *
+     * <p>When {@code online} is {@code true}, callers must invoke
+     * {@link #connectToServerGame()} on the returned instance after registering a message
+     * handler — see {@link OnlineGame#create} for the two-phase construction contract.
+     *
+     * @param online               {@code true} to create an online game, {@code false} for offline.
+     * @param selectedRuleset      The ruleset to use for this game.
+     * @param playerWhiteName      The name of the white player.
+     * @param playerBlackName      The name of the black player.
+     * @param onlineGameSettings   Key-value settings for online games (e.g. join code).
+     *                             Ignored when {@code online} is {@code false}.
+     *                             Must not be {@code null} when {@code online} is {@code true}.
+     * @param connection           The {@link ServerConnection} for online communication.
+     *                             Ignored when {@code online} is {@code false}.
+     *                             Must not be {@code null} when {@code online} is {@code true}.
+     * @return A new {@link Game} instance of the appropriate subtype.
+     * @throws IllegalArgumentException if {@code online} is {@code true} and either
+     *                                  {@code onlineGameSettings} or {@code connection} is {@code null}.
+     */
+    public static Game createGame(boolean online,
+                                  RulesetOptions selectedRuleset,
+                                  String playerWhiteName,
+                                  String playerBlackName,
+                                  Map<String, String> onlineGameSettings,
+                                  ServerConnection connection) {
+        if (online) {
+            if (onlineGameSettings == null) {
+                throw new IllegalArgumentException("onlineGameSettings must not be null for an online game");
+            }
+            if (connection == null) {
+                throw new IllegalArgumentException("connection must not be null for an online game");
+            }
+            return OnlineGame.create(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings, connection);
+        } else {
+            return new OfflineGame(selectedRuleset, playerWhiteName, playerBlackName);
+        }
+    }
+
+    /**
+     * Returns the join code for this game session.
+     *
+     * <p>The default implementation returns {@code null}, indicating that this game has no
+     * server-assigned join code. {@link OnlineGame} overrides this method to return the
+     * actual join code received from the server.
+     *
+     * @return The join code string, or {@code null} if this is not an online game.
+     */
+    public String getJoinCode() {
+        return null;
+    }
+
+    /**
+     * Sends the initial handshake to the game server, establishing participation in the game
+     * session (either creating a new game or joining an existing one via join code).
+     *
+     * <p>The default implementation is a no-op for game types that do not require server
+     * communication (e.g. {@link OfflineGame}). {@link OnlineGame} overrides this method
+     * with the real two-phase connection logic. Callers must invoke this method after
+     * registering a message handler and confirming that the connection is live.
+     */
+    public void connectToServerGame() {
+        // No-op for non-online games.
+    }
+
+    /**
+     * Dispatches an incoming server message to the appropriate handler within this game instance.
+     *
+     * <p>The default implementation is a no-op for game types that do not communicate with a
+     * server (e.g. {@link OfflineGame}). {@link OnlineGame} overrides this method to process
+     * {@code JOIN_CODE}, {@code MOVE}, {@code GAME_STATUS}, {@code SUCCESS}, {@code ERROR},
+     * and {@code FAILURE} messages.
+     *
+     * @param message The {@link Message} received from the server.
+     */
+    public void handleMessage(Message message) {
+        // No-op for non-online games.
+    }
 
     /**
      * Moves a piece from one square to another.

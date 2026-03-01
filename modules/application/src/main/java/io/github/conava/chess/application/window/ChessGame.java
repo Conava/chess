@@ -1,7 +1,6 @@
 package io.github.conava.chess.application.window;
 
 import io.github.conava.chess.application.components.*;
-import io.github.conava.chess.core.data.pieces.Pawn;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.data.pieces.Pieces;
@@ -10,7 +9,6 @@ import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.logic.observer.GameObserver;
-import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.application.tasks.ExecuteMove;
 import io.github.conava.chess.application.Chess;
 
@@ -49,13 +47,19 @@ public class ChessGame extends JPanel implements GameObserver {
     /**
      * Constructor for ChessGame.
      * Initializes the game window with the given mainFrame, chess game, colorScheme, and online status.
+     * Delegates game initialization to {@link #initializeGame} which calls through the {@link Chess}
+     * facade only -- no core internals are accessed directly.
      *
-     * @param mainFrame   The main frame of the application
-     * @param chess       The chess game
-     * @param colorScheme The color scheme
-     * @param online      The online status of the game. 0 for offline, 1 for online.
+     * @param mainFrame        The main frame of the application
+     * @param chess            The chess facade used for all game interactions
+     * @param colorScheme      The color scheme for the UI
+     * @param online           {@code true} for online play, {@code false} for offline play
+     * @param rulesetOptions   The ruleset to use for the game
+     * @param playerWhiteName  The name of the white player
+     * @param playerBlackName  The name of the black player
+     * @param onlineGameOptions Additional settings required for online games; may be {@code null} for offline play
      */
-    public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, int online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameOptions) {
+    public ChessGame(MainFrame mainFrame, Chess chess, ColorScheme colorScheme, boolean online, RulesetOptions rulesetOptions, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameOptions) {
         this.mainFrame = mainFrame;
         this.chess = chess;
         this.colorScheme = colorScheme;
@@ -142,9 +146,9 @@ public class ChessGame extends JPanel implements GameObserver {
     /**
      * Initializes the game.
      *
-     * @param online The online status of the game. 0 for offline, 1 for online.
+     * @param online {@code true} for online play, {@code false} for offline play
      */
-    private void initializeGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameOptions) {
+    private void initializeGame(boolean online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameOptions) {
         chess.startGame(online, selectedRuleset, playerWhiteName, playerBlackName, onlineGameOptions);
         LOGGER.log(Level.INFO, "Game started");
         chess.addObserver(this);
@@ -312,13 +316,22 @@ public class ChessGame extends JPanel implements GameObserver {
     }
 
     /**
-     * Handles a click on a clickedSquare.
+     * Handles a click on a board square.
      *
-     * @param clickedSquare The clickedSquare that was clicked
+     * <p>If the clicked square contains a piece belonging to the current player, that
+     * square becomes selected and its legal moves are highlighted. If the clicked
+     * square is a legal destination for the currently selected piece, the move is
+     * submitted via {@link ExecuteMove}. Pawn promotion is detected by checking
+     * {@code piece.getType() == Pieces.PAWN} against the public API; no core-internal
+     * classes ({@code Pawn}, {@code Move}) are used. The local board is never mutated
+     * directly -- all state updates arrive through the {@link io.github.conava.chess.core.logic.observer.GameObserver}
+     * callback once the facade has processed the move.
+     *
+     * @param clickedSquare The square that was clicked
      */
     public void clickedOn(Square clickedSquare) {
         Optional<Piece> clickedPieceOptional = Optional.ofNullable(chess.getPieceAt(clickedSquare));
-        clickedPieceOptional.ifPresent(piece -> LOGGER.info("Piece on clickedSquare: " + piece.getClass() + " Player:" + piece.getPlayer() + " Color: " + piece.getPlayer().color()));
+        clickedPieceOptional.ifPresent(piece -> LOGGER.info("Piece on clickedSquare: " + piece.getType() + " Player:" + piece.getPlayer().name()));
 
         if (clickedPieceOptional.isPresent() && clickedPieceOptional.get().getPlayer() == chess.getCurrentPlayer()) {
             // Update selectedSquare and legalSquaresForSelectedPiece only if the clicked square has a piece
@@ -328,15 +341,15 @@ public class ChessGame extends JPanel implements GameObserver {
         }
         if (selectedSquare != null && legalSquaresForSelectedPiece.contains(clickedSquare)) {
             boardPanel.switchIconToSelected(selectedSquare, clickedSquare);
-            localBoard.executeMove(new Move(selectedSquare, clickedSquare));
             boardPanel.unsetLegalSquares();
 
-            if (chess.getPieceAt(selectedSquare) instanceof Pawn && (clickedSquare.getY() == 0 || clickedSquare.getY() == 7)) {
+            Piece piece = chess.getPieceAt(selectedSquare);
+            if (piece != null && piece.getType() == Pieces.PAWN && (clickedSquare.getY() == 0 || clickedSquare.getY() == 7)) {
                 PromotionWindow promotionWindow = new PromotionWindow(mainFrame, colorScheme, chess.getCurrentPlayer().color());
                 Pieces selectedPiece = promotionWindow.getSelectedPiece();
-                new ExecuteMove(chess, this, selectedSquare, clickedSquare, selectedPiece).execute();
+                new ExecuteMove(chess, selectedSquare, clickedSquare, selectedPiece).execute();
             } else {
-                new ExecuteMove(chess, this, selectedSquare, clickedSquare, null).execute();
+                new ExecuteMove(chess, selectedSquare, clickedSquare, null).execute();
             }
         }
     }
