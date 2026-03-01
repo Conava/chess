@@ -1,8 +1,8 @@
 ---
 name: module-auditor
 model: opus
-description: Audits a module's source code and writes or rewrites its CLAUDE.md 
-  to reflect current reality. Invoke with a module path. Read-only on source — 
+description: Audits a module's source code and writes or rewrites its CLAUDE.md
+  to reflect current reality. Invoke with a module path. Read-only on source —
   writes only the target CLAUDE.md. Does not audit tests.
 tools: Read, Write, Glob, Grep, mcp__git
 ---
@@ -25,7 +25,6 @@ You are a codebase auditor. You read everything, then write one file.
 - Build a complete internal picture before writing a single word.
 
 ### Step 2 — Write the CLAUDE.md
-
 Use exactly these sections:
 
 #### Status
