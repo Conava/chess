@@ -94,20 +94,6 @@ public class GameInstance implements GameObserver {
     }
 
     /**
-     * Compatibility overload for callers that do not yet supply a player name.
-     *
-     * <p>Delegates to {@link #connectPlayer(ClientHandler, String)} with a {@code null}
-     * player name, which causes default names ("Player 1" / "Player 2") to be used.
-     * This overload will be removed once all callers (specifically {@link ClientHandler})
-     * are updated to supply a name as part of Task 5.</p>
-     *
-     * @param clientHandler The {@link ClientHandler} for the connecting player; must not be {@code null}.
-     */
-    public synchronized void connectPlayer(ClientHandler clientHandler) {
-        connectPlayer(clientHandler, null);
-    }
-
-    /**
      * Creates the {@link Game} via the factory, registers this instance as observer, and
      * notifies both players that the game is now {@code RUNNING}.
      *
