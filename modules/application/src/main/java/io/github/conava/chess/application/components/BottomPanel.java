@@ -83,10 +83,6 @@ public class BottomPanel extends ControlPanel {
         middlePanel.add(roundedWhitePanel);
         middlePanel.add(rightPlaceholder, BorderLayout.EAST);
 
-        middlePanel.add(leftPlaceholder, BorderLayout.WEST);
-        middlePanel.add(roundedWhitePanel);
-        middlePanel.add(rightPlaceholder, BorderLayout.EAST);
-
         //Add the content to the leftPanel3
         freeWhiteLabel = new CustomLabel("", colorScheme);
         freeWhiteLabel.setFont(colorScheme.getFont());

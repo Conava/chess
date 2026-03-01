@@ -35,8 +35,9 @@ public class PromotionWindow extends JDialog {
         titleLabel.setFont(colorScheme.getFont().deriveFont(colorScheme.getFont().getSize2D() + 4));
         titleLabel.setForeground(colorScheme.getFontColor());
         titleLabel.setHorizontalAlignment(JLabel.CENTER);
-        titleLabel.setBorder(new MatteBorder(0, 0, 1, 0, Color.GRAY));
-        titleLabel.setBorder(new EmptyBorder(0, 0, 20, 0)); // Add 20px space below the title label
+        titleLabel.setBorder(BorderFactory.createCompoundBorder(
+                new MatteBorder(0, 0, 1, 0, Color.GRAY),
+                new EmptyBorder(0, 0, 20, 0)));
         containerPanel.add(titleLabel, BorderLayout.NORTH);
 
         JPanel buttonPanel = new ControlPanel();
