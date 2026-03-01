@@ -17,26 +17,74 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The Server class is responsible for managing client connections and game instances.
- * It uses a semaphore to limit the number of concurrent games and an executor service
- * to handle client connections in separate threads.
+ * The Server class manages all client connections and game instances for the chess server.
+ *
+ * <p>This class is instance-based. A single {@code Server} instance owns all mutable
+ * server state: the game semaphore, the active-games map, the connected-clients set, and
+ * the game-ID counter. The static {@code main} method creates one instance and delegates
+ * to {@link #start(int)} to begin accepting connections.
+ *
+ * <p>Lifecycle:
+ * <ol>
+ *   <li>{@code main} parses the port and creates a {@code Server}.</li>
+ *   <li>{@link #start(int)} opens the server socket, spawns the console-listener daemon
+ *       thread, and enters the accept loop.</li>
+ *   <li>Each accepted socket is handed to a {@link ClientHandler} that receives a
+ *       reference to this {@code Server} instance so it can call
+ *       {@link #addClientHandler}/{@link #removeClientHandler} and access shared state
+ *       via the getter methods.</li>
+ * </ol>
  */
 public class Server {
+
     private static final int MAX_GAMES = 40;
-    private static final Semaphore gameSemaphore = new Semaphore(MAX_GAMES);
-    private static final Map<Integer, GameInstance> gamesList = new ConcurrentHashMap<>();
-    private static final Set<ClientHandler> connectionsList = new CopyOnWriteArraySet<>();
-    private static final AtomicInteger gameIdCounter = new AtomicInteger(0);
-    private static volatile boolean running = true;
+    private static final int DEFAULT_PORT = 54321;
     private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 
+    private final Semaphore gameSemaphore;
+    private final Map<Integer, GameInstance> gamesList;
+    private final Set<ClientHandler> connectionsList;
+    private final AtomicInteger gameIdCounter;
+    private volatile boolean running;
+
     /**
-     * The main method starts the server and listens for client connections.
+     * Constructs a new {@code Server} instance and initialises all instance fields.
      *
-     * @param args Command line arguments, expects a single argument for the port number.
+     * <p>After construction the server is not yet listening; call {@link #start(int)} to
+     * open the server socket and begin accepting client connections.
+     */
+    public Server() {
+        this.gameSemaphore = new Semaphore(MAX_GAMES);
+        this.gamesList = new ConcurrentHashMap<>();
+        this.connectionsList = new CopyOnWriteArraySet<>();
+        this.gameIdCounter = new AtomicInteger(0);
+        this.running = true;
+    }
+
+    /**
+     * Entry point for the chess server process.
+     *
+     * <p>Parses an optional port argument, creates a {@code Server} instance, and calls
+     * {@link #start(int)}.
+     *
+     * @param args optional single element containing the port number as a decimal string;
+     *             if absent or invalid, the default port {@value #DEFAULT_PORT} is used
      */
     public static void main(String[] args) {
         int port = getPort(args);
+        new Server().start(port);
+    }
+
+    /**
+     * Opens the server socket on the given port and begins accepting client connections.
+     *
+     * <p>This method blocks until the server is stopped (via the {@code stop} console
+     * command or an unrecoverable {@link IOException}). Before entering the accept loop
+     * a daemon thread is started to listen for console commands ({@code stop}, {@code stats}).
+     *
+     * @param port TCP port to listen on; must be in the range 1&ndash;65535
+     */
+    public void start(int port) {
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -51,30 +99,52 @@ public class Server {
     }
 
     /**
-     * Retrieves the port number from the command line arguments.
+     * Parses and validates a port number from the command-line arguments.
      *
-     * @param args Command line arguments.
-     * @return The port number.
+     * <p>If no arguments are supplied, the argument is non-numeric, negative, or greater
+     * than 65535, a warning is logged and the default port {@value #DEFAULT_PORT} is
+     * returned.
+     *
+     * @param args command-line arguments as passed to {@code main}
+     * @return a valid TCP port number in the range 1&ndash;65535
      */
     private static int getPort(String[] args) {
         if (args.length != 1) {
-            LOGGER.info("Starting server on default port 54321");
-            return 54321;
-        } else {
+            LOGGER.info("Starting server on default port " + DEFAULT_PORT);
+            return DEFAULT_PORT;
+        }
+        try {
             int port = Integer.parseInt(args[0]);
+            if (port < 1 || port > 65535) {
+                LOGGER.warning("Port " + port + " is out of range (1-65535); using default port " + DEFAULT_PORT);
+                return DEFAULT_PORT;
+            }
             LOGGER.info("Starting server on port " + port);
             return port;
+        } catch (NumberFormatException e) {
+            LOGGER.warning("Invalid port argument '" + args[0] + "'; using default port " + DEFAULT_PORT);
+            return DEFAULT_PORT;
         }
     }
 
     /**
-     * Starts a thread to listen for console commands.
+     * Starts a daemon thread that reads console commands from {@code System.in}.
      *
-     * @param executorService The executor service to manage threads.
-     * @param serverSocket The server socket.
+     * <p>Recognised commands:
+     * <ul>
+     *   <li>{@code stop} &mdash; shuts down the server gracefully.</li>
+     *   <li>{@code stats} &mdash; prints current connection and game counts.</li>
+     * </ul>
+     *
+     * <p>The thread is set as a daemon so that it does not prevent the JVM from exiting
+     * once all non-daemon threads (i.e., the accept loop and client handlers) have
+     * terminated.
+     *
+     * @param executorService the executor used to shut down client-handler threads
+     * @param serverSocket    the open server socket (closed on {@code stop})
      */
-    private static void startConsoleCommandListener(ExecutorService executorService, ServerSocket serverSocket) {
-        new Thread(() -> {
+    private void startConsoleCommandListener(ExecutorService executorService, ServerSocket serverSocket) {
+        Thread thread = new Thread(() -> {
             Scanner scanner = new Scanner(System.in);
             while (running) {
                 String command = scanner.nextLine().trim();
@@ -84,20 +154,23 @@ public class Server {
                     printServerStatus();
                 }
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
 
     /**
-     * Accepts client connections and assigns them to a new ClientHandler.
+     * Enters the accept loop and dispatches each accepted connection to a new
+     * {@link ClientHandler} submitted to the given executor.
      *
-     * @param executorService The executor service to manage threads.
-     * @param serverSocket The server socket.
+     * @param executorService the thread pool used to run each {@link ClientHandler}
+     * @param serverSocket    the server socket to accept connections from
      */
-    private static void acceptClientConnections(ExecutorService executorService, ServerSocket serverSocket) {
+    private void acceptClientConnections(ExecutorService executorService, ServerSocket serverSocket) {
         while (running) {
             try {
                 Socket clientSocket = serverSocket.accept();
-                executorService.execute(new ClientHandler(clientSocket, gamesList, gameSemaphore, gameIdCounter));
+                executorService.execute(new ClientHandler(clientSocket, this));
             } catch (IOException e) {
                 if (running) {
                     LOGGER.log(Level.SEVERE, "Error accepting client connection", e);
@@ -107,9 +180,10 @@ public class Server {
     }
 
     /**
-     * Prints the current status information of the server.
+     * Prints the current server status (running flag, total games, active connections)
+     * to standard output.
      */
-    private static void printServerStatus() {
+    private void printServerStatus() {
         System.out.println("Running: " + running);
         System.out.println("Total Games: " + gamesList.size());
         System.out.println("Active Connections: " + connectionsList.size());
@@ -123,12 +197,13 @@ public class Server {
     }
 
     /**
-     * Stops the server and releases all resources.
+     * Stops the server: notifies all connected clients, closes the server socket, and
+     * shuts down the executor service.
      *
-     * @param executorService The executor service to manage threads.
-     * @param serverSocket The server socket.
+     * @param executorService the executor managing client-handler threads
+     * @param serverSocket    the server socket to close
      */
-    private static void stopServer(ExecutorService executorService, ServerSocket serverSocket) {
+    private void stopServer(ExecutorService executorService, ServerSocket serverSocket) {
         running = false;
         LOGGER.info("Stopping server...");
         for (ClientHandler clientHandler : connectionsList) {
@@ -145,20 +220,63 @@ public class Server {
     }
 
     /**
-     * Adds a client handler to the list of active connections.
+     * Registers a {@link ClientHandler} as an active connection.
      *
-     * @param clientHandler The client handler to add.
+     * <p>Called by {@link ClientHandler#run()} immediately after the client socket is
+     * accepted and I/O streams are ready.
+     *
+     * @param clientHandler the handler to register; must not be {@code null}
      */
-    public static void addClientHandler(ClientHandler clientHandler) {
+    public void addClientHandler(ClientHandler clientHandler) {
         connectionsList.add(clientHandler);
     }
 
     /**
-     * Removes a client handler from the list of active connections.
+     * Unregisters a {@link ClientHandler} from the active-connections set.
      *
-     * @param clientHandler The client handler to remove.
+     * <p>Called by {@link ClientHandler} during cleanup when the client disconnects.
+     *
+     * @param clientHandler the handler to remove; no-op if not present
      */
-    public static void removeClientHandler(ClientHandler clientHandler) {
+    public void removeClientHandler(ClientHandler clientHandler) {
         connectionsList.remove(clientHandler);
+    }
+
+    /**
+     * Returns the active-games map shared across all {@link ClientHandler} instances.
+     *
+     * <p>Keys are game IDs; values are the corresponding {@link GameInstance} objects.
+     * The returned map is a {@link ConcurrentHashMap} and is safe to read and write from
+     * multiple threads.
+     *
+     * @return the live map of game ID to {@link GameInstance}
+     */
+    public Map<Integer, GameInstance> getGamesList() {
+        return gamesList;
+    }
+
+    /**
+     * Returns the {@link Semaphore} that limits the number of concurrent games.
+     *
+     * <p>The semaphore is initialised with {@value #MAX_GAMES} permits. A permit is
+     * acquired in {@link ClientHandler#createGame(io.github.conava.chess.core.data.io.Message)}
+     * and released in {@link ClientHandler#releaseGameSlot()}.
+     *
+     * @return the game-slot semaphore
+     */
+    public Semaphore getGameSemaphore() {
+        return gameSemaphore;
+    }
+
+    /**
+     * Returns the {@link AtomicInteger} used to generate unique game IDs.
+     *
+     * <p>Each call to {@link ClientHandler#createGame(io.github.conava.chess.core.data.io.Message)}
+     * increments this counter to obtain a unique ID for the new {@link GameInstance}.
+     *
+     * @return the game-ID counter
+     */
+    public AtomicInteger getGameIdCounter() {
+        return gameIdCounter;
     }
 }

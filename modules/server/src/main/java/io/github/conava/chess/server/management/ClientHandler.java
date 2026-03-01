@@ -11,9 +11,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,9 +21,7 @@ import java.util.logging.Logger;
 public class ClientHandler implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
     private final Socket clientSocket;
-    private final Semaphore gameSemaphore;
-    private final Map<Integer, GameInstance> gamesList;
-    private final AtomicInteger gameIdCounter;
+    private final Server server;
     private PrintWriter out;
     private GameInstance gameInstance;
 
@@ -34,15 +29,13 @@ public class ClientHandler implements Runnable {
      * Constructs a ClientHandler instance.
      *
      * @param clientSocket The socket connected to the client.
-     * @param gamesList The list of active game instances.
-     * @param gameSemaphore The semaphore to control game creation.
-     * @param gameIdCounter The counter for generating unique game IDs.
+     * @param server       The {@link Server} instance that owns the shared state (games list,
+     *                     semaphore, ID counter) and provides
+     *                     {@link Server#addClientHandler}/{@link Server#removeClientHandler}.
      */
-    public ClientHandler(Socket clientSocket, Map<Integer, GameInstance> gamesList, Semaphore gameSemaphore, AtomicInteger gameIdCounter) {
+    public ClientHandler(Socket clientSocket, Server server) {
         this.clientSocket = clientSocket;
-        this.gameSemaphore = gameSemaphore;
-        this.gamesList = gamesList;
-        this.gameIdCounter = gameIdCounter;
+        this.server = server;
     }
 
     /**
@@ -51,7 +44,7 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         LOGGER.info("Client connected: " + clientSocket.getInetAddress());
-        Server.addClientHandler(this);
+        server.addClientHandler(this);
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
             processClientMessages(in);
@@ -120,12 +113,12 @@ public class ClientHandler implements Runnable {
      * @param message The message containing game creation details.
      */
     private void createGame(Message message) {
-        if (gameSemaphore.tryAcquire()) {
-            int gameId = gameIdCounter.incrementAndGet();
+        if (server.getGameSemaphore().tryAcquire()) {
+            int gameId = server.getGameIdCounter().incrementAndGet();
             RulesetOptions ruleset = RulesetOptions.valueOf(message.getParameterValue("ruleset"));
             gameInstance = new GameInstance(gameId, ruleset);
             gameInstance.connectPlayer(this);
-            gamesList.put(gameId, gameInstance);
+            server.getGamesList().put(gameId, gameInstance);
             sendMessage(new Message(MessageType.JOIN_CODE, "joinCode=" + gameId));
         } else {
             sendMessage(new Message(MessageType.ERROR, "Failed to create game"));
@@ -139,7 +132,7 @@ public class ClientHandler implements Runnable {
      */
     private void joinGame(Message message) {
         int gameId = Integer.parseInt(message.content());
-        GameInstance gameInstance = gamesList.get(gameId);
+        GameInstance gameInstance = server.getGamesList().get(gameId);
         if (gameInstance != null) {
             gameInstance.connectPlayer(this);
         } else {
@@ -152,7 +145,7 @@ public class ClientHandler implements Runnable {
      */
     private void cleanup() {
         LOGGER.log(Level.INFO, "Client disconnected: " + clientSocket.getInetAddress());
-        Server.removeClientHandler(this);
+        server.removeClientHandler(this);
         releaseGameSlot();
     }
 
@@ -162,8 +155,8 @@ public class ClientHandler implements Runnable {
     public void releaseGameSlot() {
         if (gameInstance != null) {
             Integer gameId = gameInstance.getGameId();
-            gamesList.remove(gameId);
-            gameSemaphore.release();
+            server.getGamesList().remove(gameId);
+            server.getGameSemaphore().release();
         }
     }
 }

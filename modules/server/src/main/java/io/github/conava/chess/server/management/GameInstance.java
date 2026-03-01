@@ -3,8 +3,8 @@ package io.github.conava.chess.server.management;
 import io.github.conava.chess.core.data.io.Message;
 import io.github.conava.chess.core.data.io.MessageType;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
+import io.github.conava.chess.core.logic.game.Game;
 import io.github.conava.chess.core.logic.game.GameState;
-import io.github.conava.chess.core.logic.game.ServerGame;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 
@@ -18,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class GameInstance {
     private static final Logger LOGGER = Logger.getLogger(GameInstance.class.getName());
-    private final ServerGame game;
+    private final Game game;
     private final int gameId;
     private ClientHandler whitePlayerHandler;
     private ClientHandler blackPlayerHandler;
@@ -31,7 +31,7 @@ public class GameInstance {
      */
     public GameInstance(int gameId, RulesetOptions ruleset) {
         this.gameId = gameId;
-        this.game = new ServerGame(ruleset);
+        this.game = Game.createServerGame(ruleset, "Player 1", "Player 2");
         this.game.setGameState(GameState.WAITING_FOR_PLAYER);
     }
 
