@@ -52,7 +52,10 @@ The server module is a standalone executable, not a library consumed by other mo
 - `void start(int port)` — opens server socket and blocks until stopped.
 - `void addClientHandler(ClientHandler)` — registers a connection.
 - `void removeClientHandler(ClientHandler)` — unregisters a connection.
-- `Map<Integer, GameInstance> getGamesList()` — returns the live games map.
+- `void addGame(int gameId, GameInstance)` — adds a game to the live games map.
+- `void removeGame(int gameId)` — removes a game from the live games map.
+- `GameInstance getGame(int gameId)` — returns a game by ID, or null if not present.
+- `Map<Integer, GameInstance> getGamesList()` — returns an unmodifiable view of the live games map; mutations must go through `addGame` / `removeGame`.
 - `Semaphore getGameSemaphore()` — returns the concurrency semaphore.
 - `AtomicInteger getGameIdCounter()` — returns the game ID counter.
 - `static void main(String[])` — entry point; parses optional port argument.
@@ -127,3 +130,7 @@ COMPLIANT
 7. **`connectionsList` drift under error conditions.** `ClientHandler` registers itself in `run()` and deregisters in `cleanup()`. If `run()` throws before reaching `cleanup()`, the handler stays in the set indefinitely.
 
 8. **Move relay sends the client-supplied string, not a normalized form.** After `game.movePiece()` succeeds, the raw move string from the incoming message is echoed to both players. If the client sends a non-canonical but parseable format, both players receive that non-canonical form.
+
+9. **Dead code — `GameInstance.connectPlayer(ClientHandler)` one-arg overload** (GameInstance.java ~line 106) has zero callers. Introduced as a temporary compatibility shim; should be removed in a follow-up.
+
+10. **Missing unit tests — `Server.getPort()` port validation and daemon-thread behaviour** are not covered by unit tests. `getPort()` is private static; a refactor to extract `parsePort(String[])` as package-private would make it testable.
