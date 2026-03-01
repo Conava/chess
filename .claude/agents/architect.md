@@ -105,5 +105,6 @@ Each Task must:
 Anything requiring human decision before execution starts.
 Format: numbered list. Do not proceed to execution until answered.
 State the background of every question, explain the terms and give an example.
-Discuss the pros and cons of every decision and provide a recommendation based on best practices and the specific context of this project.
+State the options available for each question, with pros and cons for each 
+and provide a recommendation based on best practices and the specific context of this project.
 Redo the relevant planning steps when the questions are answered and change the plan accordingly.
