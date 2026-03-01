@@ -95,9 +95,11 @@ Each Task must:
 - List every behavior that must be covered by a test.
 - Provide a suggested test method name and what it should assert.
 
-#### Documentation & Javadoc Requirements (DOCS-KEEPER ONLY)
-- List every public class/method/interface that needs a Javadoc comment.
+#### Documentation & ADRs (DOCS-KEEPER ONLY)
 - List any architectural updates, Known Debt additions, or CLAUDE.md updates required.
+- List any new ADRs that must be created, with a in-depth summary of each.
+- List any files in the `docs/` directory that must be created or updated, with a in-depth summary of the content for each.
+- List any changes to the README.md that must be made, with a in-depth summary of the content to add.
 
 #### Open Questions
 Anything requiring human decision before execution starts.
