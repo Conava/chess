@@ -116,6 +116,29 @@ public abstract class Game extends Observable {
     }
 
     /**
+     * Static factory method that creates a server-side game instance with the given ruleset
+     * and player names. This is the only approved way for the {@code server} module to
+     * construct a game; direct instantiation of {@link ServerGame} from outside the
+     * {@code core} module is prohibited by Architecture Law 2.
+     *
+     * <p>The returned game is in an uninitialised state. The caller must invoke
+     * {@link #startGame()} to transition the game to {@link GameState#RUNNING} before
+     * accepting moves.
+     *
+     * @param selectedRuleset  The ruleset to use for this game; must not be {@code null}.
+     * @param playerWhiteName  Display name for the white player. A blank string causes the
+     *                         {@link Game} superclass to substitute a default name.
+     * @param playerBlackName  Display name for the black player. A blank string causes the
+     *                         {@link Game} superclass to substitute a default name.
+     * @return A new {@link Game} instance backed by a {@link ServerGame}.
+     */
+    public static Game createServerGame(RulesetOptions selectedRuleset,
+                                        String playerWhiteName,
+                                        String playerBlackName) {
+        return new ServerGame(selectedRuleset, playerWhiteName, playerBlackName);
+    }
+
+    /**
      * Returns the join code for this game session.
      *
      * <p>The default implementation returns {@code null}, indicating that this game has no
