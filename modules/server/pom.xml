@@ -62,7 +62,7 @@
                         <configuration>
                             <filters>
                                 <filter>
-                                    <artifact>ptp:core</artifact>
+                                    <artifact>io.github.conava:core</artifact>
                                     <excludes>
                                         <exclude>META-INF/MANIFEST.MF</exclude>
                                     </excludes>
