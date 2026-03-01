@@ -7,7 +7,9 @@ import io.github.conava.chess.core.data.io.MessageParser;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
+import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
+import io.github.conava.chess.core.logic.moves.PromotionMove;
 import io.github.conava.chess.core.data.io.MessageType;
 
 import java.util.ArrayList;
@@ -277,12 +279,31 @@ public class OnlineGame extends Game {
 
     /**
      * Executes a move received from the server.
+     * <p>
+     * {@link Move#fromString} produces fresh {@link Square} instances that are not the same
+     * objects as the squares held in the board's grid. Passing those disconnected squares
+     * directly to {@link Game#executeMove} would mutate the wrong objects and leave the
+     * board state unchanged. This method therefore translates the move's start and end
+     * squares to the board's canonical {@link Square} instances via {@link #toBoardSquare},
+     * then reconstructs the correct {@link Move} subtype ({@link CastleMove},
+     * {@link PromotionMove}, or plain {@link Move}) before delegating to
+     * {@link Game#executeMove}.
      *
-     * @param move The move to be executed.
-     * @throws IllegalMoveException If the move is illegal.
+     * @param move The move received from the server (with fresh, non-canonical squares).
+     * @throws IllegalMoveException If the move is illegal according to the current board state.
      */
     private void executeMoveFromRemote(Move move) throws IllegalMoveException {
-        super.executeMove(move);
+        Square boardStart = toBoardSquare(move.getStart());
+        Square boardEnd   = toBoardSquare(move.getEnd());
+        Move canonical;
+        if (move instanceof CastleMove) {
+            canonical = new CastleMove(boardStart, boardEnd);
+        } else if (move instanceof PromotionMove pm) {
+            canonical = new PromotionMove(boardStart, boardEnd, pm.getTargetPiece());
+        } else {
+            canonical = new Move(boardStart, boardEnd);
+        }
+        super.executeMove(canonical);
     }
 
     /**

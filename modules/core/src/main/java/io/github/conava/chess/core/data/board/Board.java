@@ -125,20 +125,32 @@ public class Board {
     }
 
     /**
-     * Handles the logic for a castle move.
-     * @param startSquare The starting square of the move.
-     * @param endSquare The ending square of the move.
+     * Handles the logic for a castle move by relocating the rook to its post-castling square.
+     * <p>
+     * Coordinate convention: {@code getSquare(y, x)} where {@code y} = row/rank and
+     * {@code x} = column/file (0 = a-file, 7 = h-file). The king's rank is
+     * {@code startSquare.getY()} and the castling direction is determined by the king's
+     * destination file ({@code endSquare.getX()}):
+     * <ul>
+     *   <li>Queenside (castle long): king ends on the c-file ({@code x=2}). The rook moves
+     *       from the a-file ({@code x=0}) to the d-file ({@code x=3}).</li>
+     *   <li>Kingside (castle short): king ends on the g-file ({@code x=6}). The rook moves
+     *       from the h-file ({@code x=7}) to the f-file ({@code x=5}).</li>
+     * </ul>
+     *
+     * @param startSquare The king's starting square.
+     * @param endSquare   The king's destination square.
      */
     private void handleCastleMove(Square startSquare, Square endSquare) {
         Piece rook;
-        if (endSquare.getY() == 2) { // castle long
-            rook = getSquare(0, startSquare.getX()).getPiece();
-            getSquare(3, startSquare.getX()).setPiece(rook);
-            getSquare(0, startSquare.getX()).setPiece(null);
-        } else { // castle short
-            rook = getSquare(7, startSquare.getX()).getPiece();
-            getSquare(5, startSquare.getX()).setPiece(rook);
-            getSquare(7, startSquare.getX()).setPiece(null);
+        if (endSquare.getX() == 2) { // castle long (queenside): king ends on c-file
+            rook = getSquare(startSquare.getY(), 0).getPiece(); // rook on a-file
+            getSquare(startSquare.getY(), 3).setPiece(rook);    // rook moves to d-file
+            getSquare(startSquare.getY(), 0).setPiece(null);    // clear a-file
+        } else { // castle short (kingside): king ends on g-file
+            rook = getSquare(startSquare.getY(), 7).getPiece(); // rook on h-file
+            getSquare(startSquare.getY(), 5).setPiece(rook);    // rook moves to f-file
+            getSquare(startSquare.getY(), 7).setPiece(null);    // clear h-file
         }
     }
 

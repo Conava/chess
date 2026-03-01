@@ -89,13 +89,16 @@ public class Move {
      * </ul>
      * This format round-trips through {@link #fromString(String, Player)}.
      * Do NOT use {@link #toString()} for wire transmission — it produces algebraic notation for UI display.
+     * <p>
+     * Coordinate convention: {@code getX()} = column/file (a=0 … h=7),
+     * {@code getY()} = row/rank (rank 1 = 0 … rank 8 = 7).
      *
      * @return the wire-safe protocol string
      */
     public String toProtocolString() {
         if (this instanceof CastleMove) {
-            // Kingside: end column (getY()) is greater than start column; queenside: less.
-            return this.end.getY() > this.start.getY() ? "O-O" : "O-O-O";
+            // Kingside: end file (getX()) is greater than start file; queenside: less.
+            return this.end.getX() > this.start.getX() ? "O-O" : "O-O-O";
         }
         String startProto = squareToProtocol(this.start);
         String endProto = squareToProtocol(this.end);
@@ -109,12 +112,17 @@ public class Move {
      * Converts a square to a two-character protocol string that round-trips through
      * {@link #convertToSquare(String)}.
      * <p>
-     * {@code convertToSquare(s)} stores {@code s.charAt(0)-'a'} in the y-field (column/file)
-     * and {@code s.charAt(1)-'1'} in the x-field (row/rank). This method inverts that mapping:
-     * file char = {@code 'a' + square.getY()}, rank char = {@code '1' + square.getX()}.
+     * Coordinate convention: {@code square.getX()} = column/file (a=0 … h=7),
+     * {@code square.getY()} = row/rank (rank 1 = 0 … rank 8 = 7).
+     * The first character of the result is the file letter ({@code 'a' + square.getX()})
+     * and the second character is the rank digit ({@code '1' + square.getY()}).
+     * For example, {@code new Square(1, 4)} (rank 2, e-file) encodes as {@code "e2"}.
+     *
+     * @param square the square to encode
+     * @return a two-character string such as {@code "e2"} representing the square
      */
     private static String squareToProtocol(Square square) {
-        return "" + (char) ('a' + square.getY()) + (char) ('1' + square.getX());
+        return "" + (char) ('a' + square.getX()) + (char) ('1' + square.getY());
     }
 
     /**
@@ -143,12 +151,14 @@ public class Move {
      */
     public static Move fromString(String moveString, Player movePlayer) {
         if (moveString.equals("O-O")) {
-            Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
-            Square end = new Square(6, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // g1 or g8
+            int rank = movePlayer.color() == PlayerColor.WHITE ? 0 : 7;
+            Square start = new Square(rank, 4); // e1 (white) or e8 (black): row=rank, col=4
+            Square end   = new Square(rank, 6); // g1 (white) or g8 (black): row=rank, col=6
             return new CastleMove(start, end);
         } else if (moveString.equals("O-O-O")) {
-            Square start = new Square(4, movePlayer.color() == PlayerColor.WHITE ? 0 : 7); // e1 or e8
-            Square end = new Square(2, movePlayer.color() == PlayerColor.WHITE ? 0 : 7);   // c1 or c8
+            int rank = movePlayer.color() == PlayerColor.WHITE ? 0 : 7;
+            Square start = new Square(rank, 4); // e1 (white) or e8 (black): row=rank, col=4
+            Square end   = new Square(rank, 2); // c1 (white) or c8 (black): row=rank, col=2
             return new CastleMove(start, end);
         } else if (moveString.contains("=")) {
             // Protocol format: "<start>-<end>=<PIECES_ENUM_NAME>" e.g. "a7-a8=QUEEN"
@@ -174,8 +184,19 @@ public class Move {
         }
     }
 
+    /**
+     * Parses a two-character protocol square string (e.g. {@code "e2"}) into a {@link Square}.
+     * <p>
+     * Coordinate convention: the first character is the file letter (a=0 … h=7), stored as
+     * {@code x} (column/file); the second character is the rank digit (1=0 … 8=7), stored as
+     * {@code y} (row/rank). For example, {@code "e2"} produces {@code new Square(1, 4)}
+     * (y=1 = rank 2, x=4 = e-file).
+     *
+     * @param substring a two-character string such as {@code "e2"}
+     * @return the corresponding {@link Square}
+     */
     private static Square convertToSquare(String substring) {
-        return new Square(substring.charAt(0) - 'a', substring.charAt(1) - '1');
+        return new Square(substring.charAt(1) - '1', substring.charAt(0) - 'a');
     }
 
     /**

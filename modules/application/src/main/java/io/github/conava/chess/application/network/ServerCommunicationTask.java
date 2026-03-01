@@ -60,6 +60,11 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
      * Opens the socket connection, then loops reading lines from the server.
      * Each line is parsed into a {@link Message} and forwarded to the registered message handler.
      * All resources are closed in a {@code finally} block on every exit path.
+     * <p>
+     * Per-message runtime exceptions thrown by {@link io.github.conava.chess.core.data.io.MessageParser#parse}
+     * or by the message handler are caught, logged at {@link Level#SEVERE}, and skipped so that
+     * a single malformed message does not kill the listener thread. The loop continues reading
+     * the next line after any such exception.
      */
     @Override
     public void run() {
@@ -72,8 +77,12 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
 
             String rawMessage = in.readLine();
             while (running && rawMessage != null) {
-                Message decoded = MessageParser.parse(rawMessage);
-                messageHandler.accept(decoded);
+                try {
+                    Message decoded = MessageParser.parse(rawMessage);
+                    messageHandler.accept(decoded);
+                } catch (RuntimeException e) {
+                    LOGGER.log(Level.SEVERE, "Failed to process server message: " + rawMessage, e);
+                }
                 rawMessage = in.readLine();
             }
         } catch (IOException e) {
