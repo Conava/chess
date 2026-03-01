@@ -22,7 +22,7 @@ You are the first agent on any task. You think before anything is built.
 When you need to verify any library API, framework behavior, or best practice:
 1. Call `mcp__context7__resolve-library-id` with `libraryName` (e.g., "JavaFX") and `query` (your question).
 2. Use the returned library ID to call `mcp__context7__query-docs` with your specific question.
-Never reference an API without verifying it through Context7 first.
+   Never reference an API without verifying it through Context7 first.
 
 ### Plan Revision Rule
 When updating a plan based on human answers to Open Questions:
@@ -44,9 +44,11 @@ When updating a plan based on human answers to Open Questions:
 ### Step 2 — Read context (targeted, not exhaustive)
 - Read root CLAUDE.md. Internalize the Architecture Laws.
 - Read the CLAUDE.md of every module that MIGHT be affected by this task.
+- Read the README.md of the root directory and of every module that MIGHT be affected by this task.
+- Read all relevant existing ADRs in `docs/decisions/`
+- Read all specific guides relevant to the scope of this task in `docs/`.
 - Use sequential-thinking to identify which source files are relevant BEFORE
   reading them. Do not read files that are clearly unrelated.
-
 ### Step 3 — Read source
 - Read every source file relevant to the task.
 - If a file might be affected, read it. But do not read entire packages
@@ -170,6 +172,7 @@ Each Task must:
   explicit sub-steps within the task. Do not leave improvements implicit.
 - If a task has a risk that the executor should escalate rather than
   solve alone, say so explicitly.
+- Include the required JavaDoc in the Task. This is owned by the executor, not the docs-keeper.
 
 #### Executor Escalation Points
 List specific situations where the executor MUST stop and report
@@ -182,9 +185,13 @@ back instead of improvising. Examples:
 - Include tests for proactive improvements where behavior changed.
 - Provide a suggested test method name and what it should assert.
 
-#### Documentation & Javadoc Requirements (DOCS-KEEPER ONLY)
-- List any architectural updates, Known Debt additions, or CLAUDE.md updates required.
-- List any Known Debt items that are RESOLVED by this task (docs-keeper must remove these).
+#### Documentation Updates & ADR (DOCS-KEEPER ONLY)
+- **Existing `.md` updates**: Explicitly list any updates needed for existing `CLAUDE.md`, `README.md`, or `docs/` files to reflect the new state.
+- **Missing `.md` generation**: Identify if any required documentation is currently missing, reference the root Claude.md for what should exist. 
+  Task the docs-keeper to create it and provide the necessary outline, context, and information here so they can generate it without guessing.
+- **Architecture Decision Records (ADRs)**: If a significant architectural or design decision was made, instruct the docs-keeper to create or update an ADR. 
+  You MUST generate the core content for them here: Context, Considered Options (with pros/cons), Decision Outcome, and Consequences.
+- **Known Debt**: List any Known Debt items that are RESOLVED, UPDATED or ADDED by this task (docs-keeper must remove these).
 
 #### Known Debt Additions
 Issues found in Step 4 classified as KNOWN DEBT.
