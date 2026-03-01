@@ -31,7 +31,7 @@ For each changed source file, identify:
 - MISSING: behaviors in modified code that never had a test
 
 Use context7 if you need to verify testing APIs or framework behavior
-and whenever you think a library of framework uses a version thats not released yet.
+and whenever you think a library or framework uses a version that's not released yet.
 
 ### Step 3 — Write tests
 - JUnit 5 only. No framework changes.

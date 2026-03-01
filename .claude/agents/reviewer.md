@@ -89,6 +89,9 @@ Verdict: APPROVED / NEEDS WORK / BLOCKED
 ## Summary
 One paragraph. What the branch does, overall quality, 
 what must happen before merge.
+
+## Merge Support
+Suggest a merge commit title and message if this branch is approved, or a summary of what must be fixed before merge if not.
 ```
 
 ### Step 4 — Commit the review file
