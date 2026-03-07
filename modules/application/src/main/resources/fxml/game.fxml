@@ -22,7 +22,7 @@
         <VBox alignment="CENTER" BorderPane.alignment="CENTER">
             <HBox fx:id="boardRoot" alignment="CENTER" VBox.vgrow="ALWAYS">
                 <VBox fx:id="rankLabels" alignment="CENTER" minWidth="20"/>
-                <StackPane fx:id="boardContainer" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS"/>
+                <StackPane fx:id="boardContainer" minWidth="480" minHeight="480" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS"/>
             </HBox>
             <HBox fx:id="fileLabels" alignment="CENTER"/>
         </VBox>
@@ -30,7 +30,7 @@
 
     <!-- Right: white player card + move list + leave button -->
     <right>
-        <VBox spacing="12" minWidth="180" maxWidth="280" BorderPane.alignment="CENTER">
+        <VBox spacing="12" minWidth="220" prefWidth="250" maxWidth="300" BorderPane.alignment="CENTER">
             <padding><Insets top="20" right="16" bottom="20" left="16"/></padding>
 
             <VBox styleClass="card" alignment="TOP_CENTER" spacing="8">
@@ -43,7 +43,7 @@
             <ListView fx:id="moveList" styleClass="move-list-view" VBox.vgrow="ALWAYS"/>
 
             <Button text="%game.leave" onAction="#onLeaveGame"
-                    styleClass="danger-button" maxWidth="Infinity"/>
+                    styleClass="btn-danger" maxWidth="Infinity"/>
         </VBox>
     </right>
 </BorderPane>
