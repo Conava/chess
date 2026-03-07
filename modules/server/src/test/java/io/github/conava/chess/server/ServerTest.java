@@ -121,7 +121,7 @@ class ServerTest {
 
         // Mutate server1's game ID counter and games map.
         server1.getGameIdCounter().incrementAndGet();
-        server1.getGamesList().put(1, new GameInstance(1, io.github.conava.chess.core.logic.ruleset.RulesetOptions.STANDARD));
+        server1.addGame(1, new GameInstance(1, io.github.conava.chess.core.logic.ruleset.RulesetOptions.STANDARD));
 
         assertEquals(0, server2.getGameIdCounter().get(),
                 "Incrementing server1's ID counter must not affect server2's counter");

@@ -78,7 +78,8 @@ public class GameInstance implements GameObserver {
      *
      * @param clientHandler The {@link ClientHandler} for the connecting player; must not be {@code null}.
      * @param playerName    The display name for the connecting player. A blank or {@code null}
-     *                      value causes the {@link Game} superclass to substitute a default name.
+     *                      value causes this {@link GameInstance} to substitute a default name
+     *                      ({@code "Player 1"} for white, {@code "Player 2"} for black).
      */
     public synchronized void connectPlayer(ClientHandler clientHandler, String playerName) {
         if (whitePlayerHandler == null) {
@@ -264,11 +265,22 @@ public class GameInstance implements GameObserver {
         }
         if (!message.content().isEmpty()) {
             LOGGER.log(Level.INFO, "Game status update from player: {0}", message.content());
-            GameState newGameState = GameState.valueOf(message.getParameterValue("gameState"));
-            if (clientHandler == whitePlayerHandler && newGameState == GameState.BLACK_WON_BY_RESIGNATION) {
-                game.setGameState(newGameState);
-            } else if (clientHandler == blackPlayerHandler && newGameState == GameState.WHITE_WON_BY_RESIGNATION) {
-                game.setGameState(newGameState);
+            try {
+                String gameStateParam = message.getParameterValue("gameState");
+                GameState newGameState = GameState.valueOf(gameStateParam);
+                if (clientHandler == whitePlayerHandler && newGameState == GameState.BLACK_WON_BY_RESIGNATION) {
+                    game.setGameState(newGameState);
+                } else if (clientHandler == blackPlayerHandler && newGameState == GameState.WHITE_WON_BY_RESIGNATION) {
+                    game.setGameState(newGameState);
+                }
+            } catch (IllegalArgumentException | NullPointerException e) {
+                LOGGER.log(Level.WARNING,
+                        "Invalid gameState parameter in GAME_STATUS message: " + message.content(), e);
+                if (clientHandler != null) {
+                    clientHandler.sendMessage(new Message(
+                            MessageType.ERROR,
+                            "Malformed gameState parameter: " + message.getParameterValue("gameState")));
+                }
             }
         } else {
             LOGGER.log(Level.INFO, "Current game status requested");

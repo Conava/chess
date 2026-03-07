@@ -235,11 +235,14 @@ public class ClientHandler implements Runnable {
      * registration is cleaned up to prevent memory leaks.</p>
      */
     public void releaseGameSlot() {
-        if (gameInstance != null) {
-            gameInstance.disconnectPlayer(this);
-            Integer gameId = gameInstance.getGameId();
-            server.removeGame(gameId);
-            server.getGameSemaphore().release();
+        GameInstance instance = this.gameInstance;
+        if (instance == null) {
+            return;
         }
+        this.gameInstance = null;
+        instance.disconnectPlayer(this);
+        Integer gameId = instance.getGameId();
+        server.removeGame(gameId);
+        server.getGameSemaphore().release();
     }
 }

@@ -130,5 +130,3 @@ COMPLIANT
 7. **`connectionsList` drift under error conditions.** `ClientHandler` registers itself in `run()` and deregisters in `cleanup()`. If `run()` throws before reaching `cleanup()`, the handler stays in the set indefinitely.
 
 8. **Move relay sends the client-supplied string, not a normalized form.** After `game.movePiece()` succeeds, the raw move string from the incoming message is echoed to both players. If the client sends a non-canonical but parseable format, both players receive that non-canonical form.
-
-9. **Missing unit tests — `Server.getPort()` port validation and daemon-thread behaviour** are not covered by unit tests. `getPort()` is private static; a refactor to extract `parsePort(String[])` as package-private would make it testable.
