@@ -1,8 +1,6 @@
 package io.github.conava.chess.application.controllers;
 
-import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.application.i18n.I18n;
-import io.github.conava.chess.application.navigation.SceneManager;
 import io.github.conava.chess.core.logic.game.GameState;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -34,8 +32,6 @@ public class GameEndController {
     @FXML private Button rematchBtn;
 
     private final I18n         i18n;
-    private final Chess        chess;
-    private final SceneManager sceneManager;
     private final GameState    state;
     private final String       whiteName;
     private final String       blackName;
@@ -45,12 +41,9 @@ public class GameEndController {
 
     private Choice choice = Choice.NONE;
 
-    public GameEndController(I18n i18n, Chess chess, SceneManager sceneManager,
-                             GameState state, String whiteName, String blackName,
+    public GameEndController(I18n i18n, GameState state, String whiteName, String blackName,
                              int moveCount, boolean isOnline, Runnable closeAction) {
         this.i18n         = i18n;
-        this.chess        = chess;
-        this.sceneManager = sceneManager;
         this.state        = state;
         this.whiteName    = whiteName;
         this.blackName    = blackName;
