@@ -4,14 +4,16 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.OnlineSetupController"
+
       spacing="12" minWidth="400">
+    <fx:define>
+        <ToggleGroup fx:id="modeGroup"/>
+    </fx:define>
     <padding><Insets top="32" right="40" bottom="32" left="40"/></padding>
 
     <Label text="%dialog.online.title" styleClass="dialog-title"/>
 
     <HBox spacing="12">
-        <ToggleGroup fx:id="modeGroup"/>
         <ToggleButton fx:id="createToggle" text="%dialog.online.create"
                       toggleGroup="$modeGroup" selected="true"/>
         <ToggleButton fx:id="joinToggle"   text="%dialog.online.join"

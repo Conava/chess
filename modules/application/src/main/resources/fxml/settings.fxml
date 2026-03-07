@@ -4,8 +4,12 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.SettingsController"
       spacing="0" minWidth="500" maxWidth="700" alignment="CENTER">
+    <fx:define>
+        <ToggleGroup fx:id="themeGroup"/>
+        <ToggleGroup fx:id="boardGroup"/>
+        <ToggleGroup fx:id="langGroup"/>
+    </fx:define>
     <padding><Insets top="40" right="60" bottom="40" left="60"/></padding>
 
     <Label text="%settings.title" styleClass="dialog-title"/>
@@ -16,14 +20,12 @@
 
         <HBox alignment="CENTER_LEFT" spacing="16">
             <Label text="%settings.theme"/>
-            <ToggleGroup fx:id="themeGroup"/>
             <ToggleButton fx:id="darkToggle"  text="%settings.theme.dark"  toggleGroup="$themeGroup"/>
             <ToggleButton fx:id="lightToggle" text="%settings.theme.light" toggleGroup="$themeGroup"/>
         </HBox>
 
         <HBox alignment="CENTER_LEFT" spacing="12">
             <Label text="%settings.board"/>
-            <ToggleGroup fx:id="boardGroup"/>
             <ToggleButton fx:id="classicSwatch" text="Classic" styleClass="theme-swatch"
                           toggleGroup="$boardGroup" style="-fx-background-color: #b58863;"/>
             <ToggleButton fx:id="oceanSwatch"   text="Ocean"   styleClass="theme-swatch"
@@ -37,7 +39,6 @@
     <VBox styleClass="card" spacing="14">
         <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
         <HBox spacing="12" alignment="CENTER_LEFT">
-            <ToggleGroup fx:id="langGroup"/>
             <ToggleButton fx:id="enToggle" text="English" toggleGroup="$langGroup"/>
             <ToggleButton fx:id="deToggle" text="Deutsch" toggleGroup="$langGroup"/>
         </HBox>
