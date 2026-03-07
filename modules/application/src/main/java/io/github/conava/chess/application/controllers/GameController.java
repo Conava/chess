@@ -27,7 +27,6 @@ import javafx.scene.shape.Circle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -290,11 +289,11 @@ public class GameController implements GameObserver {
     private void showGameEndDialog(GameState state) {
         boolean isOnline = chess.getJoinCode() != null;
         int moveCount = chess.getMoveList().size();
-        String whiteName = chess.getPlayerWhite() != null ? chess.getPlayerWhite().name() : "";
-        String blackName = chess.getPlayerBlack() != null ? chess.getPlayerBlack().name() : "";
+        String whitePlayerName = chess.getPlayerWhite() != null ? chess.getPlayerWhite().name() : "";
+        String blackPlayerName = chess.getPlayerBlack() != null ? chess.getPlayerBlack().name() : "";
 
         GameEndController ctrl = new GameEndController(
-                i18n, state, whiteName, blackName, moveCount, isOnline,
+                i18n, state, whitePlayerName, blackPlayerName, moveCount, isOnline,
                 sceneManager::dismissOverlay
         );
         sceneManager.showOverlay("/fxml/game-end.fxml", ctrl);
@@ -306,7 +305,7 @@ public class GameController implements GameObserver {
             chess.endGame();
             chess.startGame(false,
                     RulesetOptions.STANDARD,
-                    whiteName, blackName, Map.of());
+                    whitePlayerName, blackPlayerName, Map.of());
             sceneManager.showGame();
         }
         // NONE = player dismissed without choosing (shouldn't happen in practice)
