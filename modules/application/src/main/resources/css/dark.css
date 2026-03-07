@@ -1,16 +1,17 @@
 /* dark.css */
 
 .root {
-    app-bg:           #121212;
-    app-surface:      #1e1e2e;
-    app-card:         #252538;
-    app-border:       #3a3a5c;
+    app-bg:           #0f0f1a;
+    app-surface:      #1a1b2e;
+    app-card:         #22243a;
+    app-elevated:     #2a2c45;
+    app-border:       #2e3058;
     app-primary:      #7c3aed;
-    app-primary-dark: #5b21b6;
+    app-primary-hover:#6d28d9;
     app-danger:       #e53e3e;
     app-danger-dark:  #c53030;
-    app-text:         #f0f0f5;
-    app-subtext:      #9090a8;
+    app-text:         #e8e8f0;
+    app-subtext:      #8585a0;
     app-dot:          #a0a0ff;
 
     -fx-background: app-bg;
@@ -20,36 +21,32 @@
     -fx-accent: app-primary;
 }
 
+.btn-primary {
+    -fx-background-color: app-primary;
+    -fx-text-fill: white;
+}
+.btn-primary:hover { -fx-background-color: app-primary-hover; }
+
+.btn-ghost {
+    -fx-border-color: app-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-text-fill: app-text;
+}
+.btn-ghost:hover {
+    -fx-border-color: app-primary;
+    -fx-text-fill: app-primary;
+}
+
+.btn-danger { -fx-background-color: app-danger; -fx-text-fill: white; }
+.btn-danger:hover { -fx-background-color: app-danger-dark; }
+
 .nav-button {
-    -fx-background-color: app-card;
+    -fx-background-color: app-surface;
     -fx-text-fill: app-text;
     -fx-border-color: app-border;
     -fx-border-radius: 8;
     -fx-border-width: 1;
-}
-
-.nav-button:hover {
-    -fx-background-color: app-primary;
-    -fx-text-fill: white;
-    -fx-border-color: app-primary;
-}
-
-.primary-button {
-    -fx-background-color: app-primary;
-    -fx-text-fill: white;
-}
-
-.primary-button:hover {
-    -fx-background-color: app-primary-dark;
-}
-
-.danger-button {
-    -fx-background-color: app-danger;
-    -fx-text-fill: white;
-}
-
-.danger-button:hover {
-    -fx-background-color: app-danger-dark;
 }
 
 .card {
@@ -57,11 +54,15 @@
     -fx-border-color: app-border;
     -fx-border-width: 1;
     -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 12, 0, 0, 3);
 }
+
+.overlay-card { -fx-background-color: app-surface; }
 
 .section-heading { -fx-text-fill: app-subtext; }
 .player-name { -fx-text-fill: app-text; }
 .player-active-indicator { -fx-text-fill: app-primary; }
+.game-end-title { -fx-text-fill: app-text; }
 
 .text-field {
     -fx-background-color: app-surface;
@@ -71,17 +72,14 @@
     -fx-border-radius: 6;
     -fx-prompt-text-fill: app-subtext;
 }
-
 .text-field:focused { -fx-border-color: app-primary; }
 
 .move-list-view { -fx-background-color: app-surface; }
-
 .move-list-view .list-cell {
     -fx-background-color: transparent;
     -fx-text-fill: app-text;
     -fx-padding: 4 8 4 8;
 }
-
 .move-list-view .list-cell:odd { -fx-background-color: app-card; }
 
 .legal-move-dot { -fx-fill: app-dot; }
