@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.*?>
+
+<HBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="io.github.conava.chess.application.controllers.MainMenuController">
+
+    <!-- Left: branding panel -->
+    <VBox styleClass="card" alignment="CENTER" HBox.hgrow="ALWAYS" minWidth="300">
+        <padding><Insets top="60" right="40" bottom="60" left="40"/></padding>
+        <ImageView fx:id="titleImage" fitWidth="260" preserveRatio="true" pickOnBounds="true"/>
+        <Label fx:id="appTitle" text="%menu.title"
+               style="-fx-font-size:42px; -fx-font-weight:bold;" wrapText="true"/>
+    </VBox>
+
+    <!-- Right: navigation buttons -->
+    <VBox alignment="CENTER" spacing="16" HBox.hgrow="ALWAYS">
+        <padding><Insets top="80" right="60" bottom="80" left="60"/></padding>
+        <Button fx:id="localBtn"    text="%menu.local"    onAction="#onLocalGame"
+                styleClass="nav-button" maxWidth="Infinity"/>
+        <Button fx:id="onlineBtn"   text="%menu.online"   onAction="#onOnlineGame"
+                styleClass="nav-button" maxWidth="Infinity"/>
+        <Button fx:id="settingsBtn" text="%menu.settings" onAction="#onSettings"
+                styleClass="nav-button" maxWidth="Infinity"/>
+        <Button fx:id="exitBtn"     text="%menu.exit"     onAction="#onExit"
+                styleClass="nav-button danger-button" maxWidth="Infinity"/>
+    </VBox>
+</HBox>
