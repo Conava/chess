@@ -12,11 +12,12 @@ import io.github.conava.chess.core.data.pieces.Pieces;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.observer.GameObserver;
+import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.NumberBinding;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
@@ -25,8 +26,8 @@ import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -54,6 +55,7 @@ public class GameController implements GameObserver {
     private Square selectedSquare = null;
     private List<Square> legalSquares = List.of();
     private Board localBoard;
+    private NumberBinding squareSize;
 
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor(r -> {
@@ -84,13 +86,18 @@ public class GameController implements GameObserver {
         GridPane grid = new GridPane();
         grid.getStyleClass().add("chess-board");
 
+        squareSize = Bindings.min(
+                boardContainer.widthProperty(), boardContainer.heightProperty()
+        ).divide(8.0);
+
         for (int row = 7; row >= 0; row--) {
             for (int col = 0; col < 8; col++) {
                 StackPane square = new StackPane();
                 square.getStyleClass().addAll("board-square",
                         (row + col) % 2 == 0 ? "light-square" : "dark-square");
                 square.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-                square.setPrefSize(72, 72);
+                square.prefWidthProperty().bind(squareSize);
+                square.prefHeightProperty().bind(squareSize);
 
                 final int r = row, c = col;
                 square.setOnMouseClicked(e -> handleSquareClick(r, c));
@@ -100,14 +107,8 @@ public class GameController implements GameObserver {
             }
         }
 
-        boardContainer.widthProperty().addListener((o, old, w) -> {
-            double size = Math.min(w.doubleValue(), boardContainer.getHeight());
-            grid.setPrefSize(size, size);
-        });
-        boardContainer.heightProperty().addListener((o, old, h) -> {
-            double size = Math.min(boardContainer.getWidth(), h.doubleValue());
-            grid.setPrefSize(size, size);
-        });
+        grid.prefWidthProperty().bind(boardContainer.widthProperty());
+        grid.prefHeightProperty().bind(boardContainer.heightProperty());
 
         boardContainer.getChildren().add(grid);
     }
@@ -116,13 +117,13 @@ public class GameController implements GameObserver {
         for (int row = 8; row >= 1; row--) {
             Label lbl = new Label(String.valueOf(row));
             lbl.getStyleClass().add("board-label");
-            lbl.setMinHeight(72);
+            lbl.prefHeightProperty().bind(squareSize);
             rankLabels.getChildren().add(lbl);
         }
         for (char c = 'a'; c <= 'h'; c++) {
             Label lbl = new Label(String.valueOf(c));
             lbl.getStyleClass().add("board-label");
-            lbl.setMinWidth(72);
+            lbl.prefWidthProperty().bind(squareSize);
             fileLabels.getChildren().add(lbl);
         }
     }
@@ -199,8 +200,8 @@ public class GameController implements GameObserver {
             var url = getClass().getResource(path);
             if (url != null) {
                 ImageView iv = new ImageView(new Image(url.toExternalForm()));
-                iv.setFitWidth(56);
-                iv.setFitHeight(56);
+                iv.fitWidthProperty().bind(squareSize.multiply(0.78));
+                iv.fitHeightProperty().bind(squareSize.multiply(0.78));
                 iv.setPreserveRatio(true);
                 iv.setUserData("piece");
                 square.getChildren().add(iv);
@@ -267,7 +268,8 @@ public class GameController implements GameObserver {
     private void showLegalMoveMarkers(List<Square> squares) {
         for (Square sq : squares) {
             StackPane pane = boardSquares[sq.getY()][sq.getX()];
-            Circle dot = new Circle(14);
+            Circle dot = new Circle();
+            dot.radiusProperty().bind(squareSize.multiply(0.19));
             dot.getStyleClass().add("legal-move-dot");
             dot.setUserData("dot");
             dot.setMouseTransparent(true);
@@ -286,37 +288,40 @@ public class GameController implements GameObserver {
     // ── End-game dialogs ──────────────────────────────────────────────────────
 
     private void showGameEndDialog(GameState state) {
-        String message;
-        try { message = i18n.get("state." + state.name()); }
-        catch (MissingResourceException e) { message = state.name(); }
+        boolean isOnline = chess.getJoinCode() != null;
+        int moveCount = chess.getMoveList().size();
+        String whiteName = chess.getPlayerWhite() != null ? chess.getPlayerWhite().name() : "";
+        String blackName = chess.getPlayerBlack() != null ? chess.getPlayerBlack().name() : "";
 
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                message + "\n\n" + i18n.get("game.end.return"),
-                ButtonType.YES, ButtonType.NO);
-        alert.setHeaderText(null);
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.YES) {
+        GameEndController ctrl = new GameEndController(
+                i18n, state, whiteName, blackName, moveCount, isOnline,
+                sceneManager::dismissOverlay
+        );
+        sceneManager.showOverlay("/fxml/game-end.fxml", ctrl);
+
+        if (ctrl.getChoice() == GameEndController.Choice.RETURN) {
             chess.endGame();
             sceneManager.showMainMenu();
+        } else if (ctrl.getChoice() == GameEndController.Choice.REMATCH) {
+            chess.endGame();
+            chess.startGame(false,
+                    RulesetOptions.STANDARD,
+                    whiteName, blackName, Map.of());
+            sceneManager.showGame();
         }
+        // NONE = player dismissed without choosing (shouldn't happen in practice)
     }
 
     private void showErrorAndReturnToMenu(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.showAndWait();
+        sceneManager.showConfirm(message);
         chess.endGame();
         sceneManager.showMainMenu();
     }
 
     @FXML
     private void onLeaveGame() {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                i18n.get("game.end.return"), ButtonType.YES, ButtonType.NO);
-        alert.setHeaderText(null);
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.YES) {
+        boolean confirmed = sceneManager.showConfirm(i18n.get("game.leave.confirm"));
+        if (confirmed) {
             chess.endGame();
             executor.shutdown();
             sceneManager.showMainMenu();
