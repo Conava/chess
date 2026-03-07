@@ -5,7 +5,7 @@
 <?import javafx.geometry.*?>
 
 <HBox xmlns:fx="http://javafx.com/fxml/1"
-     >
+      fx:controller="io.github.conava.chess.application.controllers.MainMenuController">
 
     <!-- Left: branding panel -->
     <StackPane styleClass="menu-brand-panel" HBox.hgrow="ALWAYS" minWidth="300">

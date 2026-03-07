@@ -4,6 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="io.github.conava.chess.application.controllers.GameEndController"
       styleClass="overlay-card" spacing="16" minWidth="360" alignment="CENTER">
     <padding><Insets top="36" right="48" bottom="36" left="48"/></padding>
 

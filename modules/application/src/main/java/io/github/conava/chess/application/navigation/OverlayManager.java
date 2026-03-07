@@ -50,7 +50,7 @@ public class OverlayManager {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource(fxmlPath), i18n.getBundle());
-            loader.setController(controller);
+            loader.setControllerFactory(type -> controller);
             Parent content = loader.load();
 
             // Keep dialogs at their natural (preferred) size so StackPane centres

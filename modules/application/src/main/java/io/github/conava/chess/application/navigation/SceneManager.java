@@ -109,7 +109,7 @@ public class SceneManager {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource(fxmlPath), i18n.getBundle());
-            loader.setController(controller);
+            loader.setControllerFactory(type -> controller);
             return loader.load();
         } catch (IOException e) {
             throw new RuntimeException("Failed to load FXML: " + fxmlPath, e);

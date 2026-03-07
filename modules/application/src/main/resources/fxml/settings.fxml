@@ -4,6 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="io.github.conava.chess.application.controllers.SettingsController"
       spacing="0" minWidth="500" maxWidth="700" alignment="CENTER">
     <fx:define>
         <ToggleGroup fx:id="themeGroup"/>
