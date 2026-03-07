@@ -1,7 +1,9 @@
-/* base.css — structure, layout, no color values */
+/* base.css — structure, layout, typography. Zero color values. All colors live in theme CSS. */
+
+/* ── Root ────────────────────────────────────────────────────────────────── */
 
 .root {
-    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-family: "Segoe UI Variable", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     -fx-font-size: 14px;
 }
 
@@ -9,6 +11,7 @@
 
 .btn-primary {
     -fx-font-size: 14px;
+    -fx-font-weight: bold;
     -fx-padding: 10 28 10 28;
     -fx-background-radius: 8;
     -fx-cursor: hand;
@@ -31,6 +34,7 @@
 
 .btn-danger {
     -fx-font-size: 14px;
+    -fx-font-weight: bold;
     -fx-padding: 10 24 10 24;
     -fx-background-radius: 8;
     -fx-cursor: hand;
@@ -41,32 +45,26 @@
 }
 
 .nav-button {
-    -fx-font-size: 16px;
-    -fx-padding: 14 40 14 40;
+    -fx-font-size: 15px;
+    -fx-padding: 0 40 0 20;
     -fx-background-radius: 8;
     -fx-cursor: hand;
     -fx-min-width: 220px;
+    -fx-min-height: 52px;
     -fx-alignment: CENTER_LEFT;
-}
-
-.nav-button:hover {
-    -fx-background-color: app-elevated;
-    -fx-border-color: app-primary transparent transparent transparent;
-    -fx-border-width: 0 0 0 3;
-    -fx-translate-y: -1;
 }
 
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 
 .card {
     -fx-background-radius: 12;
-    -fx-padding: 16;
+    -fx-padding: 20;
 }
 
 .section-heading {
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-padding: 0 0 8 0;
+    -fx-padding: 20 0 8 0;
 }
 
 /* ── Overlay ─────────────────────────────────────────────────────────────── */
@@ -76,19 +74,21 @@
 }
 
 .overlay-card {
-    -fx-background-radius: 12;
+    -fx-background-radius: 14;
+    -fx-padding: 32;
+    -fx-min-width: 420;
 }
 
 /* ── Form controls ───────────────────────────────────────────────────────── */
 
 .text-field {
-    -fx-background-radius: 6;
-    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 7;
+    -fx-padding: 9 13 9 13;
     -fx-font-size: 14px;
 }
 
 .combo-box {
-    -fx-background-radius: 6;
+    -fx-background-radius: 7;
 }
 
 /* ── Player cards ────────────────────────────────────────────────────────── */
@@ -107,7 +107,13 @@
 .move-list-view {
     -fx-background-insets: 0;
     -fx-padding: 4;
-    -fx-background-radius: 6;
+    -fx-background-radius: 8;
+}
+
+.move-list-view .list-cell {
+    -fx-font-family: "Consolas", "Menlo", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-padding: 5 10 5 10;
 }
 
 /* ── Board ───────────────────────────────────────────────────────────────── */
@@ -122,13 +128,18 @@
     -fx-cursor: hand;
 }
 
+.board-coord-label {
+    -fx-mouse-transparent: true;
+}
+
 .board-label {
     -fx-font-size: 11px;
+    -fx-font-weight: bold;
     -fx-alignment: center;
 }
 
 .legal-move-dot {
-    -fx-opacity: 0.55;
+    -fx-opacity: 0.65;
 }
 
 /* ── Settings ────────────────────────────────────────────────────────────── */
@@ -139,24 +150,24 @@
 }
 
 .theme-swatch {
-    -fx-min-width: 36px;
-    -fx-min-height: 36px;
-    -fx-background-radius: 6;
+    -fx-background-radius: 10;
     -fx-cursor: hand;
-    -fx-border-radius: 6;
-    -fx-border-width: 2;
-}
-
-.theme-swatch:selected {
-    -fx-border-width: 3;
+    -fx-border-radius: 10;
+    -fx-border-width: 2.5;
+    -fx-min-width: 120;
+    -fx-min-height: 64;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-alignment: BOTTOM_CENTER;
+    -fx-padding: 0 0 8 0;
 }
 
 /* ── Dialog titles ───────────────────────────────────────────────────────── */
 
 .dialog-title {
-    -fx-font-size: 20px;
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
-    -fx-padding: 0 0 12 0;
+    -fx-padding: 0 0 16 0;
 }
 
 /* ── Game-end overlay ────────────────────────────────────────────────────── */
@@ -169,17 +180,49 @@
 .outcome-badge-win {
     -fx-background-color: #16a34a;
     -fx-text-fill: white;
-    -fx-padding: 4 14 4 14;
+    -fx-padding: 4 16 4 16;
     -fx-background-radius: 20;
     -fx-font-weight: bold;
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
 }
 
 .outcome-badge-draw {
     -fx-background-color: #d97706;
     -fx-text-fill: white;
-    -fx-padding: 4 14 4 14;
+    -fx-padding: 4 16 4 16;
     -fx-background-radius: 20;
     -fx-font-weight: bold;
-    -fx-font-size: 13px;
+    -fx-font-size: 12px;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+    -fx-pref-width: 7;
+    -fx-pref-height: 7;
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar .thumb {
+    -fx-background-radius: 4;
+    -fx-background-insets: 1;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
+    -fx-shape: "";
+    -fx-padding: 0;
 }

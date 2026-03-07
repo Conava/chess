@@ -1,0 +1,227 @@
+/* dark-charcoal.css — "Ember" — industrial warmth */
+/* Warm matte charcoal surfaces. Whiskey-amber primary. No blue tint anywhere. */
+
+.root {
+    app-bg:              #0e0e0e;
+    app-surface:         #181818;
+    app-card:            #212121;
+    app-elevated:        #2c2c2c;
+    app-border:          #3a3a3a;
+    app-primary:         #f59e0b;
+    app-primary-hover:   #d97706;
+    app-danger:          #ef4444;
+    app-danger-dark:     #dc2626;
+    app-text:            #f2f0eb;
+    app-subtext:         #8a8680;
+    app-dot:             #fbbf24;
+    app-gradient-start:  #181818;
+    app-gradient-end:    #212121;
+
+    /* Board highlight tokens */
+    board-selected:      rgba(245, 158, 11, 0.50);
+    board-highlight:     rgba(245, 158, 11, 0.26);
+
+    -fx-background:                  app-bg;
+    -fx-base:                        app-surface;
+    -fx-control-inner-background:    app-card;
+    -fx-text-fill:                   app-text;
+    -fx-accent:                      app-primary;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+.btn-primary {
+    -fx-background-color: app-primary;
+    -fx-text-fill: #0e0e0e;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.35), 10, 0, 0, 3);
+}
+
+.btn-primary:hover {
+    -fx-background-color: app-primary-hover;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.50), 14, 0, 0, 4);
+}
+
+.btn-ghost {
+    -fx-background-color: transparent;
+    -fx-border-color: app-border;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 8;
+    -fx-text-fill: app-text;
+}
+
+.btn-ghost:hover {
+    -fx-border-color: app-primary;
+    -fx-text-fill: app-primary;
+}
+
+.btn-danger {
+    -fx-background-color: app-danger;
+    -fx-text-fill: white;
+}
+
+.btn-danger:hover {
+    -fx-background-color: app-danger-dark;
+}
+
+.nav-button {
+    -fx-background-color: app-surface;
+    -fx-text-fill: app-text;
+    -fx-border-color: app-border;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.nav-button:hover {
+    -fx-background-color: app-primary, app-elevated;
+    -fx-background-insets: 0 0 0 0, 0 0 0 3;
+    -fx-background-radius: 8, 8;
+    -fx-text-fill: #0e0e0e;
+    -fx-translate-y: -1;
+}
+
+.nav-button-exit:hover {
+    -fx-background-color: app-danger;
+    -fx-text-fill: white;
+    -fx-translate-y: -1;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+
+.card {
+    -fx-background-color: app-card;
+    -fx-border-color: app-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 14, 0, 0, 4);
+}
+
+.overlay-card {
+    -fx-background-color: app-surface;
+    -fx-border-color: app-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.75), 32, 0, 0, 8);
+}
+
+/* ── Brand panel ─────────────────────────────────────────────────────────── */
+
+.menu-brand-panel {
+    -fx-background-color: linear-gradient(to bottom, app-gradient-start, app-gradient-end);
+}
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+
+.section-heading          { -fx-text-fill: app-subtext; }
+.player-name              { -fx-text-fill: app-text; }
+.player-active-indicator  { -fx-text-fill: app-primary; }
+.game-end-title           { -fx-text-fill: app-text; }
+.dialog-title             { -fx-text-fill: app-text; }
+.board-label              { -fx-text-fill: app-subtext; }
+
+/* ── Form controls ───────────────────────────────────────────────────────── */
+
+.text-field {
+    -fx-background-color: app-surface;
+    -fx-text-fill: app-text;
+    -fx-border-color: app-border;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 7;
+    -fx-prompt-text-fill: app-subtext;
+}
+
+.text-field:focused {
+    -fx-border-color: app-primary;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.28), 8, 0, 0, 0);
+}
+
+/* ── Move list ───────────────────────────────────────────────────────────── */
+
+.move-list-view {
+    -fx-background-color: app-surface;
+    -fx-border-color: app-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.move-list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: app-text;
+}
+
+.move-list-view .list-cell:odd {
+    -fx-background-color: app-card;
+}
+
+.move-list-view .list-cell:selected {
+    -fx-background-color: app-elevated;
+    -fx-text-fill: app-primary;
+}
+
+/* ── Board ───────────────────────────────────────────────────────────────── */
+
+.legal-move-dot     { -fx-fill: app-dot; }
+.light-square       { -fx-background-color: board-light; }
+.dark-square        { -fx-background-color: board-dark; }
+.highlighted-square { -fx-background-color: board-highlight; }
+.selected-square    { -fx-background-color: board-selected; }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+
+.scroll-bar .thumb       { -fx-background-color: app-border; }
+.scroll-bar .thumb:hover { -fx-background-color: app-subtext; }
+
+/* ── Settings swatches ───────────────────────────────────────────────────── */
+
+.theme-swatch          { -fx-border-color: app-border; }
+.theme-swatch:selected {
+    -fx-border-color: app-primary;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.45), 10, 0, 0, 0);
+}
+
+/* ── Toggle buttons ──────────────────────────────────────────────────────── */
+
+.toggle-button {
+    -fx-background-color: app-card;
+    -fx-text-fill: app-subtext;
+    -fx-border-color: app-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.toggle-button:selected {
+    -fx-background-color: app-primary;
+    -fx-text-fill: #0e0e0e;
+    -fx-border-color: app-primary;
+}
+
+.toggle-button:hover:!selected {
+    -fx-border-color: app-primary;
+    -fx-text-fill: app-text;
+}
+
+/* ── Combo box ───────────────────────────────────────────────────────────── */
+
+.combo-box {
+    -fx-background-color: app-card;
+    -fx-border-color: app-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 7;
+    -fx-text-fill: app-text;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: app-card;
+    -fx-border-color: app-border;
+    -fx-border-width: 1;
+}
+
+.combo-box-popup .list-cell {
+    -fx-background-color: app-card;
+    -fx-text-fill: app-text;
+}
+
+.combo-box-popup .list-cell:hover {
+    -fx-background-color: app-elevated;
+}

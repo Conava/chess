@@ -4,7 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-      styleClass="overlay-card" spacing="14" minWidth="380">
+      styleClass="overlay-card" spacing="14" minWidth="380" maxHeight="-1.0">
     <padding><Insets top="32" right="40" bottom="32" left="40"/></padding>
 
     <Label text="%dialog.offline.title" styleClass="dialog-title"/>

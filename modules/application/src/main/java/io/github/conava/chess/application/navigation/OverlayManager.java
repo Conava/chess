@@ -101,6 +101,7 @@ public class OverlayManager {
         card.getStyleClass().add("overlay-card");
         card.setPadding(new Insets(28));
         card.setMaxWidth(400);
+        card.setMaxHeight(Region.USE_PREF_SIZE);
 
         Region dim = new Region();
         dim.getStyleClass().add("overlay-dim");

@@ -4,7 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-      styleClass="overlay-card" spacing="12" minWidth="400">
+      styleClass="overlay-card" spacing="12" minWidth="400" maxHeight="-1.0">
     <fx:define>
         <ToggleGroup fx:id="modeGroup"/>
     </fx:define>

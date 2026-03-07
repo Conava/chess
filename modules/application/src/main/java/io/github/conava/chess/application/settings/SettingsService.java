@@ -29,8 +29,8 @@ public class SettingsService {
     }
 
     public Theme loadTheme() {
-        try { return Theme.valueOf(prefs.get(KEY_THEME, Theme.DARK.name())); }
-        catch (IllegalArgumentException e) { return Theme.DARK; }
+        try { return Theme.valueOf(prefs.get(KEY_THEME, Theme.DARK_PURPLE.name())); }
+        catch (IllegalArgumentException e) { return Theme.DARK_PURPLE; }
     }
 
     public void saveTheme(Theme theme) { prefs.put(KEY_THEME, theme.name()); }

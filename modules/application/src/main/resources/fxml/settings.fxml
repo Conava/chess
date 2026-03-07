@@ -14,45 +14,83 @@
 
     <Label text="%settings.title" styleClass="dialog-title"/>
 
+    <!-- Appearance -->
     <Label text="%settings.appearance" styleClass="section-heading"/>
-    <VBox styleClass="card" spacing="14">
-        <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+    <VBox styleClass="card" spacing="16">
+        <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
-        <HBox alignment="CENTER_LEFT" spacing="16">
-            <Label text="%settings.theme"/>
-            <ToggleButton fx:id="darkToggle"  text="%settings.theme.dark"  toggleGroup="$themeGroup"/>
-            <ToggleButton fx:id="lightToggle" text="%settings.theme.light" toggleGroup="$themeGroup"/>
-        </HBox>
+        <!-- Theme picker — 2×2 swatch grid -->
+        <Label text="%settings.theme" style="-fx-font-size: 12px; -fx-font-weight: bold;"/>
+        <GridPane hgap="12" vgap="12">
+            <!-- Dark: Midnight -->
+            <ToggleButton fx:id="midnightSwatch"
+                          text="Midnight"
+                          toggleGroup="$themeGroup"
+                          styleClass="theme-swatch"
+                          style="-fx-background-color: linear-gradient(to right, #080812 60%, #8b5cf6 40%); -fx-text-fill: #ededf8;"
+                          GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <!-- Dark: Ember -->
+            <ToggleButton fx:id="emberSwatch"
+                          text="Ember"
+                          toggleGroup="$themeGroup"
+                          styleClass="theme-swatch"
+                          style="-fx-background-color: linear-gradient(to right, #111111 60%, #f59e0b 40%); -fx-text-fill: #f2f0eb;"
+                          GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+            <!-- Light: Manuscript -->
+            <ToggleButton fx:id="manuscriptSwatch"
+                          text="Manuscript"
+                          toggleGroup="$themeGroup"
+                          styleClass="theme-swatch"
+                          style="-fx-background-color: linear-gradient(to right, #f7f2e9 60%, #9a3412 40%); -fx-text-fill: #1c1108;"
+                          GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <!-- Light: Fjord -->
+            <ToggleButton fx:id="fjordSwatch"
+                          text="Fjord"
+                          toggleGroup="$themeGroup"
+                          styleClass="theme-swatch"
+                          style="-fx-background-color: linear-gradient(to right, #eef3f8 60%, #0284c7 40%); -fx-text-fill: #0a1929;"
+                          GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        </GridPane>
 
+        <!-- Board colour picker -->
+        <Label text="%settings.board" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 8 0 0 0;"/>
         <HBox alignment="CENTER_LEFT" spacing="12">
-            <Label text="%settings.board"/>
             <ToggleButton fx:id="classicSwatch" text="Classic" styleClass="theme-swatch"
-                          toggleGroup="$boardGroup" style="-fx-background-color: #b58863;"/>
+                          toggleGroup="$boardGroup"
+                          style="-fx-background-color: linear-gradient(to right, #f0d9b5 50%, #b58863 50%); -fx-text-fill: #2c1e10;"
+                          minWidth="90" minHeight="44"/>
             <ToggleButton fx:id="oceanSwatch"   text="Ocean"   styleClass="theme-swatch"
-                          toggleGroup="$boardGroup" style="-fx-background-color: #4a90a4;"/>
+                          toggleGroup="$boardGroup"
+                          style="-fx-background-color: linear-gradient(to right, #dee3e6 50%, #4a90a4 50%); -fx-text-fill: #0a2030;"
+                          minWidth="90" minHeight="44"/>
             <ToggleButton fx:id="walnutSwatch"  text="Walnut"  styleClass="theme-swatch"
-                          toggleGroup="$boardGroup" style="-fx-background-color: #7a4f2c;"/>
+                          toggleGroup="$boardGroup"
+                          style="-fx-background-color: linear-gradient(to right, #d4b896 50%, #7a4f2c 50%); -fx-text-fill: #1a0c04;"
+                          minWidth="90" minHeight="44"/>
         </HBox>
     </VBox>
 
-    <Label text="%settings.language" styleClass="section-heading" style="-fx-padding: 16 0 0 0;"/>
+    <!-- Language -->
+    <Label text="%settings.language" styleClass="section-heading"/>
     <VBox styleClass="card" spacing="14">
-        <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+        <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
         <HBox spacing="12" alignment="CENTER_LEFT">
             <ToggleButton fx:id="enToggle" text="English" toggleGroup="$langGroup"/>
             <ToggleButton fx:id="deToggle" text="Deutsch" toggleGroup="$langGroup"/>
         </HBox>
     </VBox>
 
-    <Label text="%settings.players" styleClass="section-heading" style="-fx-padding: 16 0 0 0;"/>
-    <VBox styleClass="card" spacing="10">
-        <padding><Insets top="16" right="16" bottom="16" left="16"/></padding>
+    <!-- Player names -->
+    <Label text="%settings.players" styleClass="section-heading"/>
+    <VBox styleClass="card" spacing="12">
+        <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
         <TextField fx:id="whiteNameField" promptText="%settings.player.white"/>
         <TextField fx:id="blackNameField" promptText="%settings.player.black"/>
     </VBox>
 
+    <!-- Actions -->
     <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 24 0 0 0;">
         <Button text="%settings.cancel" onAction="#onCancel" styleClass="btn-ghost"/>
-        <Button text="%settings.save"   onAction="#onSave" styleClass="btn-primary"/>
+        <Button text="%settings.save"   onAction="#onSave"   styleClass="btn-primary"/>
     </HBox>
 </VBox>
