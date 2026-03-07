@@ -8,12 +8,18 @@
      >
 
     <!-- Left: branding panel -->
-    <VBox styleClass="card" alignment="CENTER" HBox.hgrow="ALWAYS" minWidth="300">
-        <padding><Insets top="60" right="40" bottom="60" left="40"/></padding>
-        <ImageView fx:id="titleImage" fitWidth="260" preserveRatio="true" pickOnBounds="true"/>
-        <Label fx:id="appTitle" text="%menu.title"
-               style="-fx-font-size:42px; -fx-font-weight:bold;" wrapText="true"/>
-    </VBox>
+    <StackPane styleClass="menu-brand-panel" HBox.hgrow="ALWAYS" minWidth="300">
+        <!-- Watermark king image -->
+        <ImageView fx:id="watermarkImage" fitWidth="200" opacity="0.12"
+                   preserveRatio="true" mouseTransparent="true"/>
+        <!-- Content -->
+        <VBox alignment="CENTER">
+            <padding><Insets top="60" right="40" bottom="60" left="40"/></padding>
+            <ImageView fx:id="titleImage" fitWidth="260" preserveRatio="true" pickOnBounds="true"/>
+            <Label fx:id="appTitle" text="%menu.title"
+                   style="-fx-font-size:48px; -fx-font-weight:bold;" wrapText="true"/>
+        </VBox>
+    </StackPane>
 
     <!-- Right: navigation buttons -->
     <VBox alignment="CENTER" spacing="16" HBox.hgrow="ALWAYS">
@@ -25,6 +31,6 @@
         <Button fx:id="settingsBtn" text="%menu.settings" onAction="#onSettings"
                 styleClass="nav-button" maxWidth="Infinity"/>
         <Button fx:id="exitBtn"     text="%menu.exit"     onAction="#onExit"
-                styleClass="nav-button" maxWidth="Infinity"/>
+                styleClass="nav-button nav-button-exit" maxWidth="Infinity"/>
     </VBox>
 </HBox>

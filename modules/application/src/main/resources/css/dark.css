@@ -92,3 +92,24 @@
 
 .theme-swatch { -fx-border-color: app-border; }
 .theme-swatch:selected { -fx-border-color: app-primary; }
+
+/* Main menu brand panel */
+.menu-brand-panel {
+    -fx-background-color: linear-gradient(to bottom, app-surface, app-card);
+    -fx-background-radius: 12;
+}
+
+/* Nav button hover: app-elevated fill + 3px left app-primary accent */
+.nav-button:hover {
+    -fx-background-color: app-primary, app-elevated;
+    -fx-background-insets: 0 0 0 0, 0 0 0 3;
+    -fx-background-radius: 8, 8;
+    -fx-translate-y: -1;
+}
+
+/* Exit button hover: red */
+.nav-button-exit:hover {
+    -fx-background-color: app-danger;
+    -fx-text-fill: white;
+    -fx-translate-y: -1;
+}
