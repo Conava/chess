@@ -72,7 +72,7 @@ io.github.conava.chess.core
 | `Game` (abstract) | Owns board, players, ruleset, turn counter, and move history. Provides `movePiece`, `promoteMove`, `getLegalSquares`, `getCurrentPlayer`, `getBoard`, `getMoveList`. Validates moves via ruleset and detects king-capture game-end. Calls `notifyObservers()` after every successful `executeMove`. Extends `Observable`. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Board`, `Ruleset`, `Move`, `Observable`, `Player` |
 | `OfflineGame` | Concrete `Game` for local two-player play. `startGame()` sets state to `RUNNING`; `endGame()` is a no-op. | `Game`, `GameState` |
 | `OnlineGame` | Concrete `Game` for networked play. Uses a static factory method: `OnlineGame.create(...)` constructs the instance with a private constructor without sending any network messages. The application facade must then call `connectToServerGame()` after confirming the connection is live — this two-phase construction ensures the message handler is registered before the server's first reply can arrive. Overrides `executeMove` to enforce local-player-turn gating, backup/restore state on server rejection, and forward moves via `sendMessageToServer` (using `Move.toProtocolString()` for wire serialization). Handles incoming `Message` objects dispatched by the application layer via `handleMessage`. `handleMove` catches both `IllegalMoveException` and `RuntimeException` to prevent malformed server messages from crashing the handler thread. `handleGameStatus` calls `notifyObservers()` after updating state. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Game`, `ServerConnection`, `Message`, `MessageType`, `Board` |
-| `ServerGame` | Concrete `Game` intended for server-side use. `startGame()` sets state to `RUNNING`; `endGame()` body is empty. | `Game`, `GameState` |
+| `ServerGame` | Concrete `Game` intended for server-side use. Constructor is package-private: `ServerGame(RulesetOptions, String playerWhiteName, String playerBlackName)`. External callers must use `Game.createServerGame()`. `startGame()` sets state to `RUNNING`; `endGame()` body is empty. | `Game`, `GameState` |
 | `ServerConnection` | Interface that abstracts the networking transport. Methods: `sendMessage(String)`, `closeConnection()`, `isConnected()`. Allows `OnlineGame` to send/receive messages without importing any I/O classes. Implemented in the `application` module by `ServerCommunicationTask`. | — |
 | `GameState` | Enum of 14 game states (German-language display strings). Covers no-game, waiting, running, win-by-checkmate/resignation/timeout for each colour, and three draw variants. | — |
 
@@ -146,6 +146,8 @@ static Game createGame(boolean online, RulesetOptions selectedRuleset,
                        String playerWhiteName, String playerBlackName,
                        Map<String, String> onlineGameSettings,
                        ServerConnection connection)
+static Game createServerGame(RulesetOptions selectedRuleset,
+                             String playerWhiteName, String playerBlackName)
 void startGame()
 void endGame()
 void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException

@@ -1,31 +1,35 @@
 # modules/server CLAUDE.md
 
 ## Status
-Experimental / early-stage. The server has basic structure for hosting multiplayer chess games over TCP sockets, but there are no tests, several architectural law violations (see below), and incomplete message handling. Not production-ready.
+Experimental. The server hosts multiplayer chess games over TCP sockets. Architecture law violations that were previously present in this module have been resolved. No production-ready hardening (TLS, authentication, reconnection) exists.
 
 ## Responsibility
-This module owns the multiplayer server: accepting TCP client connections, creating and joining game lobbies, relaying moves between two players, and managing server lifecycle (start/stop/stats). It does **not** own game logic, rulesets, or the message serialization format -- those belong to `core`. It does **not** own any UI -- that belongs to `application`.
+This module owns the multiplayer server: accepting TCP client connections, creating and joining game lobbies, relaying moves between two players, and managing server lifecycle (start/stop/stats). It does **not** own game logic, rulesets, or the message serialization format — those belong to `core`. It does **not** own any UI — that belongs to `application`.
 
 ## Package Structure
-- `io.github.conava.chess.server` -- Server entry point and top-level lifecycle management (main method, accept loop, console commands).
-- `io.github.conava.chess.server.management` -- Per-client and per-game session management (ClientHandler, GameInstance).
+- `io.github.conava.chess.server` — Server entry point and top-level lifecycle management (main method, accept loop, console commands).
+- `io.github.conava.chess.server.management` — Per-client and per-game session management (ClientHandler, GameInstance).
 
 ## Key Classes
 
 ### `Server` (io.github.conava.chess.server)
-- **Responsibility:** Entry point (`main`). Opens a `ServerSocket`, accepts connections in a cached thread pool, and dispatches each to a `ClientHandler`. Provides console commands (`stop`, `stats`). Maintains static global state: a `ConcurrentHashMap` of active `GameInstance` objects, a `CopyOnWriteArraySet` of connected `ClientHandler` objects, a `Semaphore` limiting concurrent games to 40.
+- **Responsibility:** Entry point (`main`). Instance-based: `main()` creates a `Server` and calls `start(int port)`. Opens a `ServerSocket`, accepts connections in a cached thread pool, and dispatches each to a `ClientHandler`. Provides console commands (`stop`, `stats`). Owns all mutable server state as instance fields: a `ConcurrentHashMap` of active `GameInstance` objects (`gamesList`), a `CopyOnWriteArraySet` of connected `ClientHandler` objects (`connectionsList`), a `Semaphore` limiting concurrent games to 40 (`gameSemaphore`), and an `AtomicInteger` for game ID generation (`gameIdCounter`). Console listener thread is a daemon thread.
 - **Collaborators:** `ClientHandler`, `GameInstance`, core's `Message` / `MessageType`.
-- **Notes:** Entirely static. No instance is ever created. Default port is 54321; overridden by a single CLI argument.
+- **Public methods (beyond `main`):** `start(int port)`, `addClientHandler(ClientHandler)`, `removeClientHandler(ClientHandler)`, `getGamesList()`, `getGameSemaphore()`, `getGameIdCounter()`.
 
 ### `ClientHandler` (io.github.conava.chess.server.management)
-- **Responsibility:** Implements `Runnable`. Handles one TCP client connection: reads newline-delimited messages via `MessageParser.parse()`, dispatches `CREATE_GAME` and `JOIN_GAME` locally, and forwards all other message types to the associated `GameInstance`. Sends responses back to the client via `MessageParser.serialize()`.
-- **Collaborators:** `Server` (registers/unregisters itself), `GameInstance` (delegates game-scoped messages), core's `Message`, `MessageParser`, `MessageType`, `RulesetOptions`.
+- **Responsibility:** Implements `Runnable`. Handles one TCP client connection: reads newline-delimited messages via `MessageParser.parse()`, dispatches `CREATE_GAME` and `JOIN_GAME` locally, and forwards all other message types to the associated `GameInstance`. Sends responses back to the client via `MessageParser.serialize()`. `sendMessage(Message)` is `synchronized` on this instance so that two player threads within a `GameInstance` can both write to this client without interleaving output on the underlying `PrintWriter`. Extracts `playerName` from `CREATE_GAME` and `JOIN_GAME` message content; falls back to `"Player 1"` / `"Player 2"` when the parameter is absent. Malformed messages produce an `ERROR` response; the handler loop continues.
+- **Collaborators:** `Server` (registers/unregisters itself, accesses shared state via getters), `GameInstance` (delegates game-scoped messages), core's `Message`, `MessageParser`, `MessageType`, `RulesetOptions`.
 
 ### `GameInstance` (io.github.conava.chess.server.management)
-- **Responsibility:** Wraps a single `ServerGame` from core. Manages two player slots (white/black). When both players connect, starts the game. Processes in-game messages: `MOVE` (deserializes via `Move.fromString()`, executes, then relays the executed move to both players), `GAME_STATUS` (handles resignation and status queries), and logs `SUCCESS`/`ERROR`/`FAILURE`/`JOIN_CODE` messages. `handleMove()` catches both `IllegalMoveException` and `RuntimeException` so that malformed move strings from a client do not crash the handler thread.
-- **Collaborators:** `ClientHandler` (the two connected players), core's `ServerGame`, `Move`, `GameState`, `RulesetOptions`, `Message`, `MessageType`.
+- **Responsibility:** Manages a single server-side game session. Implements `GameObserver` to receive state-change notifications from the underlying `Game`. Game creation is deferred: the internal `Game` reference is `null` until both players connect via `connectPlayer(ClientHandler, String)`. On the second call, the game is created via `Game.createServerGame(RulesetOptions, String, String)` and this instance registers itself as an observer. The observer handles terminal state transitions only (checkmate, resignation, timeout, draw); it sends a `GAME_STATUS` message to both players when the state changes to a terminal value. Move relay is explicit in `handleMove()` — the observer callback carries no move data. Both `connectPlayer` and `processMessage` are `synchronized` on this instance. On player disconnect, `disconnectPlayer(ClientHandler)` awards a resignation to the remaining player, nulls the handler reference, and removes the observer to prevent memory leaks.
+- **Collaborators:** `ClientHandler` (the two connected players), core's `Game`, `GameObserver`, `Move`, `GameState`, `RulesetOptions`, `Message`, `MessageType`, `IllegalMoveException`.
 
 ## Design Patterns Identified
+
+### Observer
+- **Classes:** `GameInstance` (implements `GameObserver`), core's `Game` (extends `Observable`).
+- **How it works:** `GameInstance` registers itself via `game.addObserver(this)` when the game is created in `startGame()`. `onGameStateChanged()` fires after every successful move. The implementation checks whether the new state is terminal; if so, it sends a `GAME_STATUS` message to both players. Non-terminal state changes (RUNNING) are ignored in the observer path.
 
 ### Concurrency via Semaphore
 - **Classes:** `Server` (owns the `Semaphore`), `ClientHandler` (acquires on `CREATE_GAME`, releases on disconnect).
@@ -35,81 +39,94 @@ This module owns the multiplayer server: accepting TCP client connections, creat
 - **Classes:** `Server` (cached thread pool), `ClientHandler` (implements `Runnable`).
 - **How it works:** Each accepted socket is handed to a new `ClientHandler` and submitted to `Executors.newCachedThreadPool()`.
 
-No Observer pattern usage was found in this module (see Architecture Law Compliance).
-
 ## Public API
 The server module is a standalone executable, not a library consumed by other modules. Its "API" is the TCP message protocol defined by core's `MessageType` enum.
 
-### Server (static methods exposed to other classes within the module)
-- `Server.addClientHandler(ClientHandler)` -- registers a connection.
-- `Server.removeClientHandler(ClientHandler)` -- unregisters a connection.
-- `Server.main(String[])` -- entry point. Accepts optional port argument.
+### Message Protocol Extensions (this module's conventions)
+- `CREATE_GAME` content: `ruleset=STANDARD playerName=<name>` — `playerName` is optional; defaults to `"Player 1"`.
+- `JOIN_GAME` content: `gameId=<id> playerName=<name>` — `playerName` is optional; defaults to `"Player 2"`. `gameId` is key-value format (not raw integer).
+- `JOIN_CODE` response content: `joinCode=<id>` — sent to the game creator on successful `CREATE_GAME`.
+
+### Server (instance methods, accessed within the module)
+- `new Server()` — constructor; initialises all instance fields.
+- `void start(int port)` — opens server socket and blocks until stopped.
+- `void addClientHandler(ClientHandler)` — registers a connection.
+- `void removeClientHandler(ClientHandler)` — unregisters a connection.
+- `void addGame(int gameId, GameInstance)` — adds a game to the live games map.
+- `void removeGame(int gameId)` — removes a game from the live games map.
+- `GameInstance getGame(int gameId)` — returns a game by ID, or null if not present.
+- `Map<Integer, GameInstance> getGamesList()` — returns an unmodifiable view of the live games map; mutations must go through `addGame` / `removeGame`.
+- `Semaphore getGameSemaphore()` — returns the concurrency semaphore.
+- `AtomicInteger getGameIdCounter()` — returns the game ID counter.
+- `static void main(String[])` — entry point; parses optional port argument.
 
 ### ClientHandler
-- `ClientHandler(Socket, Map<Integer, GameInstance>, Semaphore, AtomicInteger)` -- constructor.
-- `void run()` -- Runnable entry point.
-- `void sendMessage(Message)` -- sends a serialized message to the connected client.
-- `void releaseGameSlot()` -- releases the semaphore permit and removes the game from the global map.
+- `ClientHandler(Socket, Server)` — constructor; takes the client socket and owning Server instance.
+- `void run()` — Runnable entry point.
+- `synchronized void sendMessage(Message)` — sends a serialized message to the connected client; thread-safe.
+- `void releaseGameSlot()` — notifies the game of disconnect, removes game from map, releases semaphore.
 
 ### GameInstance
-- `GameInstance(int gameId, RulesetOptions ruleset)` -- constructor, creates a `ServerGame`.
-- `synchronized void connectPlayer(ClientHandler)` -- assigns white or black slot; starts game when both connected.
-- `void processMessage(ClientHandler, Message)` -- dispatches an in-game message.
-- `int getGameId()` -- returns the game's numeric ID.
-- `ClientHandler getWhitePlayerHandler()` -- returns white player's handler (nullable).
-- `ClientHandler getBlackPlayerHandler()` -- returns black player's handler (nullable).
+- `GameInstance(int gameId, RulesetOptions ruleset)` — constructor; no Game created yet.
+- `synchronized void connectPlayer(ClientHandler, String playerName)` — assigns white or black slot; creates game and starts when both connected.
+- `synchronized void disconnectPlayer(ClientHandler)` — awards resignation to remaining player, removes observer.
+- `synchronized void processMessage(ClientHandler, Message)` — dispatches an in-game message.
+- `void onGameStateChanged()` — observer callback; sends GAME_STATUS to both players on terminal state transitions.
+- `int getGameId()` — returns the game's numeric ID.
+- `ClientHandler getWhitePlayerHandler()` — returns white player's handler (nullable).
+- `ClientHandler getBlackPlayerHandler()` — returns black player's handler (nullable).
 
 ## Internal Dependencies
 ```
 server
   +-- Server
-        |-- uses --> ClientHandler (creates on accept)
+        |-- uses --> ClientHandler (creates on accept, passes Server reference)
         |-- uses --> GameInstance (referenced in stats/stop)
         |-- uses --> core: Message, MessageType
   +-- management
         |-- ClientHandler
-        |     |-- uses --> Server (static add/remove)
+        |     |-- uses --> Server (instance reference: add/remove, getters)
         |     |-- uses --> GameInstance (creates on CREATE_GAME, delegates messages)
         |     |-- uses --> core: Message, MessageParser, MessageType, RulesetOptions
         |-- GameInstance
+              |-- implements --> core: GameObserver
               |-- uses --> ClientHandler (sends messages to players)
-              |-- uses --> core: ServerGame, Move, GameState, RulesetOptions,
+              |-- uses --> core: Game (via Game.createServerGame() factory only),
+              |            Move, GameState, RulesetOptions,
               |            Message, MessageType, IllegalMoveException
 ```
 
 ## Architecture Law Compliance
 
-### VIOLATION: Law 2 -- Chess facade bypass
-`GameInstance` directly instantiates `ServerGame` (line 35: `new ServerGame(ruleset)`) and calls `game.movePiece()`, `game.startGame()`, `game.setGameState()`, `game.getPlayerWhite()`, `game.getPlayerBlack()`, `game.getState()` directly. The root CLAUDE.md states: "Application and server code must go through `Chess.java`. Direct instantiation of `Game` subclasses from outside `core` is banned." The `Chess` facade is never imported anywhere in this module.
+### Law 1 — Module boundaries are hard
+COMPLIANT
 
-### VIOLATION: Law 3 -- No Observer pattern usage
-The server does not implement `GameObserver` or register any observers. Game state changes (moves, game status) are communicated via ad-hoc message passing, not through the Observer pattern. After a move is executed on the `ServerGame`, there is no mechanism to notify clients of the resulting board state -- the move is executed server-side but the result is never relayed back.
+### Law 2 — Chess facade is the only API surface
+COMPLIANT. `GameInstance` creates games exclusively via `Game.createServerGame(RulesetOptions, String, String)`. No direct instantiation of `ServerGame` or any other `Game` subclass occurs outside `core`.
 
-### COMPLIANT: Law 1 -- Module boundaries
-The server depends only on `core` (verified in `pom.xml`). No dependency on `application`.
+### Law 3 — Observer pattern for all state propagation
+COMPLIANT. `GameInstance` implements `GameObserver` and registers on the `Game` instance at game-start time. Terminal state transitions (checkmate, resignation, timeout, draw) are propagated to clients via the observer callback. Move relay is explicit in `handleMove()` because the observer callback is signal-only and carries no move data.
 
-### COMPLIANT: Law 4 -- Core is logic-only
-Not applicable to this module (this law constrains `core`, not `server`).
+### Law 4 — Core is logic-only
+COMPLIANT
 
-### COMPLIANT: Law 5 -- Strategy pattern for rulesets
-The server delegates ruleset selection via `RulesetOptions`, which is the core-defined enum. No ruleset branching inside server code.
+### Law 5 — Strategy pattern for rulesets
+COMPLIANT
 
 ## Known Debt / Gotchas
 
-1. **No tests.** The `src/test` directory does not exist. Zero test coverage.
+1. **No TLS/SSL support.** All TCP traffic is plaintext. Unsuitable for production deployment over untrusted networks.
 
-2. **Move relay is present but not fully validated.** `handleMove()` now relays the executed move to both players after a successful `game.movePiece()` call. However, the relay sends the raw move string received from the client rather than a normalized form, and the relay to the sending client is redundant (the client already applied the move locally).
+2. **No authentication or authorization.** Any client that can reach the TCP port can create or join a game. There is no identity verification.
 
-3. **Stale pom.xml artifact reference.** The maven-shade-plugin filter references `ptp:core` (line 66: `<artifact>ptp:core</artifact>`) which appears to be a leftover from the pre-rebrand package name. The current group/artifact is `io.github.conava:core`.
+3. **No reconnection support.** A dropped connection ends the game for that player. The remaining player receives a resignation notification, but the disconnected player cannot reconnect to the same game.
 
-4. **`connectionsList` is populated but partially unused.** `Server.connectionsList` is a `CopyOnWriteArraySet` that tracks all connected clients. It is used in `stopServer()` and `printServerStatus()`, but `printServerStatus()` reads `connectionsList.size()` while the actual connection count may drift -- `ClientHandler` registers itself in `run()` but if `run()` throws before reaching `cleanup()`, the handler stays in the set.
+4. **Message protocol has no versioning.** There is no protocol version header. Clients and servers must agree on the exact message format out-of-band.
 
-5. **`releaseGameSlot()` removes the entire game on any disconnect.** When either player disconnects, the `GameInstance` is removed from `gamesList` and the semaphore is released. This means if white disconnects, black's `gameInstance` reference still exists but the game is gone from the server map. There is no notification to the remaining player.
+5. **Hardcoded 40-game limit.** `MAX_GAMES = 40` is a compile-time constant with no external configuration.
 
-6. **`joinGame()` does not set `this.gameInstance`.** In `ClientHandler.joinGame()`, the local variable `gameInstance` shadows the field. After joining, `this.gameInstance` remains null, so subsequent messages from the joining player will get "No game instance available" errors. This is a bug.
+6. **Player name validation is absent.** Names are accepted as-is from the protocol with no length limit, no character sanitization, and no uniqueness enforcement.
 
-7. **No graceful handling of malformed messages.** `MessageParser.parse()` failures, `Integer.parseInt()` in `joinGame()`, and `RulesetOptions.valueOf()` in `createGame()` will throw unchecked exceptions that crash the handler thread.
+7. **`connectionsList` drift under error conditions.** `ClientHandler` registers itself in `run()` and deregisters in `cleanup()`. If `run()` throws before reaching `cleanup()`, the handler stays in the set indefinitely.
 
-8. **Synchronization inconsistency.** `connectPlayer()` on `GameInstance` is `synchronized`, but `processMessage()` is not. Concurrent message processing for the same game instance could cause race conditions on the `ServerGame`.
-
-9. **Console command thread is a raw `Thread`, not submitted to the executor.** It will not be shut down by `executorService.shutdown()` and could keep the JVM alive after stop. It is also not a daemon thread.
+8. **Move relay sends the client-supplied string, not a normalized form.** After `game.movePiece()` succeeds, the raw move string from the incoming message is echoed to both players. If the client sends a non-canonical but parseable format, both players receive that non-canonical form.

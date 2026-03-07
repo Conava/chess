@@ -84,10 +84,11 @@ For each non-obvious decision: what, why, what was rejected and why.
 
 #### Ordered Implementation Tasks (EXECUTOR ONLY)
 Each Task must:
-- STRICT RULE: NEVER include test writing, or documentation updates in this list. Production code changes only.
+- STRICT RULE: NEVER include test writing, or documentation updates in this list except for JavaDoc. Production code changes only.
 - Each task must declare exact files to touch and leave the project compilable.
 - Leave the project in a compilable state when complete
 - Declare exact files to touch
+- Declare overlap with other tasks, if any, and coordinate on order to avoid merge conflicts and state a execution order and parallel execution plan.
 - Declare acceptance criteria
 - Declare required Javadoc: list every public class/method/interface that is new or changed and needs a Javadoc comment written or updated
 
@@ -95,13 +96,20 @@ Each Task must:
 - List every behavior that must be covered by a test.
 - Provide a suggested test method name and what it should assert.
 
-#### Documentation & Javadoc Requirements (DOCS-KEEPER ONLY)
-- List every public class/method/interface that needs a Javadoc comment.
+#### Documentation & ADRs (DOCS-KEEPER ONLY)
 - List any architectural updates, Known Debt additions, or CLAUDE.md updates required.
+- List any new ADRs that must be created, with a in-depth summary of each.
+- List any files in the `docs/` directory that must be created or updated, with a in-depth summary of the content for each.
+- List any changes to the README.md that must be made, with a in-depth summary of the content to add.
+
+#### Execution Notes
+- Note which tasks can be done in parallel and which must be done sequentially and order them.
+- Note any tasks that require special attention to avoid merge conflicts.
 
 #### Open Questions
 Anything requiring human decision before execution starts.
 Format: numbered list. Do not proceed to execution until answered.
 State the background of every question, explain the terms and give an example.
-Discuss the pros and cons of every decision and provide a recommendation based on best practices and the specific context of this project.
+State the options available for each question, with pros and cons for each 
+and provide a recommendation based on best practices and the specific context of this project.
 Redo the relevant planning steps when the questions are answered and change the plan accordingly.

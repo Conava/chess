@@ -94,11 +94,6 @@ what must happen before merge.
 Suggest a merge commit title and message if this branch is approved, or a summary of what must be fixed before merge if not.
 ```
 
-### Step 4 — Commit the review file
-- Run `git add .claude/plans/*-review.md`
-- Run `git commit -m "review(<branch-slug>): compliance review"`
-- Run `git log --oneline -3` to confirm.
-
 ### Step 5 — Report verdict
 State the final verdict and list every NEEDS WORK item clearly 
 so the human knows exactly what to hand back to which agent.
