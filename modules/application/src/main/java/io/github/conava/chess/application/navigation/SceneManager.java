@@ -70,7 +70,7 @@ public class SceneManager {
      * the controller calls {@link #dismissOverlay()}. Returns the controller.
      */
     public <C> C showOverlay(String fxmlPath, C controller) {
-        return overlayManager.showOverlay(fxmlPath, controller);
+        return requireOverlay().showOverlay(fxmlPath, controller);
     }
 
     /**
@@ -78,12 +78,12 @@ public class SceneManager {
      * clicked Yes.
      */
     public boolean showConfirm(String message) {
-        return overlayManager.showConfirm(message);
+        return requireOverlay().showConfirm(message);
     }
 
     /** Dismisses the topmost overlay. Called by dialog controllers. */
     public void dismissOverlay() {
-        overlayManager.dismiss();
+        requireOverlay().dismiss();
     }
 
     // ── Internal scene swap ───────────────────────────────────────────────────
@@ -111,6 +111,14 @@ public class SceneManager {
         } catch (IOException e) {
             throw new RuntimeException("Failed to load FXML: " + fxmlPath, e);
         }
+    }
+
+    private OverlayManager requireOverlay() {
+        if (overlayManager == null) {
+            throw new IllegalStateException(
+                    "OverlayManager is not ready — call showMainMenu/showGame/showSettings first");
+        }
+        return overlayManager;
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────
