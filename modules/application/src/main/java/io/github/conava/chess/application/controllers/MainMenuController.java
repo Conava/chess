@@ -40,7 +40,7 @@ public class MainMenuController {
     private void onLocalGame() {
         OfflineSetupController setup = sceneManager.showOverlay(
                 "/fxml/offline-setup.fxml",
-                new OfflineSetupController(i18n, sceneManager.getSettingsService(),
+                new OfflineSetupController(sceneManager.getSettingsService(),
                         sceneManager::dismissOverlay));
         if (!setup.isConfirmed()) return;
 

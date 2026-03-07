@@ -54,14 +54,17 @@ public class OnlineSetupController {
         errorLabel.setManaged(false);
         String ip   = ipField.getText().trim();
         String port = portField.getText().trim();
-        if (!isValidIp(ip))     { showError("Invalid IP address."); return; }
-        if (!isValidPort(port)) { showError("Port must be 1–65535."); return; }
+        if (!isValidIp(ip))     { showError(i18n.get("dialog.online.error.invalid_ip")); return; }
+        if (!isValidPort(port)) { showError(i18n.get("dialog.online.error.invalid_port")); return; }
+        if (joinToggle.isSelected() && joinCodeField.getText().trim().isEmpty()) {
+            showError(i18n.get("dialog.online.error.empty_join_code")); return;
+        }
         confirmed = true;
-        closeAction.run();
+        if (closeAction != null) closeAction.run();
     }
 
     @FXML
-    private void onCancel() { closeAction.run(); }
+    private void onCancel() { if (closeAction != null) closeAction.run(); }
 
     private void showError(String msg) {
         errorLabel.setText(msg);
