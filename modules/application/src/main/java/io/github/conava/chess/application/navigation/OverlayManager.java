@@ -61,12 +61,14 @@ public class OverlayManager {
             overlay.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
             rootStack.getChildren().add(overlay);
-
             Object key = new Object();
             nestedLoopKeys.push(key);
-            Platform.enterNestedEventLoop(key);
-
-            rootStack.getChildren().remove(overlay);
+            try {
+                Platform.enterNestedEventLoop(key);
+            } finally {
+                rootStack.getChildren().remove(overlay);
+                nestedLoopKeys.remove(key);
+            }
             return controller;
         } catch (IOException e) {
             throw new RuntimeException("Failed to load overlay: " + fxmlPath, e);
@@ -107,12 +109,14 @@ public class OverlayManager {
         StackPane overlay = new StackPane(dim, card);
         overlay.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         rootStack.getChildren().add(overlay);
-
         Object key = new Object();
         nestedLoopKeys.push(key);
-        Platform.enterNestedEventLoop(key);
-
-        rootStack.getChildren().remove(overlay);
+        try {
+            Platform.enterNestedEventLoop(key);
+        } finally {
+            rootStack.getChildren().remove(overlay);
+            nestedLoopKeys.remove(key);
+        }
         return result[0];
     }
 
