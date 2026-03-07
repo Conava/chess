@@ -25,6 +25,6 @@
         <Button fx:id="settingsBtn" text="%menu.settings" onAction="#onSettings"
                 styleClass="nav-button" maxWidth="Infinity"/>
         <Button fx:id="exitBtn"     text="%menu.exit"     onAction="#onExit"
-                styleClass="nav-button danger-button" maxWidth="Infinity"/>
+                styleClass="nav-button" maxWidth="Infinity"/>
     </VBox>
 </HBox>

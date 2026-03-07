@@ -4,12 +4,11 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-     
-      spacing="16" alignment="CENTER" minWidth="320">
+      styleClass="overlay-card" spacing="16" alignment="CENTER" minWidth="320">
     <padding><Insets top="36" right="48" bottom="36" left="48"/></padding>
     <Label text="%waiting.title" styleClass="dialog-title"/>
     <Label text="%waiting.code" styleClass="section-heading"/>
     <Label fx:id="codeLabel" style="-fx-font-size:28px; -fx-font-weight:bold;"/>
     <Label text="%waiting.instruction" wrapText="true" alignment="CENTER"/>
-    <Button text="%waiting.cancel" onAction="#onCancel" styleClass="danger-button"/>
+    <Button text="%waiting.cancel" onAction="#onCancel" styleClass="btn-danger"/>
 </VBox>

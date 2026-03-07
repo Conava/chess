@@ -4,8 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-
-      spacing="12" minWidth="400">
+      styleClass="overlay-card" spacing="12" minWidth="400">
     <fx:define>
         <ToggleGroup fx:id="modeGroup"/>
     </fx:define>
@@ -35,7 +34,7 @@
     <Label fx:id="errorLabel" style="-fx-text-fill: red;" visible="false" managed="false"/>
 
     <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
-        <Button text="%dialog.online.cancel" onAction="#onCancel"/>
-        <Button text="%dialog.online.start"  onAction="#onConnect" styleClass="primary-button"/>
+        <Button text="%dialog.online.cancel" onAction="#onCancel" styleClass="btn-ghost"/>
+        <Button text="%dialog.online.start"  onAction="#onConnect" styleClass="btn-primary"/>
     </HBox>
 </VBox>

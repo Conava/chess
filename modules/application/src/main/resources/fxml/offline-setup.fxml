@@ -4,8 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-     
-      spacing="14" minWidth="380">
+      styleClass="overlay-card" spacing="14" minWidth="380">
     <padding><Insets top="32" right="40" bottom="32" left="40"/></padding>
 
     <Label text="%dialog.offline.title" styleClass="dialog-title"/>
@@ -20,7 +19,7 @@
     <ComboBox fx:id="rulesetBox" maxWidth="Infinity"/>
 
     <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
-        <Button text="%dialog.offline.cancel" onAction="#onCancel"/>
-        <Button text="%dialog.offline.start"  onAction="#onStart" styleClass="primary-button"/>
+        <Button text="%dialog.offline.cancel" onAction="#onCancel" styleClass="btn-ghost"/>
+        <Button text="%dialog.offline.start"  onAction="#onStart"  styleClass="btn-primary"/>
     </HBox>
 </VBox>
