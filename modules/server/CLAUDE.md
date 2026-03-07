@@ -131,6 +131,4 @@ COMPLIANT
 
 8. **Move relay sends the client-supplied string, not a normalized form.** After `game.movePiece()` succeeds, the raw move string from the incoming message is echoed to both players. If the client sends a non-canonical but parseable format, both players receive that non-canonical form.
 
-9. **Dead code — `GameInstance.connectPlayer(ClientHandler)` one-arg overload** (GameInstance.java ~line 106) has zero callers. Introduced as a temporary compatibility shim; should be removed in a follow-up.
-
-10. **Missing unit tests — `Server.getPort()` port validation and daemon-thread behaviour** are not covered by unit tests. `getPort()` is private static; a refactor to extract `parsePort(String[])` as package-private would make it testable.
+9. **Missing unit tests — `Server.getPort()` port validation and daemon-thread behaviour** are not covered by unit tests. `getPort()` is private static; a refactor to extract `parsePort(String[])` as package-private would make it testable.
