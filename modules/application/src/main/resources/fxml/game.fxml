@@ -4,7 +4,7 @@
 <?import javafx.geometry.*?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="io.github.conava.chess.application.controllers.GameController"
+           
             styleClass="root">
 
     <!-- Left: black player card -->

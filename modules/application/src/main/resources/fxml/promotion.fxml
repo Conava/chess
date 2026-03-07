@@ -4,7 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.PromotionController"
+     
       spacing="20" alignment="CENTER">
     <padding><Insets top="28" right="32" bottom="28" left="32"/></padding>
     <Label text="%promotion.title" styleClass="dialog-title"/>
