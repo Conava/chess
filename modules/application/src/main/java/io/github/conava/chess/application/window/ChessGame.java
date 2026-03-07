@@ -347,9 +347,9 @@ public class ChessGame extends JPanel implements GameObserver {
             if (piece != null && piece.getType() == Pieces.PAWN && (clickedSquare.getY() == 0 || clickedSquare.getY() == 7)) {
                 PromotionWindow promotionWindow = new PromotionWindow(mainFrame, colorScheme, chess.getCurrentPlayer().color());
                 Pieces selectedPiece = promotionWindow.getSelectedPiece();
-                new ExecuteMove(chess, selectedSquare, clickedSquare, selectedPiece).execute();
+                new Thread(new ExecuteMove(chess, selectedSquare, clickedSquare, selectedPiece), "chess-move-executor").start();
             } else {
-                new ExecuteMove(chess, selectedSquare, clickedSquare, null).execute();
+                new Thread(new ExecuteMove(chess, selectedSquare, clickedSquare, null), "chess-move-executor").start();
             }
         }
     }

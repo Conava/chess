@@ -18,7 +18,7 @@ class ChessTest {
 
     @BeforeEach
     void setUp() {
-        chess = new Chess(false);
+        chess = new Chess();
     }
 
     @Test
