@@ -23,7 +23,6 @@
     -fx-padding: 10 28 10 28;
     -fx-background-radius: 8;
     -fx-cursor: hand;
-    -fx-background-color: transparent;
 }
 
 .btn-ghost:hover {
@@ -78,7 +77,6 @@
 
 .overlay-card {
     -fx-background-radius: 12;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 24, 0, 0, 4);
 }
 
 /* ── Form controls ───────────────────────────────────────────────────────── */

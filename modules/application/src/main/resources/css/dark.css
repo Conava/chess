@@ -28,6 +28,7 @@
 .btn-primary:hover { -fx-background-color: app-primary-hover; }
 
 .btn-ghost {
+    -fx-background-color: transparent;
     -fx-border-color: app-border;
     -fx-border-width: 1;
     -fx-border-radius: 8;
@@ -57,7 +58,10 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.35), 12, 0, 0, 3);
 }
 
-.overlay-card { -fx-background-color: app-surface; }
+.overlay-card {
+    -fx-background-color: app-surface;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 24, 0, 0, 4);
+}
 
 .section-heading { -fx-text-fill: app-subtext; }
 .player-name { -fx-text-fill: app-text; }
