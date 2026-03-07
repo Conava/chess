@@ -54,17 +54,24 @@ mvn -pl modules/core -Dtest=BoardTest test
 
 ### Run Commands
 
-After building, the executable JAR files are located in the `target` directory of their respective modules.
-
-**Run the GUI Application**
+**Run the GUI Application (development)**
+Uses the JavaFX Maven plugin — recommended during development.
 ```bash
-java -jar modules/application/target/application-0.9.jar
+mvn javafx:run -pl modules/application -am
+```
+
+**Run the GUI Application (fat JAR)**
+Requires JavaFX SDK 21 on the module path.
+```bash
+java --module-path /path/to/javafx-sdk-21/lib \
+     --add-modules javafx.controls,javafx.fxml \
+     -jar modules/application/target/application-0.9.jar
 ```
 
 **Run the Application (No-GUI Mode)**
 Useful for testing API or headless operations.
 ```bash
-java -jar modules/application/target/application-0.9.jar nogui
+mvn javafx:run -pl modules/application -am -Djavafx.args=nogui
 ```
 
 **Run the Server**

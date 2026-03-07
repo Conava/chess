@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+           
+            styleClass="root">
+
+    <!-- Left: black player card -->
+    <left>
+        <VBox styleClass="card" alignment="TOP_CENTER" spacing="8"
+              minWidth="180" maxWidth="260" BorderPane.alignment="CENTER">
+            <padding><Insets top="20" right="16" bottom="20" left="16"/></padding>
+            <Label fx:id="blackName"   styleClass="player-name" text="Black"/>
+            <Label fx:id="blackActive" styleClass="player-active-indicator"/>
+        </VBox>
+    </left>
+
+    <!-- Center: board with rank/file labels -->
+    <center>
+        <VBox alignment="CENTER" BorderPane.alignment="CENTER">
+            <HBox fx:id="boardRoot" alignment="CENTER" VBox.vgrow="ALWAYS">
+                <VBox fx:id="rankLabels" alignment="CENTER" minWidth="20"/>
+                <StackPane fx:id="boardContainer" minWidth="480" minHeight="480" VBox.vgrow="ALWAYS" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox fx:id="fileLabels" alignment="CENTER"/>
+        </VBox>
+    </center>
+
+    <!-- Right: white player card + move list + leave button -->
+    <right>
+        <VBox spacing="12" minWidth="220" prefWidth="250" maxWidth="300" BorderPane.alignment="CENTER">
+            <padding><Insets top="20" right="16" bottom="20" left="16"/></padding>
+
+            <VBox styleClass="card" alignment="TOP_CENTER" spacing="8">
+                <padding><Insets top="16" right="12" bottom="16" left="12"/></padding>
+                <Label fx:id="whiteName"   styleClass="player-name" text="White"/>
+                <Label fx:id="whiteActive" styleClass="player-active-indicator"/>
+            </VBox>
+
+            <Label text="%game.moves" styleClass="section-heading"/>
+            <ListView fx:id="moveList" styleClass="move-list-view" VBox.vgrow="ALWAYS"/>
+
+            <Button text="%game.leave" onAction="#onLeaveGame"
+                    styleClass="btn-danger" maxWidth="Infinity"/>
+        </VBox>
+    </right>
+</BorderPane>

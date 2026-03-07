@@ -1,0 +1,10 @@
+.root {
+    board-light: #d4b896;
+    board-dark:  #7a4f2c;
+    board-highlight: rgba(0,120,200,0.5);
+    board-selected:  rgba(0,200,80,0.45);
+}
+.light-square    { -fx-background-color: board-light; }
+.dark-square     { -fx-background-color: board-dark; }
+.highlighted-square { -fx-background-color: board-highlight; }
+.selected-square    { -fx-background-color: board-selected; }

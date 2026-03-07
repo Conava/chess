@@ -1,0 +1,185 @@
+/* base.css — structure, layout, no color values */
+
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+.btn-primary {
+    -fx-font-size: 14px;
+    -fx-padding: 10 28 10 28;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-translate-y: -1;
+}
+
+.btn-ghost {
+    -fx-font-size: 14px;
+    -fx-padding: 10 28 10 28;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.btn-ghost:hover {
+    -fx-translate-y: -1;
+}
+
+.btn-danger {
+    -fx-font-size: 14px;
+    -fx-padding: 10 24 10 24;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.btn-danger:hover {
+    -fx-translate-y: -1;
+}
+
+.nav-button {
+    -fx-font-size: 16px;
+    -fx-padding: 14 40 14 40;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-min-width: 220px;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.nav-button:hover {
+    -fx-background-color: app-elevated;
+    -fx-border-color: app-primary transparent transparent transparent;
+    -fx-border-width: 0 0 0 3;
+    -fx-translate-y: -1;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+
+.card {
+    -fx-background-radius: 12;
+    -fx-padding: 16;
+}
+
+.section-heading {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 8 0;
+}
+
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+
+.overlay-dim {
+    -fx-background-color: rgba(0, 0, 0, 0.55);
+}
+
+.overlay-card {
+    -fx-background-radius: 12;
+}
+
+/* ── Form controls ───────────────────────────────────────────────────────── */
+
+.text-field {
+    -fx-background-radius: 6;
+    -fx-padding: 8 12 8 12;
+    -fx-font-size: 14px;
+}
+
+.combo-box {
+    -fx-background-radius: 6;
+}
+
+/* ── Player cards ────────────────────────────────────────────────────────── */
+
+.player-name {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.player-active-indicator {
+    -fx-font-size: 12px;
+}
+
+/* ── Move list ───────────────────────────────────────────────────────────── */
+
+.move-list-view {
+    -fx-background-insets: 0;
+    -fx-padding: 4;
+    -fx-background-radius: 6;
+}
+
+/* ── Board ───────────────────────────────────────────────────────────────── */
+
+.chess-board {
+    -fx-background-color: transparent;
+}
+
+.board-square {
+    -fx-min-width: 0;
+    -fx-min-height: 0;
+    -fx-cursor: hand;
+}
+
+.board-label {
+    -fx-font-size: 11px;
+    -fx-alignment: center;
+}
+
+.legal-move-dot {
+    -fx-opacity: 0.55;
+}
+
+/* ── Settings ────────────────────────────────────────────────────────────── */
+
+.settings-section {
+    -fx-spacing: 10;
+    -fx-padding: 12 0 4 0;
+}
+
+.theme-swatch {
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-border-radius: 6;
+    -fx-border-width: 2;
+}
+
+.theme-swatch:selected {
+    -fx-border-width: 3;
+}
+
+/* ── Dialog titles ───────────────────────────────────────────────────────── */
+
+.dialog-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 12 0;
+}
+
+/* ── Game-end overlay ────────────────────────────────────────────────────── */
+
+.game-end-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.outcome-badge-win {
+    -fx-background-color: #16a34a;
+    -fx-text-fill: white;
+    -fx-padding: 4 14 4 14;
+    -fx-background-radius: 20;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.outcome-badge-draw {
+    -fx-background-color: #d97706;
+    -fx-text-fill: white;
+    -fx-padding: 4 14 4 14;
+    -fx-background-radius: 20;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
