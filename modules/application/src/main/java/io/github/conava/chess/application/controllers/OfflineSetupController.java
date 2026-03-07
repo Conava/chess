@@ -1,5 +1,6 @@
 package io.github.conava.chess.application.controllers;
 
+import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.settings.SettingsService;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import javafx.collections.FXCollections;
@@ -9,6 +10,7 @@ import javafx.scene.control.TextField;
 
 public class OfflineSetupController {
 
+    private final I18n            i18n;
     private final SettingsService settingsService;
     private final Runnable        closeAction;
 
@@ -18,7 +20,8 @@ public class OfflineSetupController {
 
     private boolean confirmed = false;
 
-    public OfflineSetupController(SettingsService settingsService, Runnable closeAction) {
+    public OfflineSetupController(I18n i18n, SettingsService settingsService, Runnable closeAction) {
+        this.i18n            = i18n;
         this.settingsService = settingsService;
         this.closeAction     = closeAction;
     }
@@ -33,8 +36,8 @@ public class OfflineSetupController {
 
     @FXML
     private void onStart() {
-        if (whiteField.getText().isBlank()) whiteField.setText("Player White");
-        if (blackField.getText().isBlank()) blackField.setText("Player Black");
+        if (whiteField.getText().isBlank()) whiteField.setText(i18n.get("dialog.offline.default.white"));
+        if (blackField.getText().isBlank()) blackField.setText(i18n.get("dialog.offline.default.black"));
         confirmed = true;
         if (closeAction != null) closeAction.run();
     }

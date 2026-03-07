@@ -88,6 +88,6 @@ public class OnlineSetupController {
     public String  getPort()           { return portField.getText().trim(); }
     public String  getJoinCode()       { return joinCodeField.isVisible() ? joinCodeField.getText().trim() : ""; }
     public RulesetOptions getRuleset() { return rulesetBox.getValue(); }
-    public String  getPlayerWhite()    { return joinToggle.isSelected() ? "Opponent" : "You"; }
-    public String  getPlayerBlack()    { return joinToggle.isSelected() ? "You" : "Opponent"; }
+    public String  getPlayerWhite()    { return joinToggle.isSelected() ? i18n.get("dialog.online.player.opponent") : i18n.get("dialog.online.player.you"); }
+    public String  getPlayerBlack()    { return joinToggle.isSelected() ? i18n.get("dialog.online.player.you") : i18n.get("dialog.online.player.opponent"); }
 }
