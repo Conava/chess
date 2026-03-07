@@ -53,6 +53,12 @@ public class OverlayManager {
             loader.setController(controller);
             Parent content = loader.load();
 
+            // Keep dialogs at their natural (preferred) size so StackPane centres
+            // them rather than stretching them to fill the full window.
+            if (content instanceof Region r) {
+                r.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+            }
+
             Region dim = new Region();
             dim.getStyleClass().add("overlay-dim");
             dim.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
