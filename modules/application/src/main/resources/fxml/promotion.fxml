@@ -4,7 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
-      styleClass="overlay-card" spacing="20" alignment="CENTER">
+      styleClass="overlay-card" spacing="20" alignment="CENTER" minWidth="300">
     <padding><Insets top="28" right="32" bottom="28" left="32"/></padding>
     <Label text="%promotion.title" styleClass="dialog-title"/>
     <HBox fx:id="pieceRow" spacing="16" alignment="CENTER"/>
