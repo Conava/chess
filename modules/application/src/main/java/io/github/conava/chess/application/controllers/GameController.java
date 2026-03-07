@@ -162,8 +162,8 @@ public class GameController implements GameObserver {
 
     private void showWaitingDialog() {
         String code = chess.getJoinCode();
-        WaitingController ctrl = new WaitingController(code);
-        sceneManager.showDialog("/fxml/waiting.fxml", ctrl);
+        WaitingController ctrl = new WaitingController(code, sceneManager::dismissOverlay);
+        sceneManager.showOverlay("/fxml/waiting.fxml", ctrl);
         if (ctrl.isCancelled()) {
             chess.endGame();
             sceneManager.showMainMenu();
@@ -244,8 +244,9 @@ public class GameController implements GameObserver {
             if (movingPiece != null && movingPiece.getType() == Pieces.PAWN
                     && (clicked.getY() == 0 || clicked.getY() == 7)) {
                 PromotionController promoCtrl =
-                        new PromotionController(movingPiece.getPlayer().color());
-                sceneManager.showDialog("/fxml/promotion.fxml", promoCtrl);
+                        new PromotionController(movingPiece.getPlayer().color(),
+                                sceneManager::dismissOverlay);
+                sceneManager.showOverlay("/fxml/promotion.fxml", promoCtrl);
                 submitMove(selectedSquare, clicked, promoCtrl.getSelectedPiece());
             } else {
                 submitMove(selectedSquare, clicked, null);

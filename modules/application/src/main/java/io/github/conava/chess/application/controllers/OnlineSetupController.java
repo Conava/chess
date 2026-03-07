@@ -6,35 +6,36 @@ import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.stage.Stage;
 
 public class OnlineSetupController {
 
     private final I18n            i18n;
     private final SettingsService settingsService;
+    private final Runnable        closeAction;
 
     @FXML private ToggleButton createToggle;
     @FXML private ToggleButton joinToggle;
     @FXML private ToggleGroup  modeGroup;
-    @FXML private TextField ipField;
-    @FXML private TextField portField;
-    @FXML private TextField joinCodeField;
-    @FXML private Label     joinCodeLabel;
+    @FXML private TextField    ipField;
+    @FXML private TextField    portField;
+    @FXML private TextField    joinCodeField;
+    @FXML private Label        joinCodeLabel;
     @FXML private ComboBox<RulesetOptions> rulesetBox;
-    @FXML private Label     errorLabel;
+    @FXML private Label        errorLabel;
 
     private boolean confirmed = false;
 
-    public OnlineSetupController(I18n i18n, SettingsService settingsService) {
+    public OnlineSetupController(I18n i18n, SettingsService settingsService,
+                                 Runnable closeAction) {
         this.i18n            = i18n;
         this.settingsService = settingsService;
+        this.closeAction     = closeAction;
     }
 
     @FXML
     public void initialize() {
         rulesetBox.setItems(FXCollections.observableArrayList(RulesetOptions.values()));
         rulesetBox.getSelectionModel().selectFirst();
-
         updateJoinCodeVisibility();
         modeGroup.selectedToggleProperty().addListener((o, old, sel) -> updateJoinCodeVisibility());
     }
@@ -51,21 +52,16 @@ public class OnlineSetupController {
     private void onConnect() {
         errorLabel.setVisible(false);
         errorLabel.setManaged(false);
-
         String ip   = ipField.getText().trim();
         String port = portField.getText().trim();
-
         if (!isValidIp(ip))     { showError("Invalid IP address."); return; }
         if (!isValidPort(port)) { showError("Port must be 1–65535."); return; }
-
         confirmed = true;
-        close();
+        closeAction.run();
     }
 
     @FXML
-    private void onCancel() { close(); }
-
-    private void close() { ((Stage) ipField.getScene().getWindow()).close(); }
+    private void onCancel() { closeAction.run(); }
 
     private void showError(String msg) {
         errorLabel.setText(msg);
@@ -74,10 +70,9 @@ public class OnlineSetupController {
     }
 
     private boolean isValidIp(String ip) {
-        if (ip.equals("localhost")) return true;
-        if (ip.matches("(\\d{1,3}\\.){3}\\d{1,3}")) return true;
-        if (ip.contains(":")) return true;
-        return false;
+        return ip.equals("localhost")
+                || ip.matches("(\\d{1,3}\\.){3}\\d{1,3}")
+                || ip.contains(":");
     }
 
     private boolean isValidPort(String port) {

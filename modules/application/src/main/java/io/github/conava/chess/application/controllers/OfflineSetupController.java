@@ -7,12 +7,12 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 
 public class OfflineSetupController {
 
     private final I18n            i18n;
     private final SettingsService settingsService;
+    private final Runnable        closeAction;
 
     @FXML private TextField whiteField;
     @FXML private TextField blackField;
@@ -20,9 +20,11 @@ public class OfflineSetupController {
 
     private boolean confirmed = false;
 
-    public OfflineSetupController(I18n i18n, SettingsService settingsService) {
+    public OfflineSetupController(I18n i18n, SettingsService settingsService,
+                                  Runnable closeAction) {
         this.i18n            = i18n;
         this.settingsService = settingsService;
+        this.closeAction     = closeAction;
     }
 
     @FXML
@@ -38,15 +40,11 @@ public class OfflineSetupController {
         if (whiteField.getText().isBlank()) whiteField.setText("Player White");
         if (blackField.getText().isBlank()) blackField.setText("Player Black");
         confirmed = true;
-        close();
+        closeAction.run();
     }
 
     @FXML
-    private void onCancel() { close(); }
-
-    private void close() {
-        ((Stage) whiteField.getScene().getWindow()).close();
-    }
+    private void onCancel() { closeAction.run(); }
 
     public boolean isConfirmed()       { return confirmed; }
     public String getPlayerWhite()     { return whiteField.getText().trim(); }

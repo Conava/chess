@@ -7,15 +7,17 @@ import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
+
 import java.util.Map;
 
 public class MainMenuController {
 
     private final SceneManager sceneManager;
-    private final I18n i18n;
+    private final I18n         i18n;
 
     @FXML private ImageView titleImage;
-    @FXML private Button exitBtn;
+    @FXML private ImageView watermarkImage;
+    @FXML private Button    exitBtn;
 
     public MainMenuController(SceneManager sceneManager, I18n i18n) {
         this.sceneManager = sceneManager;
@@ -28,13 +30,18 @@ public class MainMenuController {
         if (imgUrl != null) {
             titleImage.setImage(new Image(imgUrl.toExternalForm()));
         }
+        var kingUrl = getClass().getResource("/icon/king_white.png");
+        if (kingUrl != null && watermarkImage != null) {
+            watermarkImage.setImage(new Image(kingUrl.toExternalForm()));
+        }
     }
 
     @FXML
     private void onLocalGame() {
-        OfflineSetupController setup = sceneManager.showDialog(
+        OfflineSetupController setup = sceneManager.showOverlay(
                 "/fxml/offline-setup.fxml",
-                new OfflineSetupController(i18n, sceneManager.getSettingsService()));
+                new OfflineSetupController(i18n, sceneManager.getSettingsService(),
+                        sceneManager::dismissOverlay));
         if (!setup.isConfirmed()) return;
 
         sceneManager.getChess().startGame(
@@ -45,9 +52,10 @@ public class MainMenuController {
 
     @FXML
     private void onOnlineGame() {
-        OnlineSetupController setup = sceneManager.showDialog(
+        OnlineSetupController setup = sceneManager.showOverlay(
                 "/fxml/online-setup.fxml",
-                new OnlineSetupController(i18n, sceneManager.getSettingsService()));
+                new OnlineSetupController(i18n, sceneManager.getSettingsService(),
+                        sceneManager::dismissOverlay));
         if (!setup.isConfirmed()) return;
 
         Map<String, String> opts = Map.of(

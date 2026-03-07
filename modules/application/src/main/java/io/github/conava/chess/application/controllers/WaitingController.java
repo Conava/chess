@@ -2,17 +2,18 @@ package io.github.conava.chess.application.controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.stage.Stage;
 
 public class WaitingController {
 
     @FXML private Label codeLabel;
 
-    private final String joinCode;
+    private final String   joinCode;
+    private final Runnable closeAction;
     private boolean cancelled = false;
 
-    public WaitingController(String joinCode) {
-        this.joinCode = joinCode;
+    public WaitingController(String joinCode, Runnable closeAction) {
+        this.joinCode    = joinCode;
+        this.closeAction = closeAction;
     }
 
     @FXML
@@ -23,7 +24,7 @@ public class WaitingController {
     @FXML
     private void onCancel() {
         cancelled = true;
-        ((Stage) codeLabel.getScene().getWindow()).close();
+        closeAction.run();
     }
 
     public boolean isCancelled() { return cancelled; }
