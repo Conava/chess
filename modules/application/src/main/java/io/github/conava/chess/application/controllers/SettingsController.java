@@ -18,8 +18,10 @@ public class SettingsController {
     private final I18n            i18n;
     private final SettingsService settingsService;
 
-    @FXML private ToggleButton darkToggle;
-    @FXML private ToggleButton lightToggle;
+    @FXML private ToggleButton midnightSwatch;
+    @FXML private ToggleButton emberSwatch;
+    @FXML private ToggleButton manuscriptSwatch;
+    @FXML private ToggleButton fjordSwatch;
     @FXML private ToggleGroup  themeGroup;
     @FXML private ToggleButton classicSwatch;
     @FXML private ToggleButton oceanSwatch;
@@ -41,8 +43,12 @@ public class SettingsController {
 
     @FXML
     public void initialize() {
-        if (themeManager.getTheme() == Theme.DARK) darkToggle.setSelected(true);
-        else lightToggle.setSelected(true);
+        switch (themeManager.getTheme()) {
+            case DARK_PURPLE   -> midnightSwatch.setSelected(true);
+            case DARK_CHARCOAL -> emberSwatch.setSelected(true);
+            case LIGHT_PAPER   -> manuscriptSwatch.setSelected(true);
+            case LIGHT_ARCTIC  -> fjordSwatch.setSelected(true);
+        }
 
         switch (themeManager.getBoardTheme()) {
             case CLASSIC -> classicSwatch.setSelected(true);
@@ -57,8 +63,10 @@ public class SettingsController {
         blackNameField.setText(settingsService.loadPlayerBlack());
 
         themeGroup.selectedToggleProperty().addListener((o, old, sel) -> {
-            if (sel == darkToggle)       themeManager.setTheme(Theme.DARK);
-            else if (sel == lightToggle) themeManager.setTheme(Theme.LIGHT);
+            if      (sel == midnightSwatch)  themeManager.setTheme(Theme.DARK_PURPLE);
+            else if (sel == emberSwatch)     themeManager.setTheme(Theme.DARK_CHARCOAL);
+            else if (sel == manuscriptSwatch) themeManager.setTheme(Theme.LIGHT_PAPER);
+            else if (sel == fjordSwatch)     themeManager.setTheme(Theme.LIGHT_ARCTIC);
         });
 
         boardGroup.selectedToggleProperty().addListener((o, old, sel) -> {

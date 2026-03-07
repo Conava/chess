@@ -9,7 +9,7 @@ import java.util.List;
 public class ThemeManager {
 
     private final ObjectProperty<Theme> currentTheme =
-            new SimpleObjectProperty<>(Theme.DARK);
+            new SimpleObjectProperty<>(Theme.DARK_PURPLE);
     private final ObjectProperty<BoardTheme> currentBoardTheme =
             new SimpleObjectProperty<>(BoardTheme.CLASSIC);
     private final List<Scene> managedScenes = new ArrayList<>();

@@ -4,6 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="io.github.conava.chess.application.controllers.OnlineSetupController"
       styleClass="overlay-card" spacing="12" minWidth="400">
     <fx:define>
         <ToggleGroup fx:id="modeGroup"/>

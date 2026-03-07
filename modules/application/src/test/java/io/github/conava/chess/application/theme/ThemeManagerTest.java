@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class ThemeManagerTest {
 
     @Test
-    void defaultThemeIsDark() {
+    void defaultThemeIsDarkPurple() {
         ThemeManager tm = new ThemeManager();
-        assertEquals(Theme.DARK, tm.getTheme());
+        assertEquals(Theme.DARK_PURPLE, tm.getTheme());
     }
 
     @Test
@@ -20,9 +20,9 @@ class ThemeManagerTest {
     @Test
     void setThemeUpdatesProperty() {
         ThemeManager tm = new ThemeManager();
-        tm.setTheme(Theme.LIGHT);
-        assertEquals(Theme.LIGHT, tm.getTheme());
-        assertEquals(Theme.LIGHT, tm.currentThemeProperty().get());
+        tm.setTheme(Theme.LIGHT_ARCTIC);
+        assertEquals(Theme.LIGHT_ARCTIC, tm.getTheme());
+        assertEquals(Theme.LIGHT_ARCTIC, tm.currentThemeProperty().get());
     }
 
     @Test
@@ -35,14 +35,24 @@ class ThemeManagerTest {
 
     @Test
     void themeCssFileReturnsCorrectPath() {
-        assertEquals("/css/dark.css", Theme.DARK.cssFile());
-        assertEquals("/css/light.css", Theme.LIGHT.cssFile());
+        assertEquals("/css/themes/dark-purple.css",   Theme.DARK_PURPLE.cssFile());
+        assertEquals("/css/themes/dark-charcoal.css", Theme.DARK_CHARCOAL.cssFile());
+        assertEquals("/css/themes/light-paper.css",   Theme.LIGHT_PAPER.cssFile());
+        assertEquals("/css/themes/light-arctic.css",  Theme.LIGHT_ARCTIC.cssFile());
     }
 
     @Test
     void boardThemeCssFileReturnsCorrectPath() {
         assertEquals("/css/board/classic.css", BoardTheme.CLASSIC.cssFile());
-        assertEquals("/css/board/ocean.css", BoardTheme.OCEAN.cssFile());
-        assertEquals("/css/board/walnut.css", BoardTheme.WALNUT.cssFile());
+        assertEquals("/css/board/ocean.css",   BoardTheme.OCEAN.cssFile());
+        assertEquals("/css/board/walnut.css",  BoardTheme.WALNUT.cssFile());
+    }
+
+    @Test
+    void allThemesHaveDisplayNames() {
+        for (Theme t : Theme.values()) {
+            assertNotNull(t.displayName());
+            assertFalse(t.displayName().isBlank());
+        }
     }
 }

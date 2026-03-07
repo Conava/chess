@@ -53,7 +53,8 @@ public class SceneManager {
 
     public void showSettings() {
         var controller = new SettingsController(this, themeManager, i18n, settingsService);
-        swapScene(FXML_SETTINGS, controller, 900, 650);
+        primaryStage.setMaximized(false);
+        swapScene(FXML_SETTINGS, controller, 760, 920);
     }
 
     /**
@@ -98,6 +99,8 @@ public class SceneManager {
             primaryStage.setScene(scene);
         } else {
             rootStack.getChildren().set(0, root);
+            primaryStage.setWidth(w);
+            primaryStage.setHeight(h);
         }
         primaryStage.show();
     }
@@ -106,7 +109,7 @@ public class SceneManager {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource(fxmlPath), i18n.getBundle());
-            loader.setController(controller);
+            loader.setControllerFactory(type -> controller);
             return loader.load();
         } catch (IOException e) {
             throw new RuntimeException("Failed to load FXML: " + fxmlPath, e);

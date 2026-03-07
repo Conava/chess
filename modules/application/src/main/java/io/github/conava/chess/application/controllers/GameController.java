@@ -13,17 +13,23 @@ import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.observer.GameObserver;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
+import javafx.animation.FadeTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.NumberBinding;
+import javafx.scene.Scene;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
+import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +52,8 @@ public class GameController implements GameObserver {
     @FXML private Label    whiteActive;
     @FXML private ListView<String> moveList;
     @FXML private StackPane boardContainer;
-    @FXML private VBox     rankLabels;
-    @FXML private HBox     fileLabels;
+    @FXML private VBox      leftPanel;
+    @FXML private VBox      rightPanel;
 
     private final StackPane[][] boardSquares = new StackPane[8][8];
     private final List<StackPane> markedSquares = new ArrayList<>();
@@ -75,6 +81,7 @@ public class GameController implements GameObserver {
     public void initialize() {
         buildBoard();
         buildLabels();
+        bindPanelWidths();
         registerWithGame();
         updateAll();
     }
@@ -106,25 +113,68 @@ public class GameController implements GameObserver {
             }
         }
 
-        grid.prefWidthProperty().bind(boardContainer.widthProperty());
-        grid.prefHeightProperty().bind(boardContainer.heightProperty());
+        // Keep the grid at its natural (square) size so StackPane centres it.
+        // Without this the StackPane stretches the GridPane to fill boardContainer,
+        // leaving the 8×8 block anchored to the top-left corner.
+        grid.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
 
         boardContainer.getChildren().add(grid);
     }
 
     private void buildLabels() {
-        for (int row = 8; row >= 1; row--) {
-            Label lbl = new Label(String.valueOf(row));
-            lbl.getStyleClass().add("board-label");
-            lbl.prefHeightProperty().bind(squareSize);
-            rankLabels.getChildren().add(lbl);
+        // Rank numbers go in the top-left corner of every left-column square.
+        // File letters go in the bottom-right corner of every bottom-row square.
+        // Both use the opposite square colour so they're always readable.
+        for (int row = 7; row >= 0; row--) {
+            for (int col = 0; col < 8; col++) {
+                StackPane sq = boardSquares[row][col];
+                boolean lightSquare = (row + col) % 2 == 0;
+                String colourClass = lightSquare ? "board-coord-label-on-light"
+                                                 : "board-coord-label-on-dark";
+
+                if (col == 0) {
+                    Label rank = new Label(String.valueOf(row + 1));
+                    rank.getStyleClass().addAll("board-coord-label", colourClass);
+                    rank.styleProperty().bind(squareSize.multiply(0.22)
+                            .asString("-fx-font-size: %.1fpx; -fx-font-weight: bold;"
+                                    + " -fx-padding: 2;"));
+                    rank.setMouseTransparent(true);
+                    StackPane.setAlignment(rank, Pos.TOP_LEFT);
+                    sq.getChildren().add(rank);
+                }
+
+                if (row == 0) {
+                    Label file = new Label(String.valueOf((char) ('a' + col)));
+                    file.getStyleClass().addAll("board-coord-label", colourClass);
+                    file.styleProperty().bind(squareSize.multiply(0.22)
+                            .asString("-fx-font-size: %.1fpx; -fx-font-weight: bold;"
+                                    + " -fx-padding: 2;"));
+                    file.setMouseTransparent(true);
+                    StackPane.setAlignment(file, Pos.BOTTOM_RIGHT);
+                    sq.getChildren().add(file);
+                }
+            }
         }
-        for (char c = 'a'; c <= 'h'; c++) {
-            Label lbl = new Label(String.valueOf(c));
-            lbl.getStyleClass().add("board-label");
-            lbl.prefWidthProperty().bind(squareSize);
-            fileLabels.getChildren().add(lbl);
-        }
+    }
+
+    private void bindPanelWidths() {
+        // Bind to SCENE width, not squareSize. Binding panels to squareSize
+        // creates a cycle: squareSize depends on boardContainer.width, which
+        // depends on panel widths, which would depend on squareSize → oscillation.
+        // Scene width is externally driven (by the OS/user) so there is no loop.
+        Runnable attach = () -> {
+            Scene scene = leftPanel.getScene();
+            if (scene == null) return;
+            NumberBinding pw = Bindings.max(160.0,
+                    Bindings.min(scene.widthProperty().multiply(0.13), 300.0));
+            leftPanel.prefWidthProperty().bind(pw);
+            rightPanel.prefWidthProperty().bind(pw);
+        };
+        // Scene may not exist yet at initialize() time — attach when it arrives.
+        leftPanel.sceneProperty().addListener((obs, old, scene) -> {
+            if (scene != null) attach.run();
+        });
+        if (leftPanel.getScene() != null) attach.run();
     }
 
     // ── Game wiring ───────────────────────────────────────────────────────────
@@ -268,12 +318,22 @@ public class GameController implements GameObserver {
         for (Square sq : squares) {
             StackPane pane = boardSquares[sq.getY()][sq.getX()];
             Circle dot = new Circle();
-            dot.radiusProperty().bind(squareSize.multiply(0.19));
+            dot.radiusProperty().bind(squareSize.multiply(0.20));
             dot.getStyleClass().add("legal-move-dot");
             dot.setUserData("dot");
             dot.setMouseTransparent(true);
+            dot.setOpacity(0);
+            dot.setScaleX(0.5);
+            dot.setScaleY(0.5);
             pane.getChildren().add(dot);
             markedSquares.add(pane);
+
+            FadeTransition fade = new FadeTransition(Duration.millis(90), dot);
+            fade.setToValue(0.65);
+            ScaleTransition scale = new ScaleTransition(Duration.millis(90), dot);
+            scale.setToX(1.0);
+            scale.setToY(1.0);
+            new ParallelTransition(fade, scale).play();
         }
     }
 

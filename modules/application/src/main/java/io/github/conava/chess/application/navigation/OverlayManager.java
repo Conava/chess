@@ -50,8 +50,14 @@ public class OverlayManager {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource(fxmlPath), i18n.getBundle());
-            loader.setController(controller);
+            loader.setControllerFactory(type -> controller);
             Parent content = loader.load();
+
+            // Keep dialogs at their natural (preferred) size so StackPane centres
+            // them rather than stretching them to fill the full window.
+            if (content instanceof Region r) {
+                r.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+            }
 
             Region dim = new Region();
             dim.getStyleClass().add("overlay-dim");
@@ -101,6 +107,7 @@ public class OverlayManager {
         card.getStyleClass().add("overlay-card");
         card.setPadding(new Insets(28));
         card.setMaxWidth(400);
+        card.setMaxHeight(Region.USE_PREF_SIZE);
 
         Region dim = new Region();
         dim.getStyleClass().add("overlay-dim");

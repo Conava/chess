@@ -19,14 +19,14 @@ class SettingsServiceTest {
     }
 
     @Test
-    void defaultThemeIsDark() {
-        assertEquals(Theme.DARK, service.loadTheme());
+    void defaultThemeIsDarkPurple() {
+        assertEquals(Theme.DARK_PURPLE, service.loadTheme());
     }
 
     @Test
     void saveAndLoadTheme() {
-        service.saveTheme(Theme.LIGHT);
-        assertEquals(Theme.LIGHT, service.loadTheme());
+        service.saveTheme(Theme.LIGHT_ARCTIC);
+        assertEquals(Theme.LIGHT_ARCTIC, service.loadTheme());
     }
 
     @Test

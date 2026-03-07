@@ -4,6 +4,7 @@
 <?import javafx.geometry.*?>
 
 <VBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="io.github.conava.chess.application.controllers.WaitingController"
       styleClass="overlay-card" spacing="16" alignment="CENTER" minWidth="320">
     <padding><Insets top="36" right="48" bottom="36" left="48"/></padding>
     <Label text="%waiting.title" styleClass="dialog-title"/>
