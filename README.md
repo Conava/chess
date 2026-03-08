@@ -1,88 +1,410 @@
-# Chess Application
+# Chess
 
-This is a Chess application developed as a university project in Java. It allows users to play chess games in both online and offline modes. The application also provides an API for controlling the game programmatically, enabling better testing abilities and allowing the project to be used as a module in different programs. It can be started in a `nogui` mode for this purpose.
+> A modular, multi-layer Java chess application — offline play, TCP online multiplayer,
+> and a headless API mode, all built around a strict façade API and enforced module boundaries.
 
-## Project Description
+![Java](https://img.shields.io/badge/Java-17-blue?logo=openjdk)
+![JavaFX](https://img.shields.io/badge/JavaFX-21-orange)
+![Maven](https://img.shields.io/badge/build-Maven-red?logo=apachemaven)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-The Chess application is designed with a focus on object-oriented programming principles and follows a modularized architecture. The project is divided into 3 main modules: `application`, `server` and `core`.
 
-### Modules
-
-- **application**: The GUI application for playing chess games.
-- **server**: The server to handle online games.
-- **core**: Contains the core game logic and data structures used by all other modules`
-
+A three-module Maven project (Java 17 + JavaFX 21) implementing a complete chess platform:
+a JavaFX desktop client, a pure-logic game engine, and a TCP multiplayer server — each module
+with hard dependency boundaries enforced by architecture law.
 
 ## Features
 
-- Play chess games in offline mode with 2 local players on one computer.
-- Play chess games in online mode with a client-server architecture.
-- Control the game programmatically using the provided API.
-- Switch between game and main menu.
-- Open settings window.
+- **Offline play** — two players on the same machine, no network needed
+- **Online multiplayer** — TCP-based lobby system; host or join a game by code
+- **Headless / API mode** — run without a GUI for programmatic game control (`nogui` flag)
+- **Pawn promotion** — interactive piece-selection dialog mid-game
+- **Castling** — king-side and queen-side with move-history tracking
+- **Board themes** — Classic, Ocean, and Walnut color schemes
+- **UI themes** — Light and Dark modes with CSS-driven styling
+- **Localization** — English and German (`i18n` properties files)
+- **Concurrent server** — up to 40 simultaneous online games
 
-## Development
+## Architecture
 
-This project is developed using Java and Maven. The main class is `Chess.java` in the `application` module, which contains the main method to start the application. The application can be started with a `nogui` parameter to start it without the GUI and control it with the API methods defined in `Chess.java`.
+### Module Structure
 
-## Build Process
+```text
+┌─────────────────────────────────────────────────────┐
+│                   application                       │
+│  JavaFX 21 UI · Controllers · Theming · i18n · Net  │
+│           depends on → core only                    │
+└──────────────────────┬──────────────────────────────┘
+                       │
+              ┌────────▼────────┐
+              │      core       │
+              │  Game engine ·  │
+              │  Pieces · Rules │
+              │  Observer · API │
+              │  (no deps)      │
+              └────────▲────────┘
+                       │
+┌──────────────────────┴──────────────────────────────┐
+│                    server                           │
+│       TCP server · Lobby · Move relay               │
+│           depends on → core only                    │
+└─────────────────────────────────────────────────────┘
+```
 
-This project uses Maven for dependency management and build automation. Here are the steps to build the project:
+### Architecture Laws
 
-1. **Install the Project**: Use the following command to compile the project:
+These rules are enforced across all modules — no exceptions without explicit approval:
 
-    ```sh
-    mvn install
-    ```
+1. **Hard module boundaries** — `core` has zero dependencies on `application` or `server`. `application` and `server` depend on `core` only, never on each other.
+2. **Façade-only API** — all external interaction with the game engine goes through `Chess.java`. Direct instantiation of `Game` subclasses from outside `core` is banned.
+3. **Observer for state propagation** — UI components implement `GameObserver` and register via `chess.addObserver()`. Polling loops are banned.
+4. **Core is logic-only** — no UI imports, no JavaFX, no I/O in `core`.
+5. **Strategy pattern for ruleset variants** — new rule sets implement the `Ruleset` interface; branching inside `Game` is banned.
 
-   This command compiles the source code of the project and places the output in the `target` directory of the respective module.
-   The JAR files for Application will be created in the `Releases` directory in a subfolder of the current version number as defined in the `pom.xml` file.
+### Design Patterns
 
-2. **Run the Application**: After packaging the project, you can run the application using the following command:
+| Pattern | Implementation | Purpose |
+|---------|----------------|---------|
+| **Façade** | `Chess.java` | Single API surface for all game interaction |
+| **Observer** | `GameObserver` / `Observable` | Decoupled, push-based state propagation to UI |
+| **Strategy** | `Ruleset` interface + `StandardChessRuleset` | Pluggable rule variants without conditionals |
+| **Factory Method** | `Game.createGame()` / `Game.createServerGame()` | Enforces module boundaries; keeps constructors package-private |
+| **Template Method** | `Game.executeMove()` | Defines move sequence; `OnlineGame` overrides for network relay |
 
-    ```sh
-    java -jar Releases/1.0/application-1.0.jar
-    ```
-   
-    This command starts the regular application with the GUI.
+### Key Classes
 
-    To run the application without a GUI (for testing or using with a different GUI), use the following command:
+| Class | Module | Role |
+|-------|--------|------|
+| `Chess` | application | Entry point (`Application`), façade, scene lifecycle |
+| `Game` (abstract) | core | Board state, ruleset, observer list, move history |
+| `OfflineGame` | core | Concrete local two-player game |
+| `OnlineGame` | core | Concrete networked game; delegates I/O to `ServerConnection` |
+| `ServerGame` | core | Server-side game; created only via `Game.createServerGame()` |
+| `GameObserver` | core | Observer interface — `onGameStateChanged()` |
+| `Ruleset` | core | Strategy interface — `getLegalMoves()`, `getGameState()` |
+| `GameController` | application | FXML controller; implements `GameObserver`; renders board |
+| `ServerCommunicationTask` | application | `javafx.concurrent.Task`; implements `ServerConnection` |
+| `GameInstance` | server | Per-game session; holds two `ClientHandler` refs; implements `GameObserver` |
 
-    ```sh
-    java -jar Releases/1.0/application-1.0.jar nogui
-    ```
+## Project Structure
 
-   Please note that when running the application without a GUI, you will need to use the API methods in `Chess.java` to control the game.
+```text
+chess/
+├── modules/
+│   ├── core/                          # Pure game logic — no UI, no I/O
+│   │   └── src/main/java/io/github/conava/chess/
+│   │       ├── data/                  # Board, Square, Piece, Player, Message types
+│   │       ├── exceptions/            # IllegalMoveException
+│   │       └── logic/
+│   │           ├── game/              # Game (abstract), OfflineGame, OnlineGame, ServerGame
+│   │           ├── moves/             # Move, CastleMove, PromotionMove
+│   │           ├── observer/          # GameObserver, Observable
+│   │           └── ruleset/           # Ruleset, StandardChessRuleset, per-piece generators
+│   │
+│   ├── application/                   # JavaFX desktop client
+│   │   └── src/main/
+│   │       ├── java/io/github/conava/chess/application/
+│   │       │   ├── Chess.java         # Entry point + façade
+│   │       │   ├── controllers/       # 8 FXML controllers (game, menus, dialogs)
+│   │       │   ├── navigation/        # SceneManager, OverlayManager
+│   │       │   ├── network/           # ServerCommunicationTask
+│   │       │   ├── settings/          # SettingsService
+│   │       │   ├── tasks/             # ExecuteMove (background Task)
+│   │       │   ├── theme/             # ThemeManager, Theme, BoardTheme
+│   │       │   └── i18n/              # I18n localization helper
+│   │       └── resources/
+│   │           ├── fxml/              # 8 screen layouts
+│   │           ├── css/               # base + dark/light themes + 3 board schemes
+│   │           ├── icon/              # 12 piece PNGs (6 pieces × 2 colors)
+│   │           └── i18n/              # messages_en.properties, messages_de.properties
+│   │
+│   └── server/                        # TCP multiplayer server
+│       └── src/main/java/io/github/conava/chess/server/
+│           ├── Server.java            # Entry point; accept loop; console commands
+│           └── management/
+│               ├── ClientHandler.java # Runnable per connected client
+│               └── GameInstance.java  # Per-game session manager
+│
+├── docs/
+│   ├── decisions/                     # Architecture Decision Records (ADRs)
+│   └── plans/                         # Design and implementation plans
+│
+└── Releases/                          # Built fat JARs
+```
 
-3. **Run the Server**: To run the server, use the following command:
+## Getting Started
 
-    ```sh
-    java -jar Releases/1.0/server-1.0.jar
-    ```
+### Prerequisites
 
-    This command starts the server for online games.
+- **Java 17+** — [Download](https://adoptium.net/)
+- **Maven 3.8+** — [Download](https://maven.apache.org/)
+- JavaFX SDK is **not** required for development mode (bundled via Maven plugin)
 
-## Requirements
+### Build
 
-Please ensure that you have Maven and Java installed on your system and that they are added to your system's PATH.
+```bash
+# Build all modules
+mvn clean install
 
-## API Usage
+# Build only the GUI application (and its dependencies)
+mvn clean package -pl modules/application -am
 
-The `Chess` class provides several methods to control the game programmatically:
+# Build only the server
+mvn clean package -pl modules/server -am
+```
 
-- `startGame(int online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName)`: Starts a new game.
-- `getState()`: Returns the current state of the game.
-- `getBoard()`: Returns the current game board.
-- `addObserver(GameObserver observer)`: Adds an observer to the game.
-- `removeObserver(GameObserver observer)`: Removes an observer from the game.
-- `endGame()`: Ends the current game.
-- `getCurrentPlayer()`: Returns the current player.
-- `getPlayerWhite()`: Returns the white player.
-- `getPlayerBlack()`: Returns the black player.
-- `getPieceAt(Square position)`: Returns the piece at a given position.
-- `getLegalSquares(Square position)`: Returns the legal squares for a piece at a given position.
-- `getMoveList()`: Returns the list of moves made in the game.
-- `movePiece(Square start, Square end)`: Moves a piece in the game.
-- `promoteMove(Square start, Square end, Pieces targetPiece)`: Promotes a piece during a move.
+### Run the GUI (Development)
 
-For detailed usage, refer to the Javadoc comments in the `Chess.java` file.
+```bash
+mvn javafx:run -pl modules/application -am
+```
+
+### Run the GUI (Fat JAR)
+
+Requires JavaFX SDK 21 on the module path:
+
+```bash
+java --module-path /path/to/javafx-sdk-21/lib \
+     --add-modules javafx.controls,javafx.fxml \
+     -jar modules/application/target/application-0.9.jar
+```
+
+### Run Headless (No-GUI / API Mode)
+
+```bash
+mvn javafx:run -pl modules/application -am -Djavafx.args=nogui
+```
+
+### Run the Server
+
+```bash
+# Default port 54321
+java -jar modules/server/target/server-0.9.jar
+
+# Custom port
+java -jar modules/server/target/server-0.9.jar 8080
+```
+
+Server console commands (type while running):
+- `stats` — show active game count and connection list
+- `stop` — gracefully shut down the server
+
+## API Reference
+
+The `Chess` class (`io.github.conava.chess.application.Chess`) is the sole façade for all game interaction. No internal `Game` subclass is accessible from outside `core`.
+
+### Game Lifecycle
+
+| Method | Description |
+|--------|-------------|
+| `startGame(boolean online, RulesetOptions, String playerWhite, String playerBlack, Map<String, String> settings)` | Start a game. Pass `online=false` for local play; `online=true` for networked play with `settings` containing `"ip"` and `"port"` keys. |
+| `endGame()` | Terminate the current game and release resources. |
+
+**Online game settings map:**
+```java
+Map<String, String> settings = Map.of("ip", "192.168.1.10", "port", "54321");
+chess.startGame(true, RulesetOptions.STANDARD, "Alice", "Bob", settings);
+```
+
+**Offline game (settings map is ignored):**
+```java
+chess.startGame(false, RulesetOptions.STANDARD, "Alice", "Bob", null);
+```
+
+### Move Execution
+
+| Method | Description |
+|--------|-------------|
+| `movePiece(Square, Square)` | Execute a standard move from source to destination. Throws `IllegalMoveException`. |
+| `promoteMove(Square, Square, Pieces)` | Execute a pawn promotion move. `Pieces` is an enum (`QUEEN`, `ROOK`, `BISHOP`, `KNIGHT`). Throws `IllegalMoveException`. |
+
+### State Queries
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getState()` | `GameState` | Current game state (RUNNING, CHECKMATE, etc.) |
+| `getBoard()` | `Board` | Snapshot of current board |
+| `getCurrentPlayer()` | `Player` | Player whose turn it is |
+| `getPlayerWhite()` | `Player` | White player info |
+| `getPlayerBlack()` | `Player` | Black player info |
+| `getLegalSquares(Square)` | `List<Square>` | Legal destination squares for a piece |
+| `getPieceAt(Square)` | `Piece` | Piece on the given square (null if empty) |
+| `getMoveList()` | `List<String>` | Full move history as protocol strings (e.g. `"e2-e4"`) |
+| `getJoinCode()` | `String` | Join code for the hosted online game (null if offline) |
+
+### Observer Registration
+
+```java
+chess.addObserver(observer);    // Register a GameObserver
+chess.removeObserver(observer); // Unregister
+```
+
+Implement `GameObserver`:
+
+```java
+public interface GameObserver {
+    void onGameStateChanged();
+}
+```
+
+All UI updates triggered by observer callbacks must be wrapped in `Platform.runLater()`.
+
+### Game States
+
+```java
+public enum GameState {
+    NO_GAME, WAITING_FOR_PLAYER, RUNNING, SERVER_ERROR,
+    WHITE_WON_BY_CHECKMATE, BLACK_WON_BY_CHECKMATE,
+    WHITE_WON_BY_RESIGNATION, BLACK_WON_BY_RESIGNATION,
+    WHITE_WON_BY_TIMEOUT, BLACK_WON_BY_TIMEOUT,
+    DRAW_BY_STALEMATE, DRAW_BY_INSUFFICIENT_MATERIAL,
+    DRAW_BY_THREEFOLD_REPETITION, DRAW_BY_FIFTY_MOVE_RULE
+}
+```
+
+## Server & Network Protocol
+
+### Overview
+
+The server accepts TCP connections on port `54321` (configurable). Each client connection runs in its own thread. Games are managed as isolated `GameInstance` sessions; the server relays moves between the two players and forwards terminal game states.
+
+- **Max concurrent games:** 40 (semaphore-limited)
+- **Protocol:** Newline-delimited plain-text messages
+- **No TLS, authentication, or reconnection** (see [Roadmap](#roadmap))
+
+### Connection Flow
+
+```text
+Client A                    Server                   Client B
+   │                           │                         │
+   │── CREATE_GAME ───────────>│                         │
+   │<─ JOIN_CODE (gameId) ─────│                         │
+   │                           │<──────── JOIN_GAME ─────│
+   │<─ GAME_START ─────────────│─────────── GAME_START ──>│
+   │                           │                         │
+   │── MOVE (e2-e4) ──────────>│                         │
+   │                           │─────────── MOVE ────────>│
+   │<── MOVE (e7-e5) ──────────│<──────── MOVE ──────────│
+   │                           │                         │
+   │<─ GAME_STATUS (terminal) ─│──────── GAME_STATUS ────>│
+```
+
+### Message Format
+
+| Message | Direction | Format |
+|---------|-----------|--------|
+| `CREATE_GAME` | Client → Server | `CREATE_GAME ruleset=STANDARD playerName=<name>` |
+| `JOIN_CODE` | Server → Client | `JOIN_CODE joinCode=<gameId>` |
+| `JOIN_GAME` | Client → Server | `JOIN_GAME gameId=<id> playerName=<name>` |
+| `MOVE` | Client ↔ Server | `MOVE <from>-<to>` (e.g. `MOVE e2-e4`) |
+| `GAME_STATUS` | Server → Client | `GAME_STATUS status=<GameState>` |
+
+If a player disconnects, the server awards a resignation win to the remaining player.
+
+## Tech Stack
+
+| Layer | Technology | Notes |
+|-------|-----------|-------|
+| Language | Java 17 | Records, sealed classes available but not yet used |
+| UI Framework | JavaFX 21 | FXML layouts, CSS theming, `javafx.concurrent.Task` |
+| Build | Maven 4.0.0 | Multi-module, maven-shade-plugin for fat JARs |
+| Testing | JUnit 5.10.1 (core), JUnit 5.8.1 (app/server) | |
+| Mocking | Mockito 5.5.0 | Application module tests only |
+| Networking | Java standard library | `ServerSocket`, `Socket`, `ConcurrentHashMap`, `Semaphore` |
+| Localization | Java `ResourceBundle` | English and German property files |
+| Theming | CSS | base + 2 UI themes + 3 board color schemes |
+
+## Testing
+
+### Coverage Summary
+
+| Module | Test Classes | Focus |
+|--------|-------------|-------|
+| `core` | 15 | Board state, piece construction, move generation, observer notifications, ruleset (all 6 piece types), move parsing, game factory |
+| `application` | 5 | Chess façade, i18n, settings service, theme manager, background move task |
+| `server` | 3 | Server startup, game instance lifecycle, client handler integration |
+
+### Run Tests
+
+```bash
+# All modules
+mvn test
+
+# Specific module
+mvn test -pl modules/core
+mvn test -pl modules/application
+mvn test -pl modules/server
+
+# Specific test class
+mvn -pl modules/core -Dtest=BoardTest test
+```
+
+### Notable Test Classes
+
+- `StandardChessRulesetTest` — validates legal move generation for all piece types
+- `ObserverNotificationTest` — verifies Observer pattern wiring
+- `GameFactoryTest` — verifies façade-enforced game creation constraints
+- `ClientHandlerIntegrationTest` — end-to-end server message flow
+
+## Roadmap
+
+### Chess Rules
+- [ ] En passant
+- [ ] Check-legality filtering (prevent moving into check)
+- [ ] Threefold repetition detection
+- [ ] Fifty-move rule enforcement
+- [ ] Insufficient material detection
+- [ ] Fix castling move validation
+
+### UI / UX
+- [ ] Settings window (theme persistence, language selection)
+- [ ] Keyboard shortcuts and accessibility
+- [ ] In-game clock / time controls
+- [ ] Board coordinate labels (a–h, 1–8)
+
+### Server
+- [ ] TLS/SSL encryption
+- [ ] Reconnection support after disconnect
+- [ ] Player authentication
+- [ ] Configurable game limit (currently hardcoded at 40)
+- [ ] Move validation on the server side
+- [ ] Persistent game history / replay
+
+### Developer Experience
+- [ ] CI/CD pipeline (GitHub Actions)
+- [ ] Code coverage reporting
+- [ ] Docker image for server
+
+## Contributing
+
+### Branch Strategy
+
+All work happens in feature branches — no direct commits to `main`.
+
+**Branch naming:** `<type>/<short-slug>`
+
+Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
+
+Example: `feat/en-passant`, `fix/castling-validation`
+
+### Rules
+
+1. Architecture Laws (listed above) apply to every PR — no exceptions.
+2. Every new public class in `core` must have a corresponding unit test.
+3. No UI code, JavaFX imports, or I/O in `core`.
+4. All game state changes must propagate via the Observer pattern.
+5. Run `mvn test` before opening a PR; all tests must pass.
+
+### Development Flow
+
+```bash
+git checkout -b feat/your-feature
+# implement + test
+mvn test
+git push origin feat/your-feature
+# open PR against main
+```
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
