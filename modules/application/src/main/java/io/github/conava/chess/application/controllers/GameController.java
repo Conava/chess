@@ -41,10 +41,11 @@ public class GameController implements GameObserver {
 
     private static final Logger LOGGER = Logger.getLogger(GameController.class.getName());
 
-    private final SceneManager sceneManager;
-    private final Chess        chess;
-    private final ThemeManager themeManager;
-    private final I18n         i18n;
+    private final SceneManager   sceneManager;
+    private final Chess          chess;
+    private final ThemeManager   themeManager;
+    private final I18n           i18n;
+    private final RulesetOptions ruleset;
 
     @FXML private Label    blackName;
     @FXML private Label    blackActive;
@@ -70,11 +71,12 @@ public class GameController implements GameObserver {
             });
 
     public GameController(SceneManager sceneManager, Chess chess,
-                          ThemeManager themeManager, I18n i18n) {
+                          ThemeManager themeManager, I18n i18n, RulesetOptions ruleset) {
         this.sceneManager = sceneManager;
         this.chess        = chess;
         this.themeManager = themeManager;
         this.i18n         = i18n;
+        this.ruleset      = ruleset;
     }
 
     @FXML
@@ -362,10 +364,10 @@ public class GameController implements GameObserver {
             sceneManager.showMainMenu();
         } else if (ctrl.getChoice() == GameEndController.Choice.REMATCH) {
             chess.endGame();
-            chess.startGame(false,
-                    RulesetOptions.STANDARD,
+            chess.startGame(isOnline,
+                    this.ruleset,
                     whitePlayerName, blackPlayerName, Map.of());
-            sceneManager.showGame();
+            sceneManager.showGame(this.ruleset);
         }
         // NONE = player dismissed without choosing (shouldn't happen in practice)
     }

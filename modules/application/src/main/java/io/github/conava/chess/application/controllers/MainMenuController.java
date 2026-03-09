@@ -47,7 +47,7 @@ public class MainMenuController {
         sceneManager.getChess().startGame(
                 false, setup.getRuleset(),
                 setup.getPlayerWhite(), setup.getPlayerBlack(), null);
-        sceneManager.showGame();
+        sceneManager.showGame(setup.getRuleset());
     }
 
     @FXML
@@ -66,7 +66,7 @@ public class MainMenuController {
         sceneManager.getChess().startGame(
                 true, setup.getRuleset(),
                 setup.getPlayerWhite(), setup.getPlayerBlack(), opts);
-        sceneManager.showGame();
+        sceneManager.showGame(setup.getRuleset());
     }
 
     @FXML
