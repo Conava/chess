@@ -69,7 +69,12 @@ public class GameEndController {
 
         // --- Title ---
         if (isWin) {
-            outcomeTitle.setText(i18n.get("game.end.title.win"));
+            if (isOnline) {
+                outcomeTitle.setText(i18n.get("game.end.title.win"));
+            } else {
+                String winnerName = resolveWinnerName(state, whiteName, blackName);
+                outcomeTitle.setText(MessageFormat.format(i18n.get("game.end.title.win.local"), winnerName));
+            }
         } else if (isDraw) {
             outcomeTitle.setText(i18n.get("game.end.title.draw"));
         } else {
@@ -112,6 +117,14 @@ public class GameEndController {
     // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    /**
+     * Returns the name of the winning player derived from the terminal {@link GameState}.
+     * Package-private for unit testing.
+     */
+    static String resolveWinnerName(GameState state, String whiteName, String blackName) {
+        return state.name().startsWith("WHITE_WON") ? whiteName : blackName;
+    }
 
     private String resolveStateLabel() {
         try {

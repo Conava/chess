@@ -321,7 +321,7 @@ If a player disconnects, the server awards a resignation win to the remaining pl
 | Module | Test Classes | Focus |
 |--------|-------------|-------|
 | `core` | 15 | Board state, piece construction, move generation, observer notifications, ruleset (all 6 piece types), move parsing, game factory |
-| `application` | 5 | Chess façade, i18n, settings service, theme manager, background move task |
+| `application` | 6 | Chess façade, i18n, settings service, theme manager, background move task, scene manager |
 | `server` | 3 | Server startup, game instance lifecycle, client handler integration |
 
 ### Run Tests
@@ -357,7 +357,6 @@ mvn -pl modules/core -Dtest=BoardTest test
 - [ ] Fix castling move validation
 
 ### UI / UX
-- [ ] Settings window (theme persistence, language selection)
 - [ ] Keyboard shortcuts and accessibility
 - [ ] In-game clock / time controls
 - [ ] Board coordinate labels (a–h, 1–8)
