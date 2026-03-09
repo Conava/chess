@@ -280,8 +280,9 @@ ruleset logic internally.
    not throw or return a status, so the caller has no way to detect a rejected start.
 
 2. **Application tests are thin.** `ChessTest.java` has placeholder test methods with empty
-   bodies. Controller tests require a JavaFX runtime (TestFX or Headless FX) and are not yet
-   in place.
+   bodies. `SceneManagerTest.java` covers constructor injection and basic overlay guard
+   behaviour. Full controller tests (board rendering, click logic, overlay flows) require a
+   running JavaFX runtime (TestFX or Headless FX) and are not yet in place.
 
 3. **`SceneManager.showDialog()` is deprecated.** The method exists only for source
    compatibility and forwards to `showOverlay()`. All callers should be updated to call
