@@ -202,8 +202,7 @@ public class GameController implements GameObserver {
                 updateAll();
             }
             case WAITING_FOR_PLAYER -> showWaitingDialog();
-            case SERVER_ERROR -> showErrorAndReturnToMenu(
-                    i18n.get("error.server.title"), i18n.get("error.server"));
+            case SERVER_ERROR -> showErrorAndReturnToMenu(i18n.get("error.server"));
             default -> showGameEndDialog(state);
         }
     }
@@ -371,10 +370,12 @@ public class GameController implements GameObserver {
         // NONE = player dismissed without choosing (shouldn't happen in practice)
     }
 
-    private void showErrorAndReturnToMenu(String title, String message) {
-        sceneManager.showConfirm(message);
-        chess.endGame();
-        sceneManager.showMainMenu();
+    private void showErrorAndReturnToMenu(String message) {
+        boolean confirmed = sceneManager.showConfirm(message);
+        if (confirmed) {
+            chess.endGame();
+            sceneManager.showMainMenu();
+        }
     }
 
     @FXML
