@@ -7,6 +7,7 @@ import io.github.conava.chess.application.controllers.SettingsController;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.settings.SettingsService;
 import io.github.conava.chess.application.theme.ThemeManager;
+import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -45,8 +46,8 @@ public class SceneManager {
         primaryStage.setMaximized(false);
     }
 
-    public void showGame() {
-        var controller = new GameController(this, chess, themeManager, i18n);
+    public void showGame(RulesetOptions ruleset) {
+        var controller = new GameController(this, chess, themeManager, i18n, ruleset);
         swapScene(FXML_GAME, controller, 1280, 860);
         primaryStage.setMaximized(true);
     }
