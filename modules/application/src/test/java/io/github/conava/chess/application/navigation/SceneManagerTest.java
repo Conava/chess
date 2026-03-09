@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.prefs.Preferences;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.*;
 
 class SceneManagerTest {
@@ -97,10 +98,7 @@ class SceneManagerTest {
     @Test
     @DisabledIfSystemProperty(named = "java.awt.headless", matches = "true")
     void showGame_maximizesStage() throws Exception {
-        if (!tryStartToolkit()) {
-            // Skip gracefully if the FX toolkit cannot be started in this environment
-            return;
-        }
+        assumeTrue(tryStartToolkit(), "JavaFX toolkit unavailable — skipping FX test");
 
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> error = new AtomicReference<>();
@@ -137,9 +135,7 @@ class SceneManagerTest {
     @Test
     @DisabledIfSystemProperty(named = "java.awt.headless", matches = "true")
     void showMainMenu_setsStageNonMaximizedWithExpectedDimensions() throws Exception {
-        if (!tryStartToolkit()) {
-            return;
-        }
+        assumeTrue(tryStartToolkit(), "JavaFX toolkit unavailable — skipping FX test");
 
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> error = new AtomicReference<>();
