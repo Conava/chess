@@ -69,7 +69,13 @@ public class GameEndController {
 
         // --- Title ---
         if (isWin) {
-            outcomeTitle.setText(i18n.get("game.end.title.win"));
+            if (isOnline) {
+                outcomeTitle.setText(i18n.get("game.end.title.win"));
+            } else {
+                boolean whiteWon = state.name().startsWith("WHITE_WON");
+                String winnerName = whiteWon ? whiteName : blackName;
+                outcomeTitle.setText(MessageFormat.format(i18n.get("game.end.title.win.local"), winnerName));
+            }
         } else if (isDraw) {
             outcomeTitle.setText(i18n.get("game.end.title.draw"));
         } else {
