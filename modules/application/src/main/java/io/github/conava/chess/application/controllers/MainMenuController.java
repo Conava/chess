@@ -53,6 +53,14 @@ public class MainMenuController {
         OnlineSetupController setup = sceneManager.showOverlay("/fxml/online-setup.fxml", new OnlineSetupController(i18n, sceneManager::dismissOverlay));
         if (!setup.isConfirmed()) return;
 
+        String mode = setup.getMode();
+
+        if ("FIND_MATCH".equals(mode)) {
+            int port = Integer.parseInt(setup.getPort());
+            sceneManager.showWaitingForMatch(setup.getRuleset(), setup.getIp(), port);
+            return;
+        }
+
         Map<String, String> opts = Map.of("ip", setup.getIp(), "port", setup.getPort(), "joinCode", setup.getJoinCode());
 
         sceneManager.getChess().startGame(true, setup.getRuleset(), setup.getPlayerWhite(), setup.getPlayerBlack(), opts);

@@ -240,6 +240,47 @@ public class Chess extends Application {
     // ── Matchmaking facade ────────────────────────────────────────────────────
 
     /**
+     * Returns the active {@link ServerCommunicationTask} for the current online game, or
+     * {@code null} when no online game is in progress.
+     *
+     * @return the active {@link ServerCommunicationTask}, or {@code null}.
+     */
+    public ServerCommunicationTask getActiveServerTask() {
+        return activeServerTask;
+    }
+
+    /**
+     * Sends a {@code CHAT} message to the opponent via the active server connection.
+     *
+     * <p>The message body is encoded as {@code "content=<text>"}. Callers should validate that
+     * {@code content} is non-blank before invoking this method.</p>
+     *
+     * @param content the chat message text to send; must not be {@code null}.
+     * @throws IllegalStateException if there is no active server connection.
+     */
+    public void sendChat(String content) {
+        if (activeServerTask == null || !activeServerTask.isConnected()) {
+            throw new IllegalStateException("Not connected to server");
+        }
+        Message msg = new Message(MessageType.CHAT, "content=" + content);
+        activeServerTask.sendMessage(MessageParser.serialize(msg));
+    }
+
+    /**
+     * Sends a {@code SAVE_GAME} message to the server, requesting that the current game be
+     * saved and ended. The opponent receives the request and may accept or decline.
+     *
+     * @throws IllegalStateException if there is no active server connection.
+     */
+    public void requestSaveGame() {
+        if (activeServerTask == null || !activeServerTask.isConnected()) {
+            throw new IllegalStateException("Not connected to server");
+        }
+        Message msg = new Message(MessageType.SAVE_GAME, "token=" + authToken);
+        activeServerTask.sendMessage(MessageParser.serialize(msg));
+    }
+
+    /**
      * Sends a {@code QUEUE} message to the server via the active server connection,
      * requesting to join the matchmaking queue for the given ruleset.
      *

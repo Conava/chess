@@ -2,10 +2,12 @@ package io.github.conava.chess.server;
 
 import io.github.conava.chess.core.data.io.Message;
 import io.github.conava.chess.core.data.io.MessageType;
+import io.github.conava.chess.server.auth.AuthService;
 import io.github.conava.chess.server.config.ServerConfig;
 import io.github.conava.chess.server.management.ClientHandler;
 import io.github.conava.chess.server.management.GameInstance;
 import io.github.conava.chess.server.management.GameManager;
+import io.github.conava.chess.server.persistence.GameRepository;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -47,6 +49,17 @@ public class Server {
     private volatile boolean running;
 
     /**
+     * Optional authentication service. {@code null} when no auth is configured (e.g., tests
+     * that call the no-arg constructor before wiring auth dependencies).
+     */
+    private AuthService authService;
+
+    /**
+     * Optional game persistence repository. {@code null} when no DB backing is configured.
+     */
+    private GameRepository gameRepository;
+
+    /**
      * Constructs a new {@code Server} instance with a default {@link ServerConfig}.
      *
      * <p>Loads configuration from {@code server.properties} on the classpath (or uses
@@ -73,6 +86,32 @@ public class Server {
         this.gameManager = new GameManager(config.getMaxGames());
         this.connectionsList = new CopyOnWriteArraySet<>();
         this.running = true;
+    }
+
+    /**
+     * Wires the authentication service into this server.
+     *
+     * <p>When set, every {@link ClientHandler} created by this server will use the given
+     * service to validate {@code LOGIN} and {@code REGISTER} requests. If not set (or
+     * {@code null}), authentication is unavailable and clients cannot log in.</p>
+     *
+     * @param authService the {@link AuthService} to use; may be {@code null}
+     */
+    public void setAuthService(AuthService authService) {
+        this.authService = authService;
+    }
+
+    /**
+     * Wires the game repository into this server.
+     *
+     * <p>When set, every {@link ClientHandler} created by this server will use the given
+     * repository for {@code RESUME_GAME} requests. If not set (or {@code null}), game
+     * history is unavailable.</p>
+     *
+     * @param gameRepository the {@link GameRepository} to use; may be {@code null}
+     */
+    public void setGameRepository(GameRepository gameRepository) {
+        this.gameRepository = gameRepository;
     }
 
     /**
@@ -155,7 +194,7 @@ public class Server {
         while (running) {
             try {
                 Socket clientSocket = serverSocket.accept();
-                executorService.execute(new ClientHandler(clientSocket, this));
+                executorService.execute(new ClientHandler(clientSocket, this, gameManager, authService, gameRepository));
             } catch (IOException e) {
                 if (running) {
                     LOGGER.log(Level.SEVERE, "Error accepting client connection", e);

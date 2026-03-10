@@ -16,6 +16,8 @@ public class OnlineSetupController {
     @FXML
     private ToggleButton joinToggle;
     @FXML
+    private ToggleButton findMatchToggle;
+    @FXML
     private ToggleGroup modeGroup;
     @FXML
     private TextField ipField;
@@ -31,6 +33,8 @@ public class OnlineSetupController {
     private Label rulesetLabel;
     @FXML
     private Label errorLabel;
+    @FXML
+    private Button connectButton;
 
     private boolean confirmed = false;
 
@@ -49,14 +53,28 @@ public class OnlineSetupController {
 
     private void updateJoinCodeVisibility() {
         boolean joining = joinToggle.isSelected();
+        boolean findingMatch = findMatchToggle.isSelected();
+
         joinCodeField.setVisible(joining);
         joinCodeField.setManaged(joining);
         joinCodeLabel.setVisible(joining);
         joinCodeLabel.setManaged(joining);
-        rulesetBox.setVisible(!joining);
-        rulesetBox.setManaged(!joining);
-        rulesetLabel.setVisible(!joining);
-        rulesetLabel.setManaged(!joining);
+
+        // Show ruleset picker for create and find-match modes, hide for join
+        boolean showRuleset = !joining;
+        rulesetBox.setVisible(showRuleset);
+        rulesetBox.setManaged(showRuleset);
+        rulesetLabel.setVisible(showRuleset);
+        rulesetLabel.setManaged(showRuleset);
+
+        // Update connect button text for find-match mode
+        if (connectButton != null) {
+            if (findingMatch) {
+                connectButton.setText(i18n.get("online.findMatch"));
+            } else {
+                connectButton.setText(i18n.get("dialog.online.start"));
+            }
+        }
     }
 
     @FXML
@@ -102,6 +120,23 @@ public class OnlineSetupController {
             return p >= 1 && p <= 65535;
         } catch (NumberFormatException e) {
             return false;
+        }
+    }
+
+    /**
+     * Returns the selected mode as a string.
+     *
+     * @return {@code "CREATE"} when the Create Game toggle is selected,
+     *         {@code "JOIN"} when the Join Game toggle is selected, or
+     *         {@code "FIND_MATCH"} when the Find Match toggle is selected.
+     */
+    public String getMode() {
+        if (joinToggle.isSelected()) {
+            return "JOIN";
+        } else if (findMatchToggle.isSelected()) {
+            return "FIND_MATCH";
+        } else {
+            return "CREATE";
         }
     }
 

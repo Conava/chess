@@ -425,7 +425,15 @@ public class GameInstance implements GameObserver {
      * @param clientHandler the handler that sent the chat message
      * @param message       the incoming {@code CHAT} message
      */
-    private void handleChat(ClientHandler clientHandler, Message message) {
+    /**
+     * Handles a {@code CHAT} message from the given client handler. Exposed as
+     * package-private so that {@link ClientHandler} can delegate directly after auth
+     * gating. See {@link #processMessage} for the general dispatch path.
+     *
+     * @param clientHandler the handler that sent the chat message
+     * @param message       the incoming {@code CHAT} message
+     */
+    void handleChat(ClientHandler clientHandler, Message message) {
         if (game == null) {
             return;
         }
@@ -476,7 +484,15 @@ public class GameInstance implements GameObserver {
      * @param clientHandler the handler requesting the save
      * @param message       the {@code SAVE_GAME} message
      */
-    private void handleSaveGame(ClientHandler clientHandler, Message message) {
+    /**
+     * Handles a {@code SAVE_GAME} request from a player. Exposed as package-private so
+     * that {@link ClientHandler} can delegate directly after auth gating. See
+     * {@link #processMessage} for the general dispatch path.
+     *
+     * @param clientHandler the handler requesting the save
+     * @param message       the {@code SAVE_GAME} message
+     */
+    void handleSaveGame(ClientHandler clientHandler, Message message) {
         if (game == null) {
             return;
         }

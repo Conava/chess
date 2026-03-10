@@ -81,6 +81,20 @@ public class SceneManager {
     }
 
     /**
+     * Navigates to the matchmaking waiting screen where the client searches for an
+     * available opponent with the given ruleset on the specified server.
+     *
+     * <p>This method is a stub — the full implementation will be added in T24.
+     *
+     * @param ruleset the ruleset the player wants to use for the matched game
+     * @param ip      the server IP address or hostname
+     * @param port    the server port number
+     */
+    public void showWaitingForMatch(RulesetOptions ruleset, String ip, int port) {
+        // TODO: T24
+    }
+
+    /**
      * @deprecated Use {@link #showOverlay(String, Object)} instead.
      * Kept for source compatibility until Task 5 updates all callers.
      */

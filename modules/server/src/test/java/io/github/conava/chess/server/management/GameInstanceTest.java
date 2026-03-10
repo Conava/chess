@@ -72,7 +72,7 @@ class GameInstanceTest {
         private final List<Message> sentMessages = new CopyOnWriteArrayList<>();
 
         TrackingClientHandler(Server server) {
-            super(new Socket(), server);
+            super(new Socket(), server, server.getGameManager(), null, null);
         }
 
         @Override
