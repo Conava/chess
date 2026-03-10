@@ -16,4 +16,13 @@ public class King extends Piece {
     public boolean getHasMoved() {
         return this.hasMoved;
     }
+
+    @Override
+    public King copy() {
+        King copy = new King(this.player);
+        if (this.hasMoved) {
+            copy.setHasMoved();
+        }
+        return copy;
+    }
 }
