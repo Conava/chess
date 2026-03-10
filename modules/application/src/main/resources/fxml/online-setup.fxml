@@ -29,7 +29,7 @@
     <Label fx:id="joinCodeLabel" text="%dialog.online.joincode"/>
     <TextField fx:id="joinCodeField" promptText="%dialog.online.joincode"/>
 
-    <Label text="%dialog.online.ruleset"/>
+    <Label fx:id="rulesetLabel" text="%dialog.online.ruleset"/>
     <ComboBox fx:id="rulesetBox" maxWidth="Infinity"/>
 
     <Label fx:id="errorLabel" style="-fx-text-fill: red;" visible="false" managed="false"/>
