@@ -16,4 +16,12 @@ public abstract class Piece {
     public Pieces getType() {
         return Pieces.valueOf(this.getClass().getSimpleName().toUpperCase());
     }
+
+    /**
+     * Returns a new {@code Piece} of the same concrete type, owning the same {@link Player}.
+     * Stateful subclasses (e.g. {@link King}, {@link Rook}) must copy all relevant state.
+     *
+     * @return a distinct but semantically equivalent piece instance
+     */
+    public abstract Piece copy();
 }

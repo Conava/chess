@@ -10,6 +10,11 @@ public class Pawn extends Piece {
         super(player);
     }
 
+    @Override
+    public Pawn copy() {
+        return new Pawn(this.player);
+    }
+
     public boolean hasMoveJustMovedTwoSquares(List<Move> list) {
         if (list == null || list.isEmpty()) {
             return false;
