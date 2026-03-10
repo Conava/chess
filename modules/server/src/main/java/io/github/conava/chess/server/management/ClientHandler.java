@@ -177,7 +177,11 @@ public class ClientHandler implements Runnable {
         gameInstance = new GameInstance(gameId, ruleset);
         gameInstance.connectPlayer(this, playerName);
         server.addGame(gameId, gameInstance);
-        sendMessage(new Message(MessageType.JOIN_CODE, "joinCode=" + gameId));
+        String joinCodeContent = "joinCode=" + gameId;
+        if (gameInstance.getPositionIndex() >= 0) {
+            joinCodeContent += " position=" + gameInstance.getPositionIndex() + " ruleset=CHESS960";
+        }
+        sendMessage(new Message(MessageType.JOIN_CODE, joinCodeContent));
     }
 
     /**

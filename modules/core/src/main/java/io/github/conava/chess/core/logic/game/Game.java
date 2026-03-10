@@ -135,7 +135,7 @@ public abstract class Game extends Observable {
         return color == PlayerColor.WHITE ? "Player 1 (White)" : "Player 2 (Black)";
     }
 
-    private Ruleset createRuleset(RulesetOptions selectedRuleset) {
+    protected Ruleset createRuleset(RulesetOptions selectedRuleset) {
         return switch (selectedRuleset) {
             case STANDARD -> new StandardChessRuleset();
             case CHESS960 -> new Chess960Ruleset();
@@ -383,7 +383,7 @@ public abstract class Game extends Observable {
      * @return A copy of the board.
      */
     public Board getBoard() {
-        return board.getCopy();
+        return board != null ? board.getCopy() : null;
     }
 
     public void setGameState(GameState gameState) {

@@ -51,6 +51,7 @@ public class GameController implements GameObserver {
     @FXML private Label    blackActive;
     @FXML private Label    whiteName;
     @FXML private Label    whiteActive;
+    @FXML private Label    gameLabelDisplay;
     @FXML private ListView<String> moveList;
     @FXML private StackPane boardContainer;
     @FXML private VBox      leftPanel;
@@ -227,6 +228,16 @@ public class GameController implements GameObserver {
         updateBoard();
         updateMoveList();
         updateActivePlayerIndicator();
+        updateGameLabel();
+    }
+
+    private void updateGameLabel() {
+        String label = chess.getGameLabel();
+        if (label != null && !label.isEmpty()) {
+            gameLabelDisplay.setText(label);
+            gameLabelDisplay.setVisible(true);
+            gameLabelDisplay.setManaged(true);
+        }
     }
 
     private void updateBoard() {

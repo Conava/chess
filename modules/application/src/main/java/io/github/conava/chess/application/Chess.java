@@ -141,6 +141,7 @@ public class Chess extends Application {
     public Player    getPlayerWhite()     { return game == null ? null : game.getPlayerWhite(); }
     public Player    getPlayerBlack()     { return game == null ? null : game.getPlayerBlack(); }
     public String    getJoinCode()        { return game != null ? game.getJoinCode() : null; }
+    public String    getGameLabel()       { return game != null ? game.getRuleset() != null ? game.getRuleset().getGameLabel() : "" : ""; }
 
     public Piece getPieceAt(Square position) {
         return game == null ? null : game.getPieceAt(position);
