@@ -72,7 +72,7 @@ public abstract class Game extends Observable {
     private Ruleset createRuleset(RulesetOptions selectedRuleset) {
         return switch (selectedRuleset) {
             case STANDARD -> new StandardChessRuleset();
-            // Implement other rulesets here
+            case CHESS960 -> new StandardChessRuleset(); // placeholder — Chess960Ruleset added in a later task
         };
     }
 
