@@ -182,15 +182,19 @@ public class Board {
      */
     private void handleCastleMove(Square startSquare, Square endSquare) {
         Piece rook;
+        Square rookOldSquare;
+        Square rookNewSquare;
         if (endSquare.getX() == 2) { // castle long (queenside): king ends on c-file
-            rook = getSquare(startSquare.getY(), 0).getPiece(); // rook on a-file
-            getSquare(startSquare.getY(), 3).setPiece(rook);    // rook moves to d-file
-            getSquare(startSquare.getY(), 0).setPiece(null);    // clear a-file
+            rookOldSquare = getSquare(startSquare.getY(), 0); // rook on a-file
+            rookNewSquare = getSquare(startSquare.getY(), 3); // rook moves to d-file
         } else { // castle short (kingside): king ends on g-file
-            rook = getSquare(startSquare.getY(), 7).getPiece(); // rook on h-file
-            getSquare(startSquare.getY(), 5).setPiece(rook);    // rook moves to f-file
-            getSquare(startSquare.getY(), 7).setPiece(null);    // clear h-file
+            rookOldSquare = getSquare(startSquare.getY(), 7); // rook on h-file
+            rookNewSquare = getSquare(startSquare.getY(), 5); // rook moves to f-file
         }
+        rook = rookOldSquare.getPiece();
+        rookNewSquare.setPiece(rook);
+        rookOldSquare.setPiece(null);
+        updatePieceLists(rookOldSquare, rookNewSquare, rook);
     }
 
     /**

@@ -33,12 +33,19 @@ class DrawDetectionTest {
      * We move knights back and forth for 100 half-moves (50 full moves).
      * White knight: g1-f3-g1-f3...
      * Black knight: g8-f6-g8-f6...
+     *
+     * The position history is cleared each cycle to prevent threefold repetition
+     * from triggering before the 50-move rule.
      */
     @Test
     void fiftyMoveRule_drawAfter100HalfMovesWithoutPawnOrCapture() throws IllegalMoveException {
         Game game = createAndStartGame();
 
         for (int i = 0; i < 50; i++) {
+            // Clear position history each cycle to prevent threefold repetition
+            // from triggering before the 50-move clock reaches 100.
+            game.positionHistory.clear();
+
             if (i % 2 == 0) {
                 move(game, 0, 6, 2, 5); // Ng1-f3
                 move(game, 7, 6, 5, 5); // Ng8-f6

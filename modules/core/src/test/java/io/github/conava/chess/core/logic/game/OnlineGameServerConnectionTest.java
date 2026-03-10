@@ -63,6 +63,8 @@ class OnlineGameServerConnectionTest {
         // No joinCode → creating a new game; local player is WHITE
         game = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), connection);
         game.connectToServerGame();
+        // Simulate a second player joining so the game transitions to RUNNING
+        game.setGameState(GameState.RUNNING);
     }
 
     // ---- sendMessage() is called on connectToServerGame() ----
