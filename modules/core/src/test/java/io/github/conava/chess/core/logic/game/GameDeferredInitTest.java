@@ -113,14 +113,13 @@ class GameDeferredInitTest {
 
     @Test
     void initializeBoard_doubleCallGuard_throwsIllegalStateException() {
-        // After creating a server game with a ruleset, calling initializeBoard again should throw.
+        // After creating a server game with a ruleset, the board is already initialized.
+        // Calling initializeBoard a second time must throw IllegalStateException.
         Chess960Ruleset chess960 = new Chess960Ruleset();
         Game game = Game.createServerGame(chess960, "A", "B");
-        // initializeBoard is protected; we verify the guard via reflection or subclass,
-        // but since it's protected we must rely on indirect effects.
-        // The ServerGame constructor that takes a Ruleset calls initializeBoard once.
-        // We verify the state is stable.
-        assertNotNull(game.getRuleset());
+        // initializeBoard is protected and this test is in the same package, so it is accessible.
+        assertThrows(IllegalStateException.class,
+                () -> game.initializeBoard(new StandardChessRuleset()));
     }
 
     // -------------------------------------------------------------------------

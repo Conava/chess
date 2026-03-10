@@ -68,7 +68,6 @@ public class Chess960StartPosition {
      */
     public static Square[][] generate(Player white, Player black) {
         Random rng = new Random();
-        int[] backRankFiles = new int[8]; // piece type index per file, -1 = empty initially
 
         // Build back rank as a list of piece types
         Piece[] whiteBackRank = new Piece[8];

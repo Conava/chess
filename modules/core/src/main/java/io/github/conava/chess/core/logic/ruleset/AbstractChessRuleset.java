@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * bounds helpers. Subclasses need only override {@link #getStartBoard} and, if they
  * use a different castling encoding, {@link #getPseudoLegalKingSquares}.
  *
- * <p>The {@link #getSudoLegalSquares} dispatch is {@code protected} so subclasses
+ * <p>The {@link #getPseudoLegalSquares} dispatch is {@code protected} so subclasses
  * can reuse it when building their own override of {@link #getLegalSquares}.
  */
 public abstract class AbstractChessRuleset implements Ruleset {
@@ -91,7 +91,7 @@ public abstract class AbstractChessRuleset implements Ruleset {
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
         if (square.getPiece() == null) return Collections.emptyList();
 
-        List<Square> pseudoLegal = getSudoLegalSquares(square, board, moves);
+        List<Square> pseudoLegal = getPseudoLegalSquares(square, board, moves);
         List<Square> legal = new ArrayList<>();
 
         // Derive the moving player from the piece on the source square so that
@@ -145,7 +145,7 @@ public abstract class AbstractChessRuleset implements Ruleset {
      * @param moves  Move history (used by pawn for en passant, by king for castling)
      * @return list of pseudo-legal target squares
      */
-    protected List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) {
+    protected List<Square> getPseudoLegalSquares(Square square, Board board, List<Move> moves) {
         if (square.getPiece().getClass().equals(Rook.class)) {
             PossibleStandardRookMoves rookMoves = new PossibleStandardRookMoves(square, board);
             return rookMoves.getPossibleSquares();
