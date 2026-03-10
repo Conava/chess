@@ -48,6 +48,19 @@ public class Move {
     }
 
     /**
+     * Gets the type of piece that made this move, as recorded at construction time.
+     * <p>
+     * This value is captured when the {@code Move} is constructed, before the piece is
+     * removed from the start square by {@code Board.executeMove}. It is safe to use even
+     * after the move has been committed (when the start square's piece reference is null).
+     *
+     * @return the {@link Pieces} enum constant identifying the moving piece type
+     */
+    public Pieces getPieceType() {
+        return pieceType;
+    }
+
+    /**
      * Converts the move to a string representation.
      *
      * @return The string representation of the move.
