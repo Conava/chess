@@ -51,9 +51,10 @@ The game engine. Owns everything related to chess rules and game state:
   plus an abstract `Piece` base class. All pieces implement `copy()` for deep cloning (preserving
   state such as `hasMoved` on `King` and `Rook`).
 - **Move types** — `Move`, `CastleMove`, `PromotionMove`
-- **Ruleset** — `Ruleset` interface and `StandardChessRuleset` with per-piece move generators.
-  `StandardChessRuleset.getLegalSquares` filters pseudo-legal moves through deep-copy simulation
-  to enforce check legality. Includes en passant generation.
+- **Ruleset** — `Ruleset` interface, `AbstractChessRuleset` shared base class, and two
+  concrete implementations: `StandardChessRuleset` and `Chess960Ruleset`. Per-piece move
+  generators are shared. `AbstractChessRuleset.getLegalSquares` filters pseudo-legal moves
+  through deep-copy simulation to enforce check legality. Includes en passant generation.
 - **Game lifecycle** — abstract `Game` class plus three concrete subtypes:
   `OfflineGame`, `OnlineGame`, `ServerGame`. Game-end detection (`evaluateGameEnd`) handles
   checkmate, stalemate, 50-move rule, threefold repetition, and insufficient material.
@@ -99,7 +100,10 @@ The TCP multiplayer server. Owns the network session management:
 | `GameObserver` | core | `logic/observer/GameObserver.java` | Observer interface; `onGameStateChanged()` |
 | `Observable` | core | `logic/observer/Observable.java` | Observer list management (CopyOnWriteArrayList) |
 | `Ruleset` | core | `logic/ruleset/Ruleset.java` | Strategy interface for ruleset variants |
-| `StandardChessRuleset` | core | `logic/ruleset/standardChessRuleset/StandardChessRuleset.java` | Standard chess move generation |
+| `AbstractChessRuleset` | core | `logic/ruleset/AbstractChessRuleset.java` | Shared base class for chess variants (move dispatch, check filter) |
+| `StandardChessRuleset` | core | `logic/ruleset/standardChessRuleset/StandardChessRuleset.java` | Standard chess -- overrides `getStartBoard` only |
+| `Chess960Ruleset` | core | `logic/ruleset/chess960Ruleset/Chess960Ruleset.java` | Chess960 -- randomized start position, dynamic castling |
+| `Chess960StartPosition` | core | `logic/ruleset/chess960Ruleset/Chess960StartPosition.java` | Random position generator + Scharnagl index codec |
 | `Board` | core | `data/board/Board.java` | 8×8 grid; executes moves (incl. en passant capture removal); maintains piece lists; deep-copy via `getCopy()` |
 | `GameController` | application | `controllers/GameController.java` | In-game screen; implements `GameObserver` |
 | `SceneManager` | application | `navigation/SceneManager.java` | Loads FXML; swaps full scenes |

@@ -16,8 +16,8 @@ public class PromotionMove extends Move {
     /**
      * Constructs a PromotionMove.
      *
-     * @param start The starting square of the move.
-     * @param end The ending square of the move.
+     * @param start       The starting square of the move.
+     * @param end         The ending square of the move.
      * @param targetPiece The piece to which the pawn is promoted.
      */
     public PromotionMove(Square start, Square end, Piece targetPiece) {

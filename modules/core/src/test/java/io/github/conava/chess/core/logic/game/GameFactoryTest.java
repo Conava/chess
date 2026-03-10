@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for the factory and default no-op methods added to Game in the
  * fix/application-architecture-violations branch (Tasks 1-2 of the plan).
- *
+ * <p>
  * Covered behaviours:
  * - Game.createGame(false, ...) produces a non-null, working OfflineGame
  * - Game.createGame(true, ...)  produces a non-null OnlineGame via a stub connection
@@ -59,15 +59,13 @@ class GameFactoryTest {
     void testCreateOfflineGameViaFactory_afterStartGameStateIsRunning() {
         Game game = Game.createGame(false, RulesetOptions.STANDARD, "Alice", "Bob", null, null);
         game.startGame();
-        assertEquals(GameState.RUNNING, game.getState(),
-                "After startGame(), createGame(false,...) game state must be RUNNING");
+        assertEquals(GameState.RUNNING, game.getState(), "After startGame(), createGame(false,...) game state must be RUNNING");
     }
 
     @Test
     void testCreateOfflineGameViaFactory_getJoinCodeReturnsNull() {
         Game game = Game.createGame(false, RulesetOptions.STANDARD, "Alice", "Bob", null, null);
-        assertNull(game.getJoinCode(),
-                "createGame(false,...) must return a game whose getJoinCode() is null");
+        assertNull(game.getJoinCode(), "createGame(false,...) must return a game whose getJoinCode() is null");
     }
 
     // -------------------------------------------------------------------------
@@ -85,16 +83,14 @@ class GameFactoryTest {
     void testCreateOnlineGameViaFactory_getJoinCodeDoesNotThrow() {
         NoOpConnection conn = new NoOpConnection();
         Game game = Game.createGame(true, RulesetOptions.STANDARD, "Alice", "Bob", Map.of(), conn);
-        assertDoesNotThrow(game::getJoinCode,
-                "getJoinCode() on an OnlineGame created via the factory must not throw");
+        assertDoesNotThrow(game::getJoinCode, "getJoinCode() on an OnlineGame created via the factory must not throw");
     }
 
     @Test
     void testCreateOnlineGameViaFactory_connectToServerGameDoesNotThrow() {
         NoOpConnection conn = new NoOpConnection();
         Game game = Game.createGame(true, RulesetOptions.STANDARD, "Alice", "Bob", Map.of(), conn);
-        assertDoesNotThrow(game::connectToServerGame,
-                "connectToServerGame() on an OnlineGame created via the factory must not throw");
+        assertDoesNotThrow(game::connectToServerGame, "connectToServerGame() on an OnlineGame created via the factory must not throw");
     }
 
     // -------------------------------------------------------------------------
@@ -104,8 +100,7 @@ class GameFactoryTest {
     @Test
     void testGetJoinCodeReturnsNullForOfflineGame() {
         OfflineGame offlineGame = new OfflineGame(RulesetOptions.STANDARD, "Alice", "Bob");
-        assertNull(offlineGame.getJoinCode(),
-                "OfflineGame.getJoinCode() must return null");
+        assertNull(offlineGame.getJoinCode(), "OfflineGame.getJoinCode() must return null");
     }
 
     // -------------------------------------------------------------------------
@@ -115,8 +110,7 @@ class GameFactoryTest {
     @Test
     void testConnectToServerGameNoOpForOffline() {
         OfflineGame offlineGame = new OfflineGame(RulesetOptions.STANDARD, "Alice", "Bob");
-        assertDoesNotThrow(offlineGame::connectToServerGame,
-                "OfflineGame.connectToServerGame() must not throw (no-op default)");
+        assertDoesNotThrow(offlineGame::connectToServerGame, "OfflineGame.connectToServerGame() must not throw (no-op default)");
     }
 
     // -------------------------------------------------------------------------
@@ -127,7 +121,6 @@ class GameFactoryTest {
     void testHandleMessageNoOpForOffline() {
         OfflineGame offlineGame = new OfflineGame(RulesetOptions.STANDARD, "Alice", "Bob");
         Message msg = new Message(MessageType.SUCCESS, "move=accepted");
-        assertDoesNotThrow(() -> offlineGame.handleMessage(msg),
-                "OfflineGame.handleMessage() must not throw (no-op default)");
+        assertDoesNotThrow(() -> offlineGame.handleMessage(msg), "OfflineGame.handleMessage() must not throw (no-op default)");
     }
 }

@@ -5,7 +5,9 @@ import io.github.conava.chess.core.data.pieces.*;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
+
 import java.util.List;
 
 /**
@@ -33,20 +35,16 @@ class CastlingBugTest {
 
         // Verify castling is in legal squares
         List<Square> kingLegal = game.getLegalSquares(new Square(0, 4));
-        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 6),
-                "King should be able to castle kingside");
+        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 6), "King should be able to castle kingside");
 
         // Castle: Ke1-g1
         move(game, 0, 4, 0, 6);
 
         // Verify king moved to g1
-        assertInstanceOf(King.class, game.getPieceAt(new Square(0, 6)),
-                "King should be on g1");
+        assertInstanceOf(King.class, game.getPieceAt(new Square(0, 6)), "King should be on g1");
         // Verify rook moved from h1 to f1
-        assertInstanceOf(Rook.class, game.getPieceAt(new Square(0, 5)),
-                "Rook should be on f1 after kingside castling");
-        assertNull(game.getPieceAt(new Square(0, 7)),
-                "h1 should be empty after castling");
+        assertInstanceOf(Rook.class, game.getPieceAt(new Square(0, 5)), "Rook should be on f1 after kingside castling");
+        assertNull(game.getPieceAt(new Square(0, 7)), "h1 should be empty after castling");
     }
 
     @Test
@@ -66,19 +64,15 @@ class CastlingBugTest {
 
         // Verify castling is in legal squares
         List<Square> kingLegal = game.getLegalSquares(new Square(0, 4));
-        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 2),
-                "King should be able to castle queenside");
+        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 2), "King should be able to castle queenside");
 
         // Castle: Ke1-c1
         move(game, 0, 4, 0, 2);
 
         // Verify king moved to c1
-        assertInstanceOf(King.class, game.getPieceAt(new Square(0, 2)),
-                "King should be on c1");
+        assertInstanceOf(King.class, game.getPieceAt(new Square(0, 2)), "King should be on c1");
         // Verify rook moved from a1 to d1
-        assertInstanceOf(Rook.class, game.getPieceAt(new Square(0, 3)),
-                "Rook should be on d1 after queenside castling");
-        assertNull(game.getPieceAt(new Square(0, 0)),
-                "a1 should be empty after castling");
+        assertInstanceOf(Rook.class, game.getPieceAt(new Square(0, 3)), "Rook should be on d1 after queenside castling");
+        assertNull(game.getPieceAt(new Square(0, 0)), "a1 should be empty after castling");
     }
 }

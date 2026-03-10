@@ -10,20 +10,23 @@ import javafx.scene.control.TextField;
 
 public class OfflineSetupController {
 
-    private final I18n            i18n;
+    private final I18n i18n;
     private final SettingsService settingsService;
-    private final Runnable        closeAction;
+    private final Runnable closeAction;
 
-    @FXML private TextField whiteField;
-    @FXML private TextField blackField;
-    @FXML private ComboBox<RulesetOptions> rulesetBox;
+    @FXML
+    private TextField whiteField;
+    @FXML
+    private TextField blackField;
+    @FXML
+    private ComboBox<RulesetOptions> rulesetBox;
 
     private boolean confirmed = false;
 
     public OfflineSetupController(I18n i18n, SettingsService settingsService, Runnable closeAction) {
-        this.i18n            = i18n;
+        this.i18n = i18n;
         this.settingsService = settingsService;
-        this.closeAction     = closeAction;
+        this.closeAction = closeAction;
     }
 
     @FXML
@@ -43,10 +46,23 @@ public class OfflineSetupController {
     }
 
     @FXML
-    private void onCancel() { if (closeAction != null) closeAction.run(); }
+    private void onCancel() {
+        if (closeAction != null) closeAction.run();
+    }
 
-    public boolean isConfirmed()       { return confirmed; }
-    public String getPlayerWhite()     { return whiteField.getText().trim(); }
-    public String getPlayerBlack()     { return blackField.getText().trim(); }
-    public RulesetOptions getRuleset() { return rulesetBox.getValue(); }
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public String getPlayerWhite() {
+        return whiteField.getText().trim();
+    }
+
+    public String getPlayerBlack() {
+        return blackField.getText().trim();
+    }
+
+    public RulesetOptions getRuleset() {
+        return rulesetBox.getValue();
+    }
 }

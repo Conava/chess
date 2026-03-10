@@ -13,47 +13,60 @@ import javafx.scene.control.ToggleGroup;
 
 public class SettingsController {
 
-    private final SceneManager    sceneManager;
-    private final ThemeManager    themeManager;
-    private final I18n            i18n;
+    private final SceneManager sceneManager;
+    private final ThemeManager themeManager;
+    private final I18n i18n;
     private final SettingsService settingsService;
 
-    @FXML private ToggleButton midnightSwatch;
-    @FXML private ToggleButton emberSwatch;
-    @FXML private ToggleButton manuscriptSwatch;
-    @FXML private ToggleButton fjordSwatch;
-    @FXML private ToggleGroup  themeGroup;
-    @FXML private ToggleButton classicSwatch;
-    @FXML private ToggleButton oceanSwatch;
-    @FXML private ToggleButton walnutSwatch;
-    @FXML private ToggleGroup  boardGroup;
-    @FXML private ToggleButton enToggle;
-    @FXML private ToggleButton deToggle;
-    @FXML private ToggleGroup  langGroup;
-    @FXML private TextField    whiteNameField;
-    @FXML private TextField    blackNameField;
+    @FXML
+    private ToggleButton midnightSwatch;
+    @FXML
+    private ToggleButton emberSwatch;
+    @FXML
+    private ToggleButton manuscriptSwatch;
+    @FXML
+    private ToggleButton fjordSwatch;
+    @FXML
+    private ToggleGroup themeGroup;
+    @FXML
+    private ToggleButton classicSwatch;
+    @FXML
+    private ToggleButton oceanSwatch;
+    @FXML
+    private ToggleButton walnutSwatch;
+    @FXML
+    private ToggleGroup boardGroup;
+    @FXML
+    private ToggleButton enToggle;
+    @FXML
+    private ToggleButton deToggle;
+    @FXML
+    private ToggleGroup langGroup;
+    @FXML
+    private TextField whiteNameField;
+    @FXML
+    private TextField blackNameField;
 
-    public SettingsController(SceneManager sceneManager, ThemeManager themeManager,
-                               I18n i18n, SettingsService settingsService) {
-        this.sceneManager    = sceneManager;
-        this.themeManager    = themeManager;
-        this.i18n            = i18n;
+    public SettingsController(SceneManager sceneManager, ThemeManager themeManager, I18n i18n, SettingsService settingsService) {
+        this.sceneManager = sceneManager;
+        this.themeManager = themeManager;
+        this.i18n = i18n;
         this.settingsService = settingsService;
     }
 
     @FXML
     public void initialize() {
         switch (themeManager.getTheme()) {
-            case DARK_PURPLE   -> midnightSwatch.setSelected(true);
+            case DARK_PURPLE -> midnightSwatch.setSelected(true);
             case DARK_CHARCOAL -> emberSwatch.setSelected(true);
-            case LIGHT_PAPER   -> manuscriptSwatch.setSelected(true);
-            case LIGHT_ARCTIC  -> fjordSwatch.setSelected(true);
+            case LIGHT_PAPER -> manuscriptSwatch.setSelected(true);
+            case LIGHT_ARCTIC -> fjordSwatch.setSelected(true);
         }
 
         switch (themeManager.getBoardTheme()) {
             case CLASSIC -> classicSwatch.setSelected(true);
-            case OCEAN   -> oceanSwatch.setSelected(true);
-            case WALNUT  -> walnutSwatch.setSelected(true);
+            case OCEAN -> oceanSwatch.setSelected(true);
+            case WALNUT -> walnutSwatch.setSelected(true);
         }
 
         if (i18n.getLanguage() == I18n.Language.EN) enToggle.setSelected(true);
@@ -63,20 +76,20 @@ public class SettingsController {
         blackNameField.setText(settingsService.loadPlayerBlack());
 
         themeGroup.selectedToggleProperty().addListener((o, old, sel) -> {
-            if      (sel == midnightSwatch)  themeManager.setTheme(Theme.DARK_PURPLE);
-            else if (sel == emberSwatch)     themeManager.setTheme(Theme.DARK_CHARCOAL);
+            if (sel == midnightSwatch) themeManager.setTheme(Theme.DARK_PURPLE);
+            else if (sel == emberSwatch) themeManager.setTheme(Theme.DARK_CHARCOAL);
             else if (sel == manuscriptSwatch) themeManager.setTheme(Theme.LIGHT_PAPER);
-            else if (sel == fjordSwatch)     themeManager.setTheme(Theme.LIGHT_ARCTIC);
+            else if (sel == fjordSwatch) themeManager.setTheme(Theme.LIGHT_ARCTIC);
         });
 
         boardGroup.selectedToggleProperty().addListener((o, old, sel) -> {
-            if      (sel == classicSwatch) themeManager.setBoardTheme(BoardTheme.CLASSIC);
-            else if (sel == oceanSwatch)   themeManager.setBoardTheme(BoardTheme.OCEAN);
-            else if (sel == walnutSwatch)  themeManager.setBoardTheme(BoardTheme.WALNUT);
+            if (sel == classicSwatch) themeManager.setBoardTheme(BoardTheme.CLASSIC);
+            else if (sel == oceanSwatch) themeManager.setBoardTheme(BoardTheme.OCEAN);
+            else if (sel == walnutSwatch) themeManager.setBoardTheme(BoardTheme.WALNUT);
         });
 
         langGroup.selectedToggleProperty().addListener((o, old, sel) -> {
-            if      (sel == enToggle) i18n.setLanguage(I18n.Language.EN);
+            if (sel == enToggle) i18n.setLanguage(I18n.Language.EN);
             else if (sel == deToggle) i18n.setLanguage(I18n.Language.DE);
         });
     }

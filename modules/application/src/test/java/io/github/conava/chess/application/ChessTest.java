@@ -5,6 +5,7 @@ import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ChessTest {
@@ -64,13 +65,13 @@ class ChessTest {
     @Test
     void addObserverThrowsWhenNoGame() {
         chess.endGame();
-        assertThrows(IllegalStateException.class, () -> chess.addObserver(() -> {}));
+        assertThrows(IllegalStateException.class, () -> chess.addObserver(() -> {
+        }));
     }
 
     @Test
     void movePieceThrowsWhenNoGame() {
         chess.endGame();
-        assertThrows(IllegalStateException.class,
-                () -> chess.movePiece(new Square(6, 4), new Square(4, 4)));
+        assertThrows(IllegalStateException.class, () -> chess.movePiece(new Square(6, 4), new Square(4, 4)));
     }
 }

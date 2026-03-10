@@ -12,37 +12,31 @@ class GameEndControllerTest {
 
     @Test
     void resolveWinnerName_returnsWhiteName_forWhiteWonByCheckmate() {
-        assertEquals(WHITE,
-                GameEndController.resolveWinnerName(GameState.WHITE_WON_BY_CHECKMATE, WHITE, BLACK));
+        assertEquals(WHITE, GameEndController.resolveWinnerName(GameState.WHITE_WON_BY_CHECKMATE, WHITE, BLACK));
     }
 
     @Test
     void resolveWinnerName_returnsWhiteName_forWhiteWonByResignation() {
-        assertEquals(WHITE,
-                GameEndController.resolveWinnerName(GameState.WHITE_WON_BY_RESIGNATION, WHITE, BLACK));
+        assertEquals(WHITE, GameEndController.resolveWinnerName(GameState.WHITE_WON_BY_RESIGNATION, WHITE, BLACK));
     }
 
     @Test
     void resolveWinnerName_returnsWhiteName_forWhiteWonByTimeout() {
-        assertEquals(WHITE,
-                GameEndController.resolveWinnerName(GameState.WHITE_WON_BY_TIMEOUT, WHITE, BLACK));
+        assertEquals(WHITE, GameEndController.resolveWinnerName(GameState.WHITE_WON_BY_TIMEOUT, WHITE, BLACK));
     }
 
     @Test
     void resolveWinnerName_returnsBlackName_forBlackWonByCheckmate() {
-        assertEquals(BLACK,
-                GameEndController.resolveWinnerName(GameState.BLACK_WON_BY_CHECKMATE, WHITE, BLACK));
+        assertEquals(BLACK, GameEndController.resolveWinnerName(GameState.BLACK_WON_BY_CHECKMATE, WHITE, BLACK));
     }
 
     @Test
     void resolveWinnerName_returnsBlackName_forBlackWonByResignation() {
-        assertEquals(BLACK,
-                GameEndController.resolveWinnerName(GameState.BLACK_WON_BY_RESIGNATION, WHITE, BLACK));
+        assertEquals(BLACK, GameEndController.resolveWinnerName(GameState.BLACK_WON_BY_RESIGNATION, WHITE, BLACK));
     }
 
     @Test
     void resolveWinnerName_returnsBlackName_forBlackWonByTimeout() {
-        assertEquals(BLACK,
-                GameEndController.resolveWinnerName(GameState.BLACK_WON_BY_TIMEOUT, WHITE, BLACK));
+        assertEquals(BLACK, GameEndController.resolveWinnerName(GameState.BLACK_WON_BY_TIMEOUT, WHITE, BLACK));
     }
 }

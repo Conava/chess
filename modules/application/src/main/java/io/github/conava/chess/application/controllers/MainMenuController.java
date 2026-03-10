@@ -13,15 +13,18 @@ import java.util.Map;
 public class MainMenuController {
 
     private final SceneManager sceneManager;
-    private final I18n         i18n;
+    private final I18n i18n;
 
-    @FXML private ImageView titleImage;
-    @FXML private ImageView watermarkImage;
-    @FXML private Button    exitBtn;
+    @FXML
+    private ImageView titleImage;
+    @FXML
+    private ImageView watermarkImage;
+    @FXML
+    private Button exitBtn;
 
     public MainMenuController(SceneManager sceneManager, I18n i18n) {
         this.sceneManager = sceneManager;
-        this.i18n         = i18n;
+        this.i18n = i18n;
     }
 
     @FXML
@@ -38,34 +41,21 @@ public class MainMenuController {
 
     @FXML
     private void onLocalGame() {
-        OfflineSetupController setup = sceneManager.showOverlay(
-                "/fxml/offline-setup.fxml",
-                new OfflineSetupController(i18n, sceneManager.getSettingsService(),
-                        sceneManager::dismissOverlay));
+        OfflineSetupController setup = sceneManager.showOverlay("/fxml/offline-setup.fxml", new OfflineSetupController(i18n, sceneManager.getSettingsService(), sceneManager::dismissOverlay));
         if (!setup.isConfirmed()) return;
 
-        sceneManager.getChess().startGame(
-                false, setup.getRuleset(),
-                setup.getPlayerWhite(), setup.getPlayerBlack(), null);
+        sceneManager.getChess().startGame(false, setup.getRuleset(), setup.getPlayerWhite(), setup.getPlayerBlack(), null);
         sceneManager.showGame(setup.getRuleset());
     }
 
     @FXML
     private void onOnlineGame() {
-        OnlineSetupController setup = sceneManager.showOverlay(
-                "/fxml/online-setup.fxml",
-                new OnlineSetupController(i18n, sceneManager.getSettingsService(),
-                        sceneManager::dismissOverlay));
+        OnlineSetupController setup = sceneManager.showOverlay("/fxml/online-setup.fxml", new OnlineSetupController(i18n, sceneManager::dismissOverlay));
         if (!setup.isConfirmed()) return;
 
-        Map<String, String> opts = Map.of(
-                "ip",       setup.getIp(),
-                "port",     setup.getPort(),
-                "joinCode", setup.getJoinCode());
+        Map<String, String> opts = Map.of("ip", setup.getIp(), "port", setup.getPort(), "joinCode", setup.getJoinCode());
 
-        sceneManager.getChess().startGame(
-                true, setup.getRuleset(),
-                setup.getPlayerWhite(), setup.getPlayerBlack(), opts);
+        sceneManager.getChess().startGame(true, setup.getRuleset(), setup.getPlayerWhite(), setup.getPlayerBlack(), opts);
         sceneManager.showGame(setup.getRuleset());
     }
 

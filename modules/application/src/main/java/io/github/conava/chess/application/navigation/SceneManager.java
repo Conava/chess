@@ -19,24 +19,24 @@ import java.io.IOException;
 public class SceneManager {
 
     private static final String FXML_MAIN_MENU = "/fxml/main-menu.fxml";
-    private static final String FXML_GAME      = "/fxml/game.fxml";
-    private static final String FXML_SETTINGS  = "/fxml/settings.fxml";
+    private static final String FXML_GAME = "/fxml/game.fxml";
+    private static final String FXML_SETTINGS = "/fxml/settings.fxml";
 
-    private final Stage           primaryStage;
-    private final Chess           chess;
-    private final ThemeManager    themeManager;
-    private final I18n            i18n;
+    private final Stage primaryStage;
+    private final Chess chess;
+    private final ThemeManager themeManager;
+    private final I18n i18n;
     private final SettingsService settingsService;
 
-    private StackPane      rootStack;
+    private StackPane rootStack;
     private OverlayManager overlayManager;
 
     public SceneManager(Stage primaryStage, Chess chess, ThemeManager themeManager,
                         I18n i18n, SettingsService settingsService) {
-        this.primaryStage    = primaryStage;
-        this.chess           = chess;
-        this.themeManager    = themeManager;
-        this.i18n            = i18n;
+        this.primaryStage = primaryStage;
+        this.chess = chess;
+        this.themeManager = themeManager;
+        this.i18n = i18n;
         this.settingsService = settingsService;
     }
 
@@ -47,7 +47,7 @@ public class SceneManager {
     }
 
     public void showGame(RulesetOptions ruleset) {
-        var controller = new GameController(this, chess, themeManager, i18n, ruleset);
+        var controller = new GameController(this, chess, i18n, ruleset);
         swapScene(FXML_GAME, controller, 1280, 860);
         primaryStage.setMaximized(true);
     }
@@ -60,7 +60,7 @@ public class SceneManager {
 
     /**
      * @deprecated Use {@link #showOverlay(String, Object)} instead.
-     *             Kept for source compatibility until Task 5 updates all callers.
+     * Kept for source compatibility until Task 5 updates all callers.
      */
     @Deprecated
     public <C> C showDialog(String fxmlPath, C controller) {
@@ -83,7 +83,9 @@ public class SceneManager {
         return requireOverlay().showConfirm(message);
     }
 
-    /** Dismisses the topmost overlay. Called by dialog controllers. */
+    /**
+     * Dismisses the topmost overlay. Called by dialog controllers.
+     */
     public void dismissOverlay() {
         requireOverlay().dismiss();
     }
@@ -93,9 +95,9 @@ public class SceneManager {
     private void swapScene(String fxmlPath, Object controller, double w, double h) {
         Parent root = loadFxml(fxmlPath, controller);
         if (primaryStage.getScene() == null) {
-            rootStack      = new StackPane(root);
+            rootStack = new StackPane(root);
             overlayManager = new OverlayManager(rootStack, i18n);
-            Scene scene    = new Scene(rootStack, w, h);
+            Scene scene = new Scene(rootStack, w, h);
             themeManager.registerScene(scene);
             primaryStage.setScene(scene);
         } else {
@@ -127,9 +129,23 @@ public class SceneManager {
 
     // ── Accessors ─────────────────────────────────────────────────────────────
 
-    public Stage           getPrimaryStage()      { return primaryStage; }
-    public Chess           getChess()             { return chess; }
-    public ThemeManager    getThemeManager()       { return themeManager; }
-    public I18n            getI18n()               { return i18n; }
-    public SettingsService getSettingsService()    { return settingsService; }
+    public Stage getPrimaryStage() {
+        return primaryStage;
+    }
+
+    public Chess getChess() {
+        return chess;
+    }
+
+    public ThemeManager getThemeManager() {
+        return themeManager;
+    }
+
+    public I18n getI18n() {
+        return i18n;
+    }
+
+    public SettingsService getSettingsService() {
+        return settingsService;
+    }
 }

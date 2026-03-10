@@ -14,12 +14,12 @@ import io.github.conava.chess.core.data.pieces.Pieces;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.data.board.Board;
-import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.moves.PromotionMove;
 import io.github.conava.chess.core.logic.observer.Observable;
 import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
+import io.github.conava.chess.core.logic.ruleset.chess960Ruleset.Chess960Ruleset;
 import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
 import java.util.ArrayList;
@@ -53,10 +53,74 @@ public abstract class Game extends Observable {
     public Game(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
         this.player0 = createPlayer(playerWhiteName, PlayerColor.WHITE);
         this.player1 = createPlayer(playerBlackName, PlayerColor.BLACK);
-        this.ruleset = createRuleset(selectedRuleset);
-        this.board = new Board(ruleset.getStartBoard(player0, player1));
         this.turnCount = 0;
         this.moves = new ArrayList<>();
+        Ruleset r = createRuleset(selectedRuleset);
+        initializeBoard(r);
+    }
+
+    /**
+     * Deferred-initialization constructor. When {@code deferBoardInit} is {@code true},
+     * the board and ruleset are <em>not</em> initialized during construction — they remain
+     * {@code null} until {@link #initializeBoard(Ruleset)} is called.
+     *
+     * <p>This constructor is intended for online games where the authoritative ruleset
+     * (including Chess960 position index) is only known after the first server response.
+     *
+     * @param selectedRuleset The ruleset option (used as a fallback hint; may be ignored
+     *                        when {@code deferBoardInit} is {@code true}).
+     * @param playerWhiteName The name of the white player.
+     * @param playerBlackName The name of the black player.
+     * @param deferBoardInit  {@code true} to skip board construction; {@code false}
+     *                        behaves identically to the two-argument constructor.
+     */
+    protected Game(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, boolean deferBoardInit) {
+        this.player0 = createPlayer(playerWhiteName, PlayerColor.WHITE);
+        this.player1 = createPlayer(playerBlackName, PlayerColor.BLACK);
+        this.turnCount = 0;
+        this.moves = new ArrayList<>();
+        if (!deferBoardInit) {
+            Ruleset r = createRuleset(selectedRuleset);
+            initializeBoard(r);
+        }
+        // When deferBoardInit == true, ruleset and board remain null until
+        // initializeBoard(Ruleset) is invoked by the subclass.
+    }
+
+    /**
+     * Constructor that accepts a pre-constructed {@link Ruleset} instance.
+     *
+     * <p>Used by {@link ServerGame} when the server module provides a fully configured
+     * ruleset (e.g. a {@code Chess960Ruleset} with a specific Scharnagl index).
+     *
+     * @param ruleset         The pre-built ruleset to use for this game.
+     * @param playerWhiteName The name of the white player.
+     * @param playerBlackName The name of the black player.
+     */
+    protected Game(Ruleset ruleset, String playerWhiteName, String playerBlackName) {
+        this.player0 = createPlayer(playerWhiteName, PlayerColor.WHITE);
+        this.player1 = createPlayer(playerBlackName, PlayerColor.BLACK);
+        this.turnCount = 0;
+        this.moves = new ArrayList<>();
+        initializeBoard(ruleset);
+    }
+
+    /**
+     * Initializes the board and ruleset from a pre-constructed {@link Ruleset} instance.
+     *
+     * <p>Must be called exactly once per game instance. Calling this method when the board
+     * is already initialized throws {@link IllegalStateException} to prevent accidental
+     * double-initialization.
+     *
+     * @param ruleset The ruleset to use; must not be {@code null}.
+     * @throws IllegalStateException if the board has already been initialized.
+     */
+    protected void initializeBoard(Ruleset ruleset) {
+        if (this.board != null) {
+            throw new IllegalStateException("initializeBoard() called on an already-initialized game");
+        }
+        this.ruleset = ruleset;
+        this.board = new Board(ruleset.getStartBoard(player0, player1));
         // Record the initial position for threefold repetition tracking.
         positionHistory.put(computePositionKey(), 1);
     }
@@ -69,10 +133,10 @@ public abstract class Game extends Observable {
         return color == PlayerColor.WHITE ? "Player 1 (White)" : "Player 2 (Black)";
     }
 
-    private Ruleset createRuleset(RulesetOptions selectedRuleset) {
+    protected Ruleset createRuleset(RulesetOptions selectedRuleset) {
         return switch (selectedRuleset) {
             case STANDARD -> new StandardChessRuleset();
-            // Implement other rulesets here
+            case CHESS960 -> new Chess960Ruleset();
         };
     }
 
@@ -89,26 +153,21 @@ public abstract class Game extends Observable {
      * {@link #connectToServerGame()} on the returned instance after registering a message
      * handler — see {@link OnlineGame#create} for the two-phase construction contract.
      *
-     * @param online               {@code true} to create an online game, {@code false} for offline.
-     * @param selectedRuleset      The ruleset to use for this game.
-     * @param playerWhiteName      The name of the white player.
-     * @param playerBlackName      The name of the black player.
-     * @param onlineGameSettings   Key-value settings for online games (e.g. join code).
-     *                             Ignored when {@code online} is {@code false}.
-     *                             Must not be {@code null} when {@code online} is {@code true}.
-     * @param connection           The {@link ServerConnection} for online communication.
-     *                             Ignored when {@code online} is {@code false}.
-     *                             Must not be {@code null} when {@code online} is {@code true}.
+     * @param online             {@code true} to create an online game, {@code false} for offline.
+     * @param selectedRuleset    The ruleset to use for this game.
+     * @param playerWhiteName    The name of the white player.
+     * @param playerBlackName    The name of the black player.
+     * @param onlineGameSettings Key-value settings for online games (e.g. join code).
+     *                           Ignored when {@code online} is {@code false}.
+     *                           Must not be {@code null} when {@code online} is {@code true}.
+     * @param connection         The {@link ServerConnection} for online communication.
+     *                           Ignored when {@code online} is {@code false}.
+     *                           Must not be {@code null} when {@code online} is {@code true}.
      * @return A new {@link Game} instance of the appropriate subtype.
      * @throws IllegalArgumentException if {@code online} is {@code true} and either
      *                                  {@code onlineGameSettings} or {@code connection} is {@code null}.
      */
-    public static Game createGame(boolean online,
-                                  RulesetOptions selectedRuleset,
-                                  String playerWhiteName,
-                                  String playerBlackName,
-                                  Map<String, String> onlineGameSettings,
-                                  ServerConnection connection) {
+    public static Game createGame(boolean online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings, ServerConnection connection) {
         if (online) {
             if (onlineGameSettings == null) {
                 throw new IllegalArgumentException("onlineGameSettings must not be null for an online game");
@@ -132,17 +191,46 @@ public abstract class Game extends Observable {
      * {@link #startGame()} to transition the game to {@link GameState#RUNNING} before
      * accepting moves.
      *
-     * @param selectedRuleset  The ruleset to use for this game; must not be {@code null}.
-     * @param playerWhiteName  Display name for the white player. A blank string causes the
-     *                         {@link Game} superclass to substitute a default name.
-     * @param playerBlackName  Display name for the black player. A blank string causes the
-     *                         {@link Game} superclass to substitute a default name.
+     * @param selectedRuleset The ruleset to use for this game; must not be {@code null}.
+     * @param playerWhiteName Display name for the white player. A blank string causes the
+     *                        {@link Game} superclass to substitute a default name.
+     * @param playerBlackName Display name for the black player. A blank string causes the
+     *                        {@link Game} superclass to substitute a default name.
      * @return A new {@link Game} instance backed by a {@link ServerGame}.
      */
-    public static Game createServerGame(RulesetOptions selectedRuleset,
-                                        String playerWhiteName,
-                                        String playerBlackName) {
+    public static Game createServerGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
         return new ServerGame(selectedRuleset, playerWhiteName, playerBlackName);
+    }
+
+    /**
+     * Creates a server-side game with a pre-constructed {@link Ruleset} instance.
+     *
+     * <p>Use this overload when the server module already holds a fully configured ruleset
+     * (e.g. a {@code Chess960Ruleset} built from the authoritative Scharnagl index). The
+     * supplied ruleset is used as-is; no {@code createRuleset} lookup is performed.
+     *
+     * <p>The returned game is in an uninitialised state. The caller must invoke
+     * {@link #startGame()} before accepting moves.
+     *
+     * @param ruleset         The pre-built ruleset; must not be {@code null}.
+     * @param playerWhiteName Display name for the white player.
+     * @param playerBlackName Display name for the black player.
+     * @return A new {@link Game} instance backed by a {@link ServerGame}.
+     */
+    public static Game createServerGame(Ruleset ruleset, String playerWhiteName, String playerBlackName) {
+        return new ServerGame(ruleset, playerWhiteName, playerBlackName);
+    }
+
+    /**
+     * Returns the active {@link Ruleset} for this game.
+     *
+     * <p>For deferred-initialization online games this method returns {@code null} until
+     * {@link #initializeBoard(Ruleset)} has been called.
+     *
+     * @return the active ruleset, or {@code null} if board initialization is still pending
+     */
+    public Ruleset getRuleset() {
+        return ruleset;
     }
 
     /**
@@ -196,8 +284,10 @@ public abstract class Game extends Observable {
         Square start = toBoardSquare(squareStart);
         Square end = toBoardSquare(squareEnd);
         Move move;
-        if (start.getPiece() instanceof King && Math.abs(end.getX() - start.getX()) == 2) {
-            move = new CastleMove(start, end);
+        if (ruleset.isCastlingMove(start, end)) {
+            // Delegate CastleMove construction to the ruleset so that the correct
+            // rook-origin and king-dest files are encoded for both standard and Chess960.
+            move = ruleset.buildCastleMove(start, end);
         } else {
             move = new Move(start, end);
         }
@@ -282,7 +372,7 @@ public abstract class Game extends Observable {
      * @return A copy of the board.
      */
     public Board getBoard() {
-        return board.getCopy();
+        return board != null ? board.getCopy() : null;
     }
 
     public void setGameState(GameState gameState) {
@@ -335,7 +425,7 @@ public abstract class Game extends Observable {
      */
     protected void executeMove(Move move) throws IllegalMoveException {
         if (gameState != GameState.RUNNING) {
-            throw new IllegalMoveException(move);
+            throw new IllegalMoveException();
         }
         if (isMoveValid(move)) {
             updateHalfMoveClock(move);
@@ -345,7 +435,7 @@ public abstract class Game extends Observable {
             evaluateGameEnd();
             notifyObservers();
         } else {
-            throw new IllegalMoveException(move);
+            throw new IllegalMoveException();
         }
     }
 
@@ -361,10 +451,7 @@ public abstract class Game extends Observable {
         Player player = this.getCurrentPlayer();
         Player startSquarePlayer = squareStart.isOccupiedBy();
 
-        return ruleset.isValidSquare(squareStart) &&
-                startSquarePlayer != null &&
-                startSquarePlayer == player &&
-                this.getLegalSquares(squareStart).contains(squareEnd);
+        return ruleset.isValidSquare(squareStart) && startSquarePlayer != null && startSquarePlayer == player && this.getLegalSquares(squareStart).contains(squareEnd);
     }
 
     /**
@@ -393,12 +480,12 @@ public abstract class Game extends Observable {
      */
     private Piece getNewPiece(Pieces targetPiece, Player player) {
         return switch (targetPiece) {
-            case QUEEN  -> new Queen(player);
-            case ROOK   -> new Rook(player);
+            case QUEEN -> new Queen(player);
+            case ROOK -> new Rook(player);
             case BISHOP -> new Bishop(player);
             case KNIGHT -> new Knight(player);
-            default     -> throw new IllegalArgumentException(
-                    "Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
+            default ->
+                    throw new IllegalArgumentException("Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
         };
     }
 
@@ -414,9 +501,7 @@ public abstract class Game extends Observable {
     private void updateHalfMoveClock(Move move) {
         Piece movingPiece = move.getStart().getPiece();
         boolean isPawnMove = movingPiece instanceof Pawn;
-        boolean isEnPassant = isPawnMove
-                && move.getStart().getX() != move.getEnd().getX()
-                && move.getEnd().getPiece() == null;
+        boolean isEnPassant = isPawnMove && move.getStart().getX() != move.getEnd().getX() && move.getEnd().getPiece() == null;
         boolean isCapture = move.getEnd().getPiece() != null || isEnPassant;
         halfMoveClock = (isPawnMove || isCapture) ? 0 : halfMoveClock + 1;
     }
@@ -443,9 +528,7 @@ public abstract class Game extends Observable {
         if (!nextHasLegalMove) {
             boolean nextInCheck = ruleset.isCheck(board, nextPlayer, moves);
             if (nextInCheck) {
-                gameState = previousPlayer == player0
-                        ? GameState.WHITE_WON_BY_CHECKMATE
-                        : GameState.BLACK_WON_BY_CHECKMATE;
+                gameState = previousPlayer == player0 ? GameState.WHITE_WON_BY_CHECKMATE : GameState.BLACK_WON_BY_CHECKMATE;
             } else {
                 gameState = GameState.DRAW_BY_STALEMATE;
             }
@@ -532,19 +615,17 @@ public abstract class Game extends Observable {
             }
         }
 
-        // Castling rights
-        sb.append(castlingChar(0, 4, 7)); // white kingside
-        sb.append(castlingChar(0, 4, 0)); // white queenside
-        sb.append(castlingChar(7, 4, 7)); // black kingside
-        sb.append(castlingChar(7, 4, 0)); // black queenside
+        // Castling rights — scan dynamically so the key is correct for all
+        // starting positions (standard and Chess960).
+        appendCastlingRights(sb, 0, player0); // white
+        appendCastlingRights(sb, 7, player1); // black
 
         // En passant target file
         int epFile = -1;
         if (!moves.isEmpty()) {
             Move lastMove = moves.get(moves.size() - 1);
             Piece lastPiece = lastMove.getEnd().getPiece();
-            if (lastPiece instanceof Pawn
-                    && Math.abs(lastMove.getEnd().getY() - lastMove.getStart().getY()) == 2) {
+            if (lastPiece instanceof Pawn && Math.abs(lastMove.getEnd().getY() - lastMove.getStart().getY()) == 2) {
                 epFile = lastMove.getEnd().getX();
             }
         }
@@ -554,24 +635,50 @@ public abstract class Game extends Observable {
     }
 
     /**
-     * Returns a character indicating whether a specific castling right is available.
-     * A castling right is available when neither the king on {@code kingX} nor the
-     * rook on {@code rookX} at rank {@code rank} has moved.
+     * Appends castling-right indicators for the given player's back rank to {@code sb}.
      *
-     * @param rank  The rank (y-coordinate) of the king and rook.
-     * @param kingX The file (x-coordinate) of the king.
-     * @param rookX The file (x-coordinate) of the rook.
-     * @return {@code '1'} if castling is still available, {@code '0'} otherwise.
+     * <p>Scans the rank for the player's king and all unmoved friendly rooks. For each
+     * unmoved rook (if the king has also not moved), appends {@code '1'}; otherwise
+     * appends {@code '0'}. Two characters are appended in total: one for each of the
+     * two potential rooks (right-side rook first, then left-side rook), matching the
+     * previous hardcoded kingside/queenside order.
+     *
+     * <p>This dynamic scan works for both standard chess (king on file 4, rooks on files
+     * 0 and 7) and Chess960 (arbitrary back-rank layout).
+     *
+     * @param sb     The {@link StringBuilder} to append to.
+     * @param rank   The rank (y-coordinate) to scan.
+     * @param player The player whose castling rights are being computed.
      */
-    private char castlingChar(int rank, int kingX, int rookX) {
-        Piece kingPiece = board.getSquare(rank, kingX).getPiece();
-        Piece rookPiece = board.getSquare(rank, rookX).getPiece();
-        if (kingPiece instanceof King king && !king.getHasMoved()
-                && rookPiece instanceof Rook rook && rook.getHasNotMoved()
-                && rook.getPlayer().equals(king.getPlayer())) {
-            return '1';
+    private void appendCastlingRights(StringBuilder sb, int rank, Player player) {
+        // Locate the king on this rank
+        King king = null;
+        for (int x = 0; x < 8; x++) {
+            Piece p = board.getSquare(rank, x).getPiece();
+            if (p instanceof King k && k.getPlayer().equals(player)) {
+                king = k;
+                break;
+            }
         }
-        return '0';
+
+        // Find the rightmost and leftmost unmoved friendly rooks
+        Rook rightRook = null;
+        Rook leftRook = null;
+        for (int x = 7; x >= 0; x--) {
+            Piece p = board.getSquare(rank, x).getPiece();
+            if (p instanceof Rook r && r.getHasNotMoved() && r.getPlayer().equals(player)) {
+                if (rightRook == null) {
+                    rightRook = r;
+                } else {
+                    leftRook = r;
+                    break;
+                }
+            }
+        }
+
+        boolean kingUnmoved = king != null && !king.getHasMoved();
+        sb.append(kingUnmoved && rightRook != null ? '1' : '0'); // kingside indicator
+        sb.append(kingUnmoved && leftRook != null ? '1' : '0'); // queenside indicator
     }
 
     /**
@@ -628,14 +735,10 @@ public abstract class Game extends Observable {
         }
 
         // K+B vs K+B same colour bishops
-        if (whiteNonKing.size() == 1 && blackNonKing.size() == 1
-                && whiteNonKing.get(0) instanceof Bishop
-                && blackNonKing.get(0) instanceof Bishop) {
+        if (whiteNonKing.size() == 1 && blackNonKing.size() == 1 && whiteNonKing.get(0) instanceof Bishop && blackNonKing.get(0) instanceof Bishop) {
             int whiteBishopColor = findBishopSquareColor(whitePieces);
             int blackBishopColor = findBishopSquareColor(blackPieces);
-            if (whiteBishopColor == blackBishopColor) {
-                return true;
-            }
+            return whiteBishopColor == blackBishopColor;
         }
 
         return false;

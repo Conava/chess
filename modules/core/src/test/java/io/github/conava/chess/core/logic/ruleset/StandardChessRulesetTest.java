@@ -5,7 +5,6 @@ import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.pieces.*;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.player.PlayerColor;
-import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,12 +64,10 @@ class StandardChessRulesetTest {
         squares[0][3].setPiece(new Queen(white));  // white queen on d1
         Board board = new Board(squares);
 
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 3), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 3), board, new ArrayList<>(), white, black);
 
         // The queen on d1 is not pinned — it must have legal moves available
-        assertFalse(legal.isEmpty(),
-                "Queen with no pin should have legal moves");
+        assertFalse(legal.isEmpty(), "Queen with no pin should have legal moves");
     }
 
     // ---------------------------------------------------------------------------
@@ -93,13 +90,11 @@ class StandardChessRulesetTest {
         squares[7][4].setPiece(new Rook(black));  // black rook e8 (pinning)
         Board board = new Board(squares);
 
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(1, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(1, 4), board, new ArrayList<>(), white, black);
 
         // The pinned rook may only move along the e-file (x=4); no lateral moves allowed
         for (Square s : legal) {
-            assertEquals(4, s.getX(),
-                    "Pinned rook must only move along the pin file (x=4), but got x=" + s.getX());
+            assertEquals(4, s.getX(), "Pinned rook must only move along the pin file (x=4), but got x=" + s.getX());
         }
     }
 
@@ -136,22 +131,18 @@ class StandardChessRulesetTest {
         squares[4][0].setPiece(new Bishop(black));  // black bishop a5 (pins the white bishop)
         Board board = new Board(squares);
 
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(1, 3), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(1, 3), board, new ArrayList<>(), white, black);
 
         // Legal moves must only be along the pin diagonal (x + y = constant = 4)
         // Diagonal a5-e1: squares where x + y == 4: (0,4),(1,3),(2,2),(3,1),(4,0)
         // The bishop is at (1,3). It can move to (2,2), (3,1), (4,0)[capture] along the pin diagonal
         // It must NOT move to squares where x + y != 4
         for (Square s : legal) {
-            assertEquals(4, s.getX() + s.getY(),
-                    "Pinned bishop must only move along the pin diagonal (x+y=4), got ("
-                            + s.getY() + "," + s.getX() + ")");
+            assertEquals(4, s.getX() + s.getY(), "Pinned bishop must only move along the pin diagonal (x+y=4), got (" + s.getY() + "," + s.getX() + ")");
         }
 
         // Must have at least one legal move (can capture or move along diagonal)
-        assertFalse(legal.isEmpty(),
-                "Pinned bishop should still have moves along the pin line");
+        assertFalse(legal.isEmpty(), "Pinned bishop should still have moves along the pin line");
     }
 
     // ---------------------------------------------------------------------------
@@ -176,17 +167,13 @@ class StandardChessRulesetTest {
         Board board = new Board(squares);
 
         // Verify the king is actually in check before testing
-        assertTrue(ruleset.isCheck(board, white, new ArrayList<>()),
-                "White king should be in check from black rook on e8");
+        assertTrue(ruleset.isCheck(board, white, new ArrayList<>()), "White king should be in check from black rook on e8");
 
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
         // Castling kingside would land on g1 (y=0,x=6) — must not appear
-        boolean castlingKingsidePresent = legal.stream()
-                .anyMatch(s -> s.getY() == 0 && s.getX() == 6);
-        assertFalse(castlingKingsidePresent,
-                "Castling kingside (g1) must not be legal when king is in check");
+        boolean castlingKingsidePresent = legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 6);
+        assertFalse(castlingKingsidePresent, "Castling kingside (g1) must not be legal when king is in check");
     }
 
     // ---------------------------------------------------------------------------
@@ -213,23 +200,17 @@ class StandardChessRulesetTest {
         Board board = new Board(squares);
 
         // Verify the king is NOT in check initially (only the transit square is attacked)
-        assertFalse(ruleset.isCheck(board, white, new ArrayList<>()),
-                "White king should NOT be in check initially");
+        assertFalse(ruleset.isCheck(board, white, new ArrayList<>()), "White king should NOT be in check initially");
 
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
         // Castling kingside lands on g1 (y=0,x=6) but passes through f1 (y=0,x=5) which is attacked
-        boolean castlingKingsidePresent = legal.stream()
-                .anyMatch(s -> s.getY() == 0 && s.getX() == 6);
-        assertFalse(castlingKingsidePresent,
-                "Castling kingside must not be legal when the transit square f1 is under attack");
+        boolean castlingKingsidePresent = legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 6);
+        assertFalse(castlingKingsidePresent, "Castling kingside must not be legal when the transit square f1 is under attack");
 
         // The filter must be selective: a normal king step (e.g., to d1) must still be legal
-        boolean d1Present = legal.stream()
-                .anyMatch(s -> s.getY() == 0 && s.getX() == 3);
-        assertTrue(d1Present,
-                "Non-castling king move to d1 must remain legal (filter must not over-prune)");
+        boolean d1Present = legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 3);
+        assertTrue(d1Present, "Non-castling king move to d1 must remain legal (filter must not over-prune)");
     }
 
     // ---------------------------------------------------------------------------
@@ -258,15 +239,12 @@ class StandardChessRulesetTest {
 
         // Deliberately pass white as player1 to reproduce the bug in Game.getLegalSquares.
         // The fix derives movingPlayer from the piece, so it must still filter for black.
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(6, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(6, 4), board, new ArrayList<>(), white, black);
 
         // The black rook may only move along the e-file (x=4) — no lateral moves are legal
-        assertFalse(legal.isEmpty(),
-                "Pinned black rook should still have moves along the pin file");
+        assertFalse(legal.isEmpty(), "Pinned black rook should still have moves along the pin file");
         for (Square s : legal) {
-            assertEquals(4, s.getX(),
-                    "Pinned black rook must only move along the pin file (x=4), but got x=" + s.getX());
+            assertEquals(4, s.getX(), "Pinned black rook must only move along the pin file (x=4), but got x=" + s.getX());
         }
     }
 

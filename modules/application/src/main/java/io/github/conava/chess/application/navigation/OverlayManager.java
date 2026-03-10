@@ -33,12 +33,12 @@ import java.util.Deque;
 public class OverlayManager {
 
     private final StackPane rootStack;
-    private final I18n      i18n;
+    private final I18n i18n;
     private final Deque<Object> nestedLoopKeys = new ArrayDeque<>();
 
     public OverlayManager(StackPane rootStack, I18n i18n) {
         this.rootStack = rootStack;
-        this.i18n      = i18n;
+        this.i18n = i18n;
     }
 
     /**
@@ -94,7 +94,10 @@ public class OverlayManager {
 
         Button yes = new Button(i18n.get("dialog.confirm.yes"));
         yes.getStyleClass().add("btn-primary");
-        yes.setOnAction(e -> { result[0] = true; dismiss(); });
+        yes.setOnAction(e -> {
+            result[0] = true;
+            dismiss();
+        });
 
         Button no = new Button(i18n.get("dialog.confirm.no"));
         no.getStyleClass().add("btn-ghost");

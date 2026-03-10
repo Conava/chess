@@ -5,14 +5,15 @@ import javafx.scene.control.Label;
 
 public class WaitingController {
 
-    @FXML private Label codeLabel;
+    @FXML
+    private Label codeLabel;
 
-    private final String   joinCode;
+    private final String joinCode;
     private final Runnable closeAction;
     private boolean cancelled = false;
 
     public WaitingController(String joinCode, Runnable closeAction) {
-        this.joinCode    = joinCode;
+        this.joinCode = joinCode;
         this.closeAction = closeAction;
     }
 
@@ -27,5 +28,7 @@ public class WaitingController {
         closeAction.run();
     }
 
-    public boolean isCancelled() { return cancelled; }
+    public boolean isCancelled() {
+        return cancelled;
+    }
 }

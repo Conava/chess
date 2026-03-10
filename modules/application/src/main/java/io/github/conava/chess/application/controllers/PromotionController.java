@@ -17,29 +17,26 @@ import javafx.util.Duration;
 
 public class PromotionController {
 
-    @FXML private HBox pieceRow;
+    @FXML
+    private HBox pieceRow;
 
-    private final PlayerColor  playerColor;
-    private final Runnable     closeAction;
+    private final PlayerColor playerColor;
+    private final Runnable closeAction;
     private final NumberBinding cellSize;
     private Pieces selectedPiece = Pieces.QUEEN;
 
-    private static final Pieces[] PROMOTION_OPTIONS = {
-        Pieces.QUEEN, Pieces.ROOK, Pieces.BISHOP, Pieces.KNIGHT
-    };
+    private static final Pieces[] PROMOTION_OPTIONS = {Pieces.QUEEN, Pieces.ROOK, Pieces.BISHOP, Pieces.KNIGHT};
 
-    public PromotionController(PlayerColor playerColor, Runnable closeAction,
-                               NumberBinding cellSize) {
+    public PromotionController(PlayerColor playerColor, Runnable closeAction, NumberBinding cellSize) {
         this.playerColor = playerColor;
         this.closeAction = closeAction;
-        this.cellSize    = cellSize;
+        this.cellSize = cellSize;
     }
 
     @FXML
     public void initialize() {
         for (Pieces piece : PROMOTION_OPTIONS) {
-            String iconPath = "/icon/" + piece.name().toLowerCase()
-                    + "_" + playerColor.name().toLowerCase() + ".png";
+            String iconPath = "/icon/" + piece.name().toLowerCase() + "_" + playerColor.name().toLowerCase() + ".png";
             var url = getClass().getResource(iconPath);
             Button btn = new Button();
             btn.prefWidthProperty().bind(cellSize);
@@ -55,8 +52,10 @@ public class PromotionController {
                 btn.setText(piece.name());
             }
             btn.getStyleClass().add("promotion-piece-btn");
-            Pieces p = piece;
-            btn.setOnAction(e -> { selectedPiece = p; closeAction.run(); });
+            btn.setOnAction(e -> {
+                selectedPiece = piece;
+                closeAction.run();
+            });
             pieceRow.getChildren().add(btn);
         }
 
@@ -73,5 +72,7 @@ public class PromotionController {
         new ParallelTransition(fade, scale).play();
     }
 
-    public Pieces getSelectedPiece() { return selectedPiece; }
+    public Pieces getSelectedPiece() {
+        return selectedPiece;
+    }
 }

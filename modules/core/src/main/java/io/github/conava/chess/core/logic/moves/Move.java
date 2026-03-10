@@ -20,7 +20,7 @@ public class Move {
      * Constructor for the Move class.
      *
      * @param start The starting square of the move.
-     * @param end The ending square of the move.
+     * @param end   The ending square of the move.
      */
     public Move(Square start, Square end) {
         this.start = start;
@@ -156,22 +156,22 @@ public class Move {
      * @param moveString the protocol string to parse, as returned by {@link #toProtocolString()}
      * @param movePlayer the {@link Player} who is making the move (used to construct piece instances)
      * @return the reconstructed {@link Move} (may be a {@link CastleMove} or {@link PromotionMove}
-     *         subtype)
-     * @throws IllegalArgumentException if the promotion piece name is {@code KING} or {@code PAWN},
-     *                                  or if {@code pieceName} is not a valid {@link Pieces} enum name
-     * @throws NullPointerException     if {@code moveString} is {@code null}
+     * subtype)
+     * @throws IllegalArgumentException        if the promotion piece name is {@code KING} or {@code PAWN},
+     *                                         or if {@code pieceName} is not a valid {@link Pieces} enum name
+     * @throws NullPointerException            if {@code moveString} is {@code null}
      * @throws StringIndexOutOfBoundsException if {@code moveString} is too short to parse
      */
     public static Move fromString(String moveString, Player movePlayer) {
         if (moveString.equals("O-O")) {
             int rank = movePlayer.color() == PlayerColor.WHITE ? 0 : 7;
             Square start = new Square(rank, 4); // e1 (white) or e8 (black): row=rank, col=4
-            Square end   = new Square(rank, 6); // g1 (white) or g8 (black): row=rank, col=6
+            Square end = new Square(rank, 6); // g1 (white) or g8 (black): row=rank, col=6
             return new CastleMove(start, end);
         } else if (moveString.equals("O-O-O")) {
             int rank = movePlayer.color() == PlayerColor.WHITE ? 0 : 7;
             Square start = new Square(rank, 4); // e1 (white) or e8 (black): row=rank, col=4
-            Square end   = new Square(rank, 2); // c1 (white) or c8 (black): row=rank, col=2
+            Square end = new Square(rank, 2); // c1 (white) or c8 (black): row=rank, col=2
             return new CastleMove(start, end);
         } else if (moveString.contains("=")) {
             // Protocol format: "<start>-<end>=<PIECES_ENUM_NAME>" e.g. "a7-a8=QUEEN"
@@ -182,12 +182,12 @@ public class Move {
             Square end = convertToSquare(squarePart.substring(3, 5));
             Pieces targetPiece = Pieces.valueOf(pieceName);
             Piece targetPieceInstance = switch (targetPiece) {
-                case QUEEN  -> new Queen(movePlayer);
-                case ROOK   -> new Rook(movePlayer);
+                case QUEEN -> new Queen(movePlayer);
+                case ROOK -> new Rook(movePlayer);
                 case BISHOP -> new Bishop(movePlayer);
                 case KNIGHT -> new Knight(movePlayer);
-                default     -> throw new IllegalArgumentException(
-                        "Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
+                default ->
+                        throw new IllegalArgumentException("Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
             };
             return new PromotionMove(start, end, targetPieceInstance);
         } else {

@@ -3,8 +3,6 @@ package io.github.conava.chess.core.logic.game;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.pieces.*;
-import io.github.conava.chess.core.data.player.Player;
-import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import org.junit.jupiter.api.Test;
@@ -29,11 +27,11 @@ class DrawDetectionTest {
     /**
      * Test the 50-move rule: after 50 full moves (100 half-moves) with no pawn move
      * or capture, the game should be drawn.
-     *
+     * <p>
      * We move knights back and forth for 100 half-moves (50 full moves).
      * White knight: g1-f3-g1-f3...
      * Black knight: g8-f6-g8-f6...
-     *
+     * <p>
      * The position history is cleared each cycle to prevent threefold repetition
      * from triggering before the 50-move rule.
      */
@@ -60,7 +58,7 @@ class DrawDetectionTest {
 
     /**
      * Test threefold repetition: the same position occurring three times results in a draw.
-     *
+     * <p>
      * Move knights back and forth to repeat the starting position:
      * 1. Nf3 Nf6  2. Ng1 Ng8 (position repeats - back to start, count=2)
      * 3. Nf3 Nf6  4. Ng1 Ng8 (position repeats - count=3, draw!)
@@ -88,19 +86,19 @@ class DrawDetectionTest {
 
     /**
      * King vs King is insufficient material.
-     *
+     * <p>
      * We play a game that results in K vs K by capturing everything.
      * Instead, we test the isInsufficientMaterial method directly through
      * a simplified game position. Since we cannot easily set up arbitrary
      * positions through the facade, we will use a full game approach.
-     *
+     * <p>
      * Actually, let's just verify that after many captures leading to K vs K,
      * the game detects insufficient material. Since constructing such a game via
      * moves is extremely complex, we test a simpler scenario first.
-     *
+     * <p>
      * We use a minimal approach: Scholar's Mate style opening, then trade pieces.
      * This is very hard to set up via moves alone, so we take a different approach.
-     *
+     * <p>
      * For now, test that the game state remains RUNNING when material is sufficient.
      * The full K vs K test requires board manipulation access that the facade doesn't provide.
      */
@@ -115,7 +113,7 @@ class DrawDetectionTest {
 
     /**
      * King vs King is insufficient material: the game must be drawn.
-     *
+     * <p>
      * Sets up a bare K vs K position by replacing the board with one that contains
      * only the two kings (white king on e1, black king on e8). Because this class is
      * in the same package as Game, it can access the protected {@code board} and

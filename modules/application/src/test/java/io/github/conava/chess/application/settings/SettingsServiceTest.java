@@ -5,7 +5,9 @@ import io.github.conava.chess.application.theme.BoardTheme;
 import io.github.conava.chess.application.theme.Theme;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import java.util.prefs.Preferences;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class SettingsServiceTest {

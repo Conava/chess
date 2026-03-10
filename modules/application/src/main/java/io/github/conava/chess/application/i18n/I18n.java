@@ -2,15 +2,15 @@ package io.github.conava.chess.application.i18n;
 
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class I18n {
 
-    public enum Language { EN, DE }
+    public enum Language {EN, DE}
 
-    private final ObjectProperty<Language> currentLanguage =
-            new SimpleObjectProperty<>(Language.EN);
+    private final ObjectProperty<Language> currentLanguage = new SimpleObjectProperty<>(Language.EN);
     private ResourceBundle bundle;
 
     public I18n(Language language) {
@@ -27,7 +27,15 @@ public class I18n {
         return bundle.getString(key);
     }
 
-    public ResourceBundle getBundle()                          { return bundle; }
-    public Language getLanguage()                              { return currentLanguage.get(); }
-    public ObjectProperty<Language> currentLanguageProperty() { return currentLanguage; }
+    public ResourceBundle getBundle() {
+        return bundle;
+    }
+
+    public Language getLanguage() {
+        return currentLanguage.get();
+    }
+
+    public ObjectProperty<Language> currentLanguageProperty() {
+        return currentLanguage;
+    }
 }

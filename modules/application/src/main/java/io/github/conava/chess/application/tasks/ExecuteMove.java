@@ -4,6 +4,7 @@ import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.pieces.Pieces;
 import javafx.concurrent.Task;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,15 +19,15 @@ public class ExecuteMove extends Task<Void> {
 
     private static final Logger LOGGER = Logger.getLogger(ExecuteMove.class.getName());
 
-    private final Chess  chess;
+    private final Chess chess;
     private final Square start;
     private final Square end;
     private final Pieces promotionPiece;
 
     public ExecuteMove(Chess chess, Square start, Square end, Pieces promotionPiece) {
-        this.chess          = chess;
-        this.start          = start;
-        this.end            = end;
+        this.chess = chess;
+        this.start = start;
+        this.end = end;
         this.promotionPiece = promotionPiece;
     }
 

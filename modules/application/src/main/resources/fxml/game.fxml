@@ -16,6 +16,8 @@
                 <Label fx:id="blackName"   styleClass="player-name" text="Black"/>
                 <Label fx:id="blackActive" styleClass="player-active-indicator"/>
             </VBox>
+            <Label fx:id="gameLabelDisplay" styleClass="section-heading"
+                   wrapText="true" visible="false" managed="false"/>
             <Region VBox.vgrow="ALWAYS"/>
         </VBox>
     </left>

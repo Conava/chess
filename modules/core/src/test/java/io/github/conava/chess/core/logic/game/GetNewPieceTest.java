@@ -53,7 +53,6 @@ class GetNewPieceTest {
     }
 
     private PromotionTestGame game;
-    private Player whitePlayer;
 
     @BeforeEach
     void setUp() {
@@ -61,7 +60,7 @@ class GetNewPieceTest {
         game.startGame();
 
         // Retrieve the white player that Game created internally
-        whitePlayer = game.getPlayerWhite();
+        Player whitePlayer = game.getPlayerWhite();
 
         // Clear black's back row (y=7) and second row (y=6) at column 0
         // so we can place a white pawn ready to promote.
@@ -123,15 +122,11 @@ class GetNewPieceTest {
 
     @Test
     void promoteToKing_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.KING),
-                "KING is not a valid promotion target; promoteMove must throw IllegalArgumentException");
+        assertThrows(IllegalArgumentException.class, () -> game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.KING), "KING is not a valid promotion target; promoteMove must throw IllegalArgumentException");
     }
 
     @Test
     void promoteToPawn_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class,
-                () -> game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.PAWN),
-                "PAWN is not a valid promotion target; promoteMove must throw IllegalArgumentException");
+        assertThrows(IllegalArgumentException.class, () -> game.promoteMove(new Square(6, 0), new Square(7, 0), Pieces.PAWN), "PAWN is not a valid promotion target; promoteMove must throw IllegalArgumentException");
     }
 }

@@ -24,6 +24,7 @@ public class Board {
 
     /**
      * Constructs a Board with the given squares.
+     *
      * @param board A 2D array of Square objects representing the board.
      */
     public Board(Square[][] board) {
@@ -62,6 +63,7 @@ public class Board {
 
     /**
      * Returns the square at the specified coordinates.
+     *
      * @param y The y-coordinate of the square.
      * @param x The x-coordinate of the square.
      * @return The Square at the specified coordinates.
@@ -72,6 +74,7 @@ public class Board {
 
     /**
      * Executes a move on the board.
+     *
      * @param move The move to be executed.
      */
     public void executeMove(Move move) {
@@ -84,6 +87,12 @@ public class Board {
             king.setHasMoved();
         }
 
+        if (move instanceof CastleMove castleMove && castleMove.getRookOriginFile() >= 0) {
+            // Chess960 castle: delegate entirely — king and rook are both placed by this method.
+            handleCastleMove960(startSquare, castleMove);
+            return;
+        }
+
         if (move instanceof CastleMove) {
             handleCastleMove(startSquare, endSquare);
         } else if (move instanceof PromotionMove promotionMove) {
@@ -94,9 +103,7 @@ public class Board {
         // that sits on the same rank as the start square, same file as the destination.
         // This check must happen before endSquare.setPiece() so the empty-destination
         // condition is evaluated against the board state prior to this move.
-        boolean isEnPassant = piece instanceof Pawn
-                && startSquare.getX() != endSquare.getX()
-                && endSquare.getPiece() == null;
+        boolean isEnPassant = piece instanceof Pawn && startSquare.getX() != endSquare.getX() && endSquare.getPiece() == null;
 
         // Remove captured piece from the opponent's piece list before overwriting
         if (endSquare.getPiece() != null) {
@@ -144,6 +151,7 @@ public class Board {
 
     /**
      * Returns a list of squares occupied by the pieces of the specified player.
+     *
      * @param player The player whose pieces are to be returned.
      * @return A list of squares occupied by the player's pieces.
      */
@@ -156,6 +164,7 @@ public class Board {
 
     /**
      * Returns the piece at the specified square.
+     *
      * @param square The square whose piece is to be returned.
      * @return The piece at the specified square.
      */
@@ -201,7 +210,71 @@ public class Board {
     }
 
     /**
+     * Handles the Chess960 variant of a castle move.
+     * <p>
+     * In Chess960 the king and rook may start on any file. The {@link CastleMove}
+     * carries explicit {@code rookOriginFile} and {@code kingDestFile} values that
+     * override the hardcoded standard-chess files.
+     * <p>
+     * Queenside/kingside is determined by {@code rookOriginFile} relative to the king's
+     * starting file ({@code startSquare.getX()}):
+     * <ul>
+     *   <li>Queenside: {@code rookOriginFile < kingStartFile} — king lands on c-file (x=2),
+     *       rook lands on d-file (x=3).</li>
+     *   <li>Kingside: {@code rookOriginFile >= kingStartFile} — king lands on g-file (x=6),
+     *       rook lands on f-file (x=5).</li>
+     * </ul>
+     * <p>
+     * Piece-clearing order avoids overwriting when king/rook squares overlap with destinations:
+     * <ol>
+     *   <li>Clear king's current square.</li>
+     *   <li>Clear rook's current square.</li>
+     *   <li>Place king at {@code kingDestFile}.</li>
+     *   <li>Place rook at its destination (f-file or d-file).</li>
+     * </ol>
+     *
+     * @param startSquare The king's starting square.
+     * @param castleMove  The {@link CastleMove} carrying {@code rookOriginFile} and
+     *                    {@code kingDestFile}.
+     */
+    private void handleCastleMove960(Square startSquare, CastleMove castleMove) {
+        int rank = startSquare.getY();
+        int kingStartFile = startSquare.getX();
+        int rookOriginFile = castleMove.getRookOriginFile();
+        int kingDestFile = castleMove.getKingDestFile();
+
+        Square rookOriginSquare = getSquare(rank, rookOriginFile);
+        Piece king = startSquare.getPiece();
+        Piece rook = rookOriginSquare.getPiece();
+
+        boolean queenside = rookOriginFile < kingStartFile;
+        Square kingDestSquare = getSquare(rank, kingDestFile);
+        Square rookDestSquare = getSquare(rank, queenside ? 3 : 5);
+
+        // Step 1: clear king's current square
+        removePiece(startSquare);
+        startSquare.setPiece(null);
+
+        // Step 2: clear rook's current square
+        removePiece(rookOriginSquare);
+        rookOriginSquare.setPiece(null);
+
+        // Step 3: place king at kingDestFile
+        kingDestSquare.setPiece(king);
+        updatePieceLists(startSquare, kingDestSquare, king);
+
+        // Step 4: place rook at its destination
+        rookDestSquare.setPiece(rook);
+        updatePieceLists(rookOriginSquare, rookDestSquare, rook);
+
+        if (rook instanceof Rook r) {
+            r.setHasMoved();
+        }
+    }
+
+    /**
      * Removes the piece from the specified square.
+     *
      * @param square The square from which the piece is to be removed.
      */
     private void removePiece(Square square) {
@@ -218,9 +291,10 @@ public class Board {
 
     /**
      * Updates the piece lists when a piece is moved.
+     *
      * @param startSquare The starting square of the move.
-     * @param endSquare The ending square of the move.
-     * @param piece The piece being moved.
+     * @param endSquare   The ending square of the move.
+     * @param piece       The piece being moved.
      */
     private void updatePieceLists(Square startSquare, Square endSquare, Piece piece) {
         if (piece == null) {

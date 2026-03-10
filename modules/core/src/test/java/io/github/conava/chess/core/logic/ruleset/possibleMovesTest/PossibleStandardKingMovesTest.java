@@ -107,8 +107,7 @@ public class PossibleStandardKingMovesTest {
         List<Square> squares = moves.getPossibleSquares();
 
         // g1 (x=6) is the king's castling destination for kingside
-        assertTrue(squares.contains(grid[0][6]),
-                "Kingside castling destination (g1) should be available");
+        assertTrue(squares.contains(grid[0][6]), "Kingside castling destination (g1) should be available");
     }
 
     @Test
@@ -123,8 +122,7 @@ public class PossibleStandardKingMovesTest {
         List<Square> squares = moves.getPossibleSquares();
 
         // c1 (x=2) is the king's castling destination for queenside
-        assertTrue(squares.contains(grid[0][2]),
-                "Queenside castling destination (c1) should be available");
+        assertTrue(squares.contains(grid[0][2]), "Queenside castling destination (c1) should be available");
     }
 
     /**
@@ -143,8 +141,7 @@ public class PossibleStandardKingMovesTest {
         PossibleStandardKingMoves moves = new PossibleStandardKingMoves(grid[0][4], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][6]),
-                "Kingside castling must be blocked by piece on f1");
+        assertFalse(squares.contains(grid[0][6]), "Kingside castling must be blocked by piece on f1");
     }
 
     /**
@@ -163,8 +160,7 @@ public class PossibleStandardKingMovesTest {
         PossibleStandardKingMoves moves = new PossibleStandardKingMoves(grid[0][4], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][2]),
-                "Queenside castling must be blocked by piece on b1");
+        assertFalse(squares.contains(grid[0][2]), "Queenside castling must be blocked by piece on b1");
     }
 
     /**
@@ -184,10 +180,8 @@ public class PossibleStandardKingMovesTest {
         PossibleStandardKingMoves moves = new PossibleStandardKingMoves(grid[0][4], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][2]),
-                "Queenside castling must be unavailable after king has moved");
-        assertFalse(squares.contains(grid[0][6]),
-                "Kingside castling must be unavailable after king has moved");
+        assertFalse(squares.contains(grid[0][2]), "Queenside castling must be unavailable after king has moved");
+        assertFalse(squares.contains(grid[0][6]), "Kingside castling must be unavailable after king has moved");
     }
 
     /**
@@ -209,10 +203,8 @@ public class PossibleStandardKingMovesTest {
         PossibleStandardKingMoves moves = new PossibleStandardKingMoves(grid[0][4], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][2]),
-                "Queenside castling must be unavailable after queenside rook has moved");
-        assertTrue(squares.contains(grid[0][6]),
-                "Kingside castling must still be available when only queenside rook moved");
+        assertFalse(squares.contains(grid[0][2]), "Queenside castling must be unavailable after queenside rook has moved");
+        assertTrue(squares.contains(grid[0][6]), "Kingside castling must still be available when only queenside rook moved");
     }
 
     /**
@@ -233,9 +225,7 @@ public class PossibleStandardKingMovesTest {
         PossibleStandardKingMoves moves = new PossibleStandardKingMoves(grid[0][4], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][6]),
-                "Kingside castling must be unavailable after kingside rook has moved");
-        assertTrue(squares.contains(grid[0][2]),
-                "Queenside castling must still be available when only kingside rook moved");
+        assertFalse(squares.contains(grid[0][6]), "Kingside castling must be unavailable after kingside rook has moved");
+        assertTrue(squares.contains(grid[0][2]), "Queenside castling must still be available when only kingside rook moved");
     }
 }

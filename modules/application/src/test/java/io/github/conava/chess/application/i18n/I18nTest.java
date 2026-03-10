@@ -1,6 +1,7 @@
 package io.github.conava.chess.application.i18n;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class I18nTest {

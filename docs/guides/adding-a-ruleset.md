@@ -17,15 +17,32 @@ public interface Ruleset {
     List<Square> getLegalSquares(Square, Board, List<Move>, Player, Player);
     boolean isValidSquare(Square square);
     boolean isCheck(Board board, Player player, List<Move> moves);
+
+    // Default methods — override as needed:
+    default String getGameLabel() { return ""; }
+    default Move deserializeMove(String wireString, Board board, Player player) {
+        return Move.fromString(wireString, player);
+    }
 }
 ```
 
+`AbstractChessRuleset` is an abstract base class that implements most of the `Ruleset`
+interface for standard 8x8 chess logic (pseudo-legal move dispatch, check-legality
+filtering, `isCheck`). If your new ruleset is a chess variant that shares standard move
+rules, extend `AbstractChessRuleset` instead of implementing `Ruleset` from scratch.
+
 `RulesetOptions` (`io.github.conava.chess.core.logic.ruleset.RulesetOptions`) is the enum
-that callers use to select a ruleset. Currently:
+that callers use to select a ruleset:
 
 ```java
 public enum RulesetOptions {
-    STANDARD
+    STANDARD("Standard Chess"),
+    CHESS960("Chess 960");
+
+    private final String displayName;
+    RulesetOptions(String displayName) { this.displayName = displayName; }
+
+    @Override public String toString() { return displayName; }
 }
 ```
 
@@ -35,13 +52,15 @@ public enum RulesetOptions {
 private Ruleset createRuleset(RulesetOptions selectedRuleset) {
     return switch (selectedRuleset) {
         case STANDARD -> new StandardChessRuleset();
+        case CHESS960  -> new Chess960Ruleset();
     };
 }
 ```
 
 The application UI already reads `RulesetOptions` values and passes the selection through
-`chess.startGame(...)` to `Game.createGame(...)`. No UI changes are needed to expose a new
-option — only the enum value and the switch case.
+`chess.startGame(...)` to `Game.createGame(...)`. The `ComboBox` calls `toString()` on each
+enum value, so the `displayName` appears automatically. No UI changes are needed to expose a
+new option.
 
 ## Step-by-step
 
@@ -51,36 +70,56 @@ File: `modules/core/src/main/java/io/github/conava/chess/core/logic/ruleset/Rule
 
 ```java
 public enum RulesetOptions {
-    STANDARD,
-    MY_VARIANT   // <-- add here
+    STANDARD("Standard Chess"),
+    CHESS960("Chess 960"),
+    MY_VARIANT("My Variant");   // <-- add here with display name
+
+    private final String displayName;
+    RulesetOptions(String displayName) { this.displayName = displayName; }
+
+    @Override public String toString() { return displayName; }
 }
 ```
 
 ### 2. Create the ruleset class
 
-Create a new file under `modules/core/src/main/java/io/github/conava/chess/core/logic/ruleset/`:
+**Option A: Chess variant that shares standard move rules** -- extend `AbstractChessRuleset`.
+This is what Chess960 does. You only need to override the methods that differ:
+
+```java
+package io.github.conava.chess.core.logic.ruleset.myVariant;
+
+import io.github.conava.chess.core.logic.ruleset.AbstractChessRuleset;
+
+public class MyVariantRuleset extends AbstractChessRuleset {
+
+    @Override
+    public Square[][] getStartBoard(Player player1, Player player2) {
+        // Return your variant's starting position.
+        // See Chess960StartPosition for an example.
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    // Override only what differs from standard chess:
+    // - getPseudoLegalKingSquares() if king moves differ
+    // - getLegalSquares() if castling/check filtering differs
+    // - getGameLabel() to show a label in the UI
+    // - deserializeMove() if move wire format needs special handling
+}
+```
+
+**Option B: Entirely different game** -- implement `Ruleset` directly:
 
 ```java
 package io.github.conava.chess.core.logic.ruleset;
 
-import io.github.conava.chess.core.data.Square;
-import io.github.conava.chess.core.data.board.Board;
-import io.github.conava.chess.core.data.player.Player;
-import io.github.conava.chess.core.logic.moves.Move;
-import java.util.List;
-
 public class MyVariantRuleset implements Ruleset {
 
-    @Override
-    public int getWidth() { return 8; }
-
-    @Override
-    public int getHeight() { return 8; }
+    @Override public int getWidth() { return 8; }
+    @Override public int getHeight() { return 8; }
 
     @Override
     public Square[][] getStartBoard(Player player1, Player player2) {
-        // Return the starting position for your variant.
-        // Use PossibleStandardPosition as a reference.
         throw new UnsupportedOperationException("TODO");
     }
 
@@ -118,6 +157,7 @@ File: `modules/core/src/main/java/io/github/conava/chess/core/logic/game/Game.ja
 private Ruleset createRuleset(RulesetOptions selectedRuleset) {
     return switch (selectedRuleset) {
         case STANDARD   -> new StandardChessRuleset();
+        case CHESS960    -> new Chess960Ruleset();
         case MY_VARIANT -> new MyVariantRuleset();   // <-- add here
     };
 }
@@ -158,36 +198,40 @@ class MyVariantRulesetTest {
 }
 ```
 
-### 5. Verify the setup UI exposes the new option (optional)
+### 5. Verify the setup UI exposes the new option
 
 The setup overlays (`OfflineSetupController`, `OnlineSetupController`) populate their ruleset
 choice boxes from `RulesetOptions.values()`. Adding a new enum value automatically makes it
-appear in the UI — no controller changes required.
+appear in the UI -- the `ComboBox` calls `toString()` on each value, which returns the
+`displayName`. No controller changes are required.
 
-If you want a human-readable display name, add a `displayName()` method to `RulesetOptions`
-(similar to `Theme.displayName()`):
+### 6. (Optional) Online play with server-provided parameters
 
-```java
-public enum RulesetOptions {
-    STANDARD,
-    MY_VARIANT;
+If your ruleset needs the server to provide initialization parameters (like Chess960 needs a
+position index), use the deferred board initialization pattern:
 
-    public String displayName() {
-        return switch (this) {
-            case STANDARD   -> "Standard";
-            case MY_VARIANT -> "My Variant";
-        };
-    }
-}
-```
+- `OnlineGame` uses `deferBoardInit=true` in its `Game` constructor call. Board and ruleset
+  remain `null` until the server responds.
+- When the server's `JOIN_CODE` or `SUCCESS` message arrives, `OnlineGame.handleJoinCode` /
+  `handleSuccess` reads the parameters, constructs the correct `Ruleset` instance, and calls
+  `initializeBoard(Ruleset)`.
+- The server (`GameInstance`) generates the parameters, stores them, and injects them into
+  the `JOIN_CODE` and `SUCCESS` messages as key-value pairs.
 
-Then update the controller to call `.displayName()` instead of `.name()` when populating
-the choice box.
+See `Chess960Ruleset` and `OnlineGame.buildRulesetFromServerParams` for the reference
+implementation of this pattern.
 
-## Reference: `StandardChessRuleset` structure
+## Reference: class hierarchy
 
-`StandardChessRuleset` is the best reference implementation. It delegates move generation
-to six per-piece classes:
+`AbstractChessRuleset` is the shared base class for chess variants that use standard 8x8
+board logic. Both `StandardChessRuleset` and `Chess960Ruleset` extend it.
+
+`StandardChessRuleset` is a minimal subclass -- it overrides only `getStartBoard` (28 lines).
+
+`Chess960Ruleset` overrides `getStartBoard`, `getPseudoLegalKingSquares`, `getLegalSquares`,
+`getGameLabel`, and `deserializeMove`.
+
+Per-piece move generators are shared by both rulesets:
 
 | Class | Location |
 |-------|----------|
@@ -197,7 +241,9 @@ to six per-piece classes:
 | `PossibleStandardPawnMoves` | `logic/ruleset/possibleMoves/` |
 | `PossibleStandardQueenMoves` | `logic/ruleset/possibleMoves/` |
 | `PossibleStandardRookMoves` | `logic/ruleset/possibleMoves/` |
+| `PossibleChess960KingMoves` | `logic/ruleset/possibleMoves/` |
 | `PossibleStandardPosition` | `logic/ruleset/possibleStartPositions/` |
+| `Chess960StartPosition` | `logic/ruleset/chess960Ruleset/` |
 
 Each move-generator class takes a `Square`, `Board`, and move history list, and returns a
 `List<Square>` of reachable squares for that piece.

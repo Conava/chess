@@ -83,9 +83,7 @@ class GameInstanceTest {
         }
 
         boolean hasGameStatusWithState(String stateName) {
-            return sentMessages.stream()
-                    .filter(m -> m.type() == MessageType.GAME_STATUS)
-                    .anyMatch(m -> m.content().contains("gameState=" + stateName));
+            return sentMessages.stream().filter(m -> m.type() == MessageType.GAME_STATUS).anyMatch(m -> m.content().contains("gameState=" + stateName));
         }
     }
 
@@ -133,17 +131,14 @@ class GameInstanceTest {
         gameInstance.connectPlayer(whiteHandler, "Alice");
 
         Game game = getPrivateGame(gameInstance);
-        assertNull(game,
-                "The internal Game must remain null until both players have connected");
+        assertNull(game, "The internal Game must remain null until both players have connected");
     }
 
     @Test
     void gameInstance_beforeBothConnect_moveIsIgnoredWithoutException() {
         // No players connected; MOVE must be silently ignored (game == null guard).
         Message moveMsg = new Message(MessageType.MOVE, "move=e2-e4 playerColor=WHITE");
-        assertDoesNotThrow(
-                () -> gameInstance.processMessage(null, moveMsg),
-                "processMessage(MOVE) before game creation must not propagate any exception");
+        assertDoesNotThrow(() -> gameInstance.processMessage(null, moveMsg), "processMessage(MOVE) before game creation must not propagate any exception");
     }
 
     // ========================================================================
@@ -155,10 +150,8 @@ class GameInstanceTest {
         connectBothPlayers();
 
         Game game = getPrivateGame(gameInstance);
-        assertNotNull(game,
-                "The internal Game must be non-null after both players have connected");
-        assertEquals(GameState.RUNNING, game.getState(),
-                "The game state must be RUNNING after both players connect");
+        assertNotNull(game, "The internal Game must be non-null after both players have connected");
+        assertEquals(GameState.RUNNING, game.getState(), "The game state must be RUNNING after both players connect");
     }
 
     @Test
@@ -181,14 +174,8 @@ class GameInstanceTest {
     void connectPlayer_firstPlayer_sendsSuccessWithWhite() {
         gameInstance.connectPlayer(whiteHandler, "Alice");
 
-        assertTrue(
-                whiteHandler.hasMessageOfType(MessageType.SUCCESS),
-                "First player (white) must receive a SUCCESS message on connecting");
-        assertTrue(
-                whiteHandler.getSentMessages().stream()
-                        .filter(m -> m.type() == MessageType.SUCCESS)
-                        .anyMatch(m -> m.content().contains("player=white")),
-                "The SUCCESS message for the first player must include player=white");
+        assertTrue(whiteHandler.hasMessageOfType(MessageType.SUCCESS), "First player (white) must receive a SUCCESS message on connecting");
+        assertTrue(whiteHandler.getSentMessages().stream().filter(m -> m.type() == MessageType.SUCCESS).anyMatch(m -> m.content().contains("player=white")), "The SUCCESS message for the first player must include player=white");
     }
 
     @Test
@@ -196,36 +183,24 @@ class GameInstanceTest {
         gameInstance.connectPlayer(whiteHandler, "Alice");
         gameInstance.connectPlayer(blackHandler, "Bob");
 
-        assertTrue(
-                blackHandler.hasMessageOfType(MessageType.SUCCESS),
-                "Second player (black) must receive a SUCCESS message on connecting");
-        assertTrue(
-                blackHandler.getSentMessages().stream()
-                        .filter(m -> m.type() == MessageType.SUCCESS)
-                        .anyMatch(m -> m.content().contains("player=black")),
-                "The SUCCESS message for the second player must include player=black");
+        assertTrue(blackHandler.hasMessageOfType(MessageType.SUCCESS), "Second player (black) must receive a SUCCESS message on connecting");
+        assertTrue(blackHandler.getSentMessages().stream().filter(m -> m.type() == MessageType.SUCCESS).anyMatch(m -> m.content().contains("player=black")), "The SUCCESS message for the second player must include player=black");
     }
 
     @Test
     void connectPlayer_bothPlayers_gameStatusRunningBroadcast() {
         connectBothPlayers();
 
-        assertTrue(whiteHandler.hasGameStatusWithState("RUNNING"),
-                "White player must receive GAME_STATUS gameState=RUNNING after game starts");
-        assertTrue(blackHandler.hasGameStatusWithState("RUNNING"),
-                "Black player must receive GAME_STATUS gameState=RUNNING after game starts");
+        assertTrue(whiteHandler.hasGameStatusWithState("RUNNING"), "White player must receive GAME_STATUS gameState=RUNNING after game starts");
+        assertTrue(blackHandler.hasGameStatusWithState("RUNNING"), "Black player must receive GAME_STATUS gameState=RUNNING after game starts");
     }
 
     @Test
     void connectPlayer_onlyOneGameStatusOnStart_notDuplicated() {
         connectBothPlayers();
 
-        long count = whiteHandler.getSentMessages().stream()
-                .filter(m -> m.type() == MessageType.GAME_STATUS)
-                .filter(m -> m.content().contains("gameState=RUNNING"))
-                .count();
-        assertEquals(1, count,
-                "Exactly one GAME_STATUS gameState=RUNNING must be sent to white at game start");
+        long count = whiteHandler.getSentMessages().stream().filter(m -> m.type() == MessageType.GAME_STATUS).filter(m -> m.content().contains("gameState=RUNNING")).count();
+        assertEquals(1, count, "Exactly one GAME_STATUS gameState=RUNNING must be sent to white at game start");
     }
 
     // ========================================================================
@@ -238,8 +213,7 @@ class GameInstanceTest {
         gameInstance.connectPlayer(blackHandler, "Bob");
 
         Game game = getPrivateGame(gameInstance);
-        assertEquals("Alice", game.getPlayerWhite().name(),
-                "The white player name in the Game must match the name passed to connectPlayer");
+        assertEquals("Alice", game.getPlayerWhite().name(), "The white player name in the Game must match the name passed to connectPlayer");
     }
 
     @Test
@@ -248,8 +222,7 @@ class GameInstanceTest {
         gameInstance.connectPlayer(blackHandler, "Bob");
 
         Game game = getPrivateGame(gameInstance);
-        assertEquals("Bob", game.getPlayerBlack().name(),
-                "The black player name in the Game must match the name passed to connectPlayer");
+        assertEquals("Bob", game.getPlayerBlack().name(), "The black player name in the Game must match the name passed to connectPlayer");
     }
 
     @Test
@@ -260,8 +233,7 @@ class GameInstanceTest {
         Game game = getPrivateGame(gameInstance);
         String whiteName = game.getPlayerWhite().name();
         assertNotNull(whiteName, "White player name must not be null");
-        assertFalse(whiteName.isBlank(),
-                "A null white player name must result in a non-blank default name in the Game");
+        assertFalse(whiteName.isBlank(), "A null white player name must result in a non-blank default name in the Game");
     }
 
     @Test
@@ -272,8 +244,7 @@ class GameInstanceTest {
         Game game = getPrivateGame(gameInstance);
         String blackName = game.getPlayerBlack().name();
         assertNotNull(blackName, "Black player name must not be null");
-        assertFalse(blackName.isBlank(),
-                "A null black player name must result in a non-blank default name in the Game");
+        assertFalse(blackName.isBlank(), "A null black player name must result in a non-blank default name in the Game");
     }
 
     // ========================================================================
@@ -281,7 +252,7 @@ class GameInstanceTest {
     // ========================================================================
 
     @Test
-    void onGameStateChanged_nonTerminalState_doesNotSendGameStatus() throws Exception {
+    void onGameStateChanged_nonTerminalState_doesNotSendGameStatus() {
         connectBothPlayers();
         whiteHandler.clearMessages();
         blackHandler.clearMessages();
@@ -290,10 +261,8 @@ class GameInstanceTest {
         // must not trigger any extra messages.
         gameInstance.onGameStateChanged();
 
-        assertFalse(whiteHandler.hasMessageOfType(MessageType.GAME_STATUS),
-                "Observer callback with RUNNING state (non-terminal) must not send GAME_STATUS");
-        assertFalse(blackHandler.hasMessageOfType(MessageType.GAME_STATUS),
-                "Observer callback with RUNNING state (non-terminal) must not send GAME_STATUS");
+        assertFalse(whiteHandler.hasMessageOfType(MessageType.GAME_STATUS), "Observer callback with RUNNING state (non-terminal) must not send GAME_STATUS");
+        assertFalse(blackHandler.hasMessageOfType(MessageType.GAME_STATUS), "Observer callback with RUNNING state (non-terminal) must not send GAME_STATUS");
     }
 
     @Test
@@ -308,10 +277,8 @@ class GameInstanceTest {
 
         gameInstance.onGameStateChanged();
 
-        assertTrue(whiteHandler.hasGameStatusWithState("WHITE_WON_BY_CHECKMATE"),
-                "White player must receive GAME_STATUS with WHITE_WON_BY_CHECKMATE when observer fires on terminal state");
-        assertTrue(blackHandler.hasGameStatusWithState("WHITE_WON_BY_CHECKMATE"),
-                "Black player must receive GAME_STATUS with WHITE_WON_BY_CHECKMATE when observer fires on terminal state");
+        assertTrue(whiteHandler.hasGameStatusWithState("WHITE_WON_BY_CHECKMATE"), "White player must receive GAME_STATUS with WHITE_WON_BY_CHECKMATE when observer fires on terminal state");
+        assertTrue(blackHandler.hasGameStatusWithState("WHITE_WON_BY_CHECKMATE"), "Black player must receive GAME_STATUS with WHITE_WON_BY_CHECKMATE when observer fires on terminal state");
     }
 
     @Test
@@ -328,19 +295,14 @@ class GameInstanceTest {
         // Second call: no state change (already terminal) — must NOT send again.
         gameInstance.onGameStateChanged();
 
-        long count = whiteHandler.getSentMessages().stream()
-                .filter(m -> m.type() == MessageType.GAME_STATUS)
-                .filter(m -> m.content().contains("gameState=BLACK_WON_BY_CHECKMATE"))
-                .count();
-        assertEquals(1, count,
-                "Calling onGameStateChanged twice with the same terminal state must send GAME_STATUS exactly once");
+        long count = whiteHandler.getSentMessages().stream().filter(m -> m.type() == MessageType.GAME_STATUS).filter(m -> m.content().contains("gameState=BLACK_WON_BY_CHECKMATE")).count();
+        assertEquals(1, count, "Calling onGameStateChanged twice with the same terminal state must send GAME_STATUS exactly once");
     }
 
     @Test
     void onGameStateChanged_beforeGameCreated_doesNotThrow() {
         // No players connected; game is null.
-        assertDoesNotThrow(() -> gameInstance.onGameStateChanged(),
-                "onGameStateChanged() when game is null must not throw");
+        assertDoesNotThrow(() -> gameInstance.onGameStateChanged(), "onGameStateChanged() when game is null must not throw");
     }
 
     // ========================================================================
@@ -357,10 +319,8 @@ class GameInstanceTest {
         Message moveMsg = new Message(MessageType.MOVE, "move=e2-e4 playerColor=WHITE");
         gameInstance.processMessage(whiteHandler, moveMsg);
 
-        assertTrue(whiteHandler.hasMessageOfType(MessageType.MOVE),
-                "White player must receive the relayed MOVE message after a valid move");
-        assertTrue(blackHandler.hasMessageOfType(MessageType.MOVE),
-                "Black player must receive the relayed MOVE message after a valid move");
+        assertTrue(whiteHandler.hasMessageOfType(MessageType.MOVE), "White player must receive the relayed MOVE message after a valid move");
+        assertTrue(blackHandler.hasMessageOfType(MessageType.MOVE), "Black player must receive the relayed MOVE message after a valid move");
     }
 
     @Test
@@ -372,8 +332,7 @@ class GameInstanceTest {
         Message illegalMove = new Message(MessageType.MOVE, "move=e2-e5 playerColor=WHITE");
         gameInstance.processMessage(whiteHandler, illegalMove);
 
-        assertTrue(whiteHandler.hasMessageOfType(MessageType.ERROR),
-                "Sender must receive an ERROR message when the move is illegal");
+        assertTrue(whiteHandler.hasMessageOfType(MessageType.ERROR), "Sender must receive an ERROR message when the move is illegal");
     }
 
     @Test
@@ -385,8 +344,7 @@ class GameInstanceTest {
         Message illegalMove = new Message(MessageType.MOVE, "move=e2-e5 playerColor=WHITE");
         gameInstance.processMessage(whiteHandler, illegalMove);
 
-        assertFalse(blackHandler.hasMessageOfType(MessageType.MOVE),
-                "An illegal move must not be relayed to the opponent");
+        assertFalse(blackHandler.hasMessageOfType(MessageType.MOVE), "An illegal move must not be relayed to the opponent");
     }
 
     // ========================================================================
@@ -395,20 +353,15 @@ class GameInstanceTest {
 
     @Test
     void handleMove_malformedMove_doesNotThrow() {
-        Message malformedMsg = new Message(MessageType.MOVE,
-                "move=!!NOT_A_VALID_MOVE!! playerColor=WHITE");
-        assertDoesNotThrow(
-                () -> gameInstance.processMessage(null, malformedMsg),
-                "A malformed MOVE message must not propagate any exception out of processMessage()");
+        Message malformedMsg = new Message(MessageType.MOVE, "move=!!NOT_A_VALID_MOVE!! playerColor=WHITE");
+        assertDoesNotThrow(() -> gameInstance.processMessage(null, malformedMsg), "A malformed MOVE message must not propagate any exception out of processMessage()");
     }
 
     @Test
     void handleMove_nullMoveParam_doesNotThrow() {
         // "playerColor=WHITE" only — no "move" key present
         Message noMoveMsg = new Message(MessageType.MOVE, "playerColor=WHITE");
-        assertDoesNotThrow(
-                () -> gameInstance.processMessage(null, noMoveMsg),
-                "A MOVE message with a missing move parameter must not propagate any exception");
+        assertDoesNotThrow(() -> gameInstance.processMessage(null, noMoveMsg), "A MOVE message with a missing move parameter must not propagate any exception");
     }
 
     @Test
@@ -419,8 +372,7 @@ class GameInstanceTest {
         Message malformedMsg = new Message(MessageType.MOVE, "move=!!NOT_A_VALID_MOVE!! playerColor=WHITE");
         gameInstance.processMessage(whiteHandler, malformedMsg);
 
-        assertTrue(whiteHandler.hasMessageOfType(MessageType.ERROR),
-                "A malformed MOVE message must send an ERROR back to the sender");
+        assertTrue(whiteHandler.hasMessageOfType(MessageType.ERROR), "A malformed MOVE message must send an ERROR back to the sender");
     }
 
     // ========================================================================
@@ -456,8 +408,7 @@ class GameInstanceTest {
 
         boolean completed = latch.await(5, TimeUnit.SECONDS);
         assertTrue(completed, "Both concurrent processMessage calls must complete within 5 seconds");
-        assertEquals(0, exceptions.get(),
-                "No exception must escape processMessage() from concurrent calls");
+        assertEquals(0, exceptions.get(), "No exception must escape processMessage() from concurrent calls");
     }
 
     // ========================================================================
@@ -471,8 +422,7 @@ class GameInstanceTest {
 
         gameInstance.disconnectPlayer(whiteHandler);
 
-        assertTrue(blackHandler.hasMessageOfType(MessageType.GAME_STATUS),
-                "Black player must receive a GAME_STATUS message when white disconnects");
+        assertTrue(blackHandler.hasMessageOfType(MessageType.GAME_STATUS), "Black player must receive a GAME_STATUS message when white disconnects");
     }
 
     @Test
@@ -482,11 +432,7 @@ class GameInstanceTest {
 
         gameInstance.disconnectPlayer(whiteHandler);
 
-        assertTrue(
-                blackHandler.getSentMessages().stream()
-                        .filter(m -> m.type() == MessageType.GAME_STATUS)
-                        .anyMatch(m -> m.content().contains("gameState=BLACK_WON_BY_RESIGNATION")),
-                "The GAME_STATUS sent to black must indicate BLACK_WON_BY_RESIGNATION when white disconnects");
+        assertTrue(blackHandler.getSentMessages().stream().filter(m -> m.type() == MessageType.GAME_STATUS).anyMatch(m -> m.content().contains("gameState=BLACK_WON_BY_RESIGNATION")), "The GAME_STATUS sent to black must indicate BLACK_WON_BY_RESIGNATION when white disconnects");
     }
 
     @Test
@@ -496,13 +442,8 @@ class GameInstanceTest {
 
         gameInstance.disconnectPlayer(blackHandler);
 
-        assertTrue(whiteHandler.hasMessageOfType(MessageType.GAME_STATUS),
-                "White player must receive a GAME_STATUS message when black disconnects");
-        assertTrue(
-                whiteHandler.getSentMessages().stream()
-                        .filter(m -> m.type() == MessageType.GAME_STATUS)
-                        .anyMatch(m -> m.content().contains("gameState=WHITE_WON_BY_RESIGNATION")),
-                "The GAME_STATUS sent to white must indicate WHITE_WON_BY_RESIGNATION when black disconnects");
+        assertTrue(whiteHandler.hasMessageOfType(MessageType.GAME_STATUS), "White player must receive a GAME_STATUS message when black disconnects");
+        assertTrue(whiteHandler.getSentMessages().stream().filter(m -> m.type() == MessageType.GAME_STATUS).anyMatch(m -> m.content().contains("gameState=WHITE_WON_BY_RESIGNATION")), "The GAME_STATUS sent to white must indicate WHITE_WON_BY_RESIGNATION when black disconnects");
     }
 
     @Test
@@ -521,25 +462,22 @@ class GameInstanceTest {
 
         // The 'observers' field lives in Observable, which is two levels up from
         // ServerGame: ServerGame -> Game -> Observable. Walk up the hierarchy to find it.
-        Field observersField = findDeclaredField(game.getClass(), "observers");
-        assertNotNull(observersField,
-                "Could not locate 'observers' field via reflection — hierarchy may have changed");
+        Field observersField = findDeclaredField(game.getClass());
+        assertNotNull(observersField, "Could not locate 'observers' field via reflection — hierarchy may have changed");
         observersField.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<Object> observers = (List<Object>) observersField.get(game);
-        assertTrue(observers.isEmpty(),
-                "After disconnectPlayer(), the observer must be removed from the Game's observer list");
+        @SuppressWarnings("unchecked") List<Object> observers = (List<Object>) observersField.get(game);
+        assertTrue(observers.isEmpty(), "After disconnectPlayer(), the observer must be removed from the Game's observer list");
     }
 
     /**
      * Walks up the class hierarchy from {@code clazz} looking for a declared field with
      * the given name. Returns {@code null} if no matching field is found.
      */
-    private static Field findDeclaredField(Class<?> clazz, String name) {
+    private static Field findDeclaredField(Class<?> clazz) {
         Class<?> current = clazz;
         while (current != null && current != Object.class) {
             try {
-                return current.getDeclaredField(name);
+                return current.getDeclaredField("observers");
             } catch (NoSuchFieldException e) {
                 current = current.getSuperclass();
             }
@@ -551,7 +489,81 @@ class GameInstanceTest {
     void disconnect_beforeGameCreated_doesNotThrow() {
         // Only white has connected; game is null. Disconnecting must not throw.
         gameInstance.connectPlayer(whiteHandler, "Alice");
-        assertDoesNotThrow(() -> gameInstance.disconnectPlayer(whiteHandler),
-                "disconnectPlayer() when game is null must not throw");
+        assertDoesNotThrow(() -> gameInstance.disconnectPlayer(whiteHandler), "disconnectPlayer() when game is null must not throw");
+    }
+
+    // ========================================================================
+    // T11 smoke tests: Chess960 position generation and wire protocol
+    // ========================================================================
+
+    @Test
+    void chess960GameInstance_positionIndex_isInValidRange() {
+        GameInstance chess960Instance = new GameInstance(2, RulesetOptions.CHESS960);
+        int index = chess960Instance.getPositionIndex();
+        assertTrue(index >= 0 && index <= 959, "Chess960 GameInstance must have a positionIndex in [0, 959], got: " + index);
+    }
+
+    @Test
+    void standardGameInstance_positionIndex_isNegativeOne() {
+        GameInstance standardInstance = new GameInstance(3, RulesetOptions.STANDARD);
+        assertEquals(-1, standardInstance.getPositionIndex(), "Standard GameInstance must have positionIndex == -1");
+    }
+
+    @Test
+    void chess960GameInstance_blackSuccessMessage_containsPositionAndRuleset() {
+        GameInstance chess960Instance = new GameInstance(4, RulesetOptions.CHESS960);
+        TrackingClientHandler chess960White = new TrackingClientHandler(server);
+        TrackingClientHandler chess960Black = new TrackingClientHandler(server);
+
+        chess960Instance.connectPlayer(chess960White, "Alice");
+        chess960Instance.connectPlayer(chess960Black, "Bob");
+
+        // Black's SUCCESS message must contain position=N and ruleset=CHESS960
+        String successContent = chess960Black.getSentMessages().stream().filter(m -> m.type() == MessageType.SUCCESS).map(Message::content).findFirst().orElse("");
+        assertTrue(successContent.contains("player=black"), "Chess960 black SUCCESS must contain player=black");
+        assertTrue(successContent.contains("ruleset=CHESS960"), "Chess960 black SUCCESS must contain ruleset=CHESS960");
+        assertTrue(successContent.contains("position="), "Chess960 black SUCCESS must contain position=<index>");
+    }
+
+    @Test
+    void standardGameInstance_blackSuccessMessage_isJustPlayerBlack() {
+        GameInstance standardInstance = new GameInstance(5, RulesetOptions.STANDARD);
+        TrackingClientHandler stdWhite = new TrackingClientHandler(server);
+        TrackingClientHandler stdBlack = new TrackingClientHandler(server);
+
+        standardInstance.connectPlayer(stdWhite, "Alice");
+        standardInstance.connectPlayer(stdBlack, "Bob");
+
+        String successContent = stdBlack.getSentMessages().stream().filter(m -> m.type() == MessageType.SUCCESS).map(Message::content).findFirst().orElse("");
+        assertEquals("player=black", successContent, "Standard black SUCCESS must be exactly 'player=black' without Chess960 extras");
+    }
+
+    @Test
+    void chess960GameInstance_whiteJoinCode_containsPositionAndRuleset() {
+        GameInstance chess960Instance = new GameInstance(7, RulesetOptions.CHESS960);
+        TrackingClientHandler chess960White = new TrackingClientHandler(server);
+
+        chess960Instance.connectPlayer(chess960White, "Alice");
+
+        // White's SUCCESS message must contain position=N and ruleset=CHESS960
+        String successContent = chess960White.getSentMessages().stream().filter(m -> m.type() == MessageType.SUCCESS).map(Message::content).findFirst().orElse("");
+        assertTrue(successContent.contains("player=white"), "Chess960 white SUCCESS must contain player=white");
+        assertTrue(successContent.contains("ruleset=CHESS960"), "Chess960 white SUCCESS must contain ruleset=CHESS960");
+        assertTrue(successContent.contains("position="), "Chess960 white SUCCESS must contain position=<index>");
+    }
+
+    @Test
+    void chess960GameInstance_startGame_createsGameWithCorrectRuleset() throws Exception {
+        GameInstance chess960Instance = new GameInstance(6, RulesetOptions.CHESS960);
+        TrackingClientHandler chess960White = new TrackingClientHandler(server);
+        TrackingClientHandler chess960Black = new TrackingClientHandler(server);
+
+        chess960Instance.connectPlayer(chess960White, "Alice");
+        chess960Instance.connectPlayer(chess960Black, "Bob");
+
+        Game game = getPrivateGame(chess960Instance);
+        assertNotNull(game, "Game must be created after both players connect");
+        assertNotNull(game.getRuleset(), "Game ruleset must not be null");
+        assertEquals(GameState.RUNNING, game.getState(), "Game must be RUNNING after both players connect");
     }
 }
