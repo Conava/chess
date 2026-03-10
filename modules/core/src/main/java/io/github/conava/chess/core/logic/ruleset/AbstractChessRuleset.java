@@ -103,8 +103,7 @@ public abstract class AbstractChessRuleset implements Ruleset {
 
         for (Square targetSquare : pseudoLegal) {
             // Castling candidate: king moves exactly 2 squares horizontally
-            if (square.getPiece() instanceof King
-                    && Math.abs(targetSquare.getX() - square.getX()) == 2) {
+            if (isCastlingCandidate(square, targetSquare)) {
                 // Cannot castle while in check
                 if (currentlyInCheck) {
                     continue;
@@ -124,9 +123,7 @@ public abstract class AbstractChessRuleset implements Ruleset {
             Board finalBoardCopy = board.getCopy();
             Square finalStart = finalBoardCopy.getSquare(square.getY(), square.getX());
             Square finalEnd = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
-            boolean isCastling = square.getPiece() instanceof King
-                    && Math.abs(targetSquare.getX() - square.getX()) == 2;
-            finalBoardCopy.executeMove(isCastling
+            finalBoardCopy.executeMove(isCastlingCandidate(square, targetSquare)
                     ? new CastleMove(finalStart, finalEnd)
                     : new Move(finalStart, finalEnd));
             if (!isCheck(finalBoardCopy, movingPlayer, moves)) {
@@ -186,6 +183,22 @@ public abstract class AbstractChessRuleset implements Ruleset {
     protected List<Square> getPseudoLegalKingSquares(Square square, Board board, List<Move> moves) {
         PossibleStandardKingMoves kingMoves = new PossibleStandardKingMoves(square, board);
         return kingMoves.getPossibleSquares();
+    }
+
+    /**
+     * Returns true if the move from {@code source} to {@code target} is a castling candidate.
+     *
+     * <p>The default implementation identifies castling as a king moving exactly 2 squares
+     * horizontally. Subclasses (e.g. Chess960) may override this to recognise a different
+     * castling encoding, such as "king moves to rook file".
+     *
+     * @param source the source square (must contain a non-null piece)
+     * @param target the target square
+     * @return true if this move is a castling candidate
+     */
+    protected boolean isCastlingCandidate(Square source, Square target) {
+        return source.getPiece() instanceof King
+                && Math.abs(target.getX() - source.getX()) == 2;
     }
 
     /**
