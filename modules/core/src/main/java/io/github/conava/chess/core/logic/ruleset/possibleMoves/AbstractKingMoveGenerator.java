@@ -25,13 +25,21 @@ import java.util.List;
  */
 abstract class AbstractKingMoveGenerator {
 
-    /** The square the king currently occupies. */
+    /**
+     * The square the king currently occupies.
+     */
     protected final Square square;
-    /** The board to inspect. */
+    /**
+     * The board to inspect.
+     */
     protected final Board board;
-    /** Board column count (used for horizontal bounds checking). */
+    /**
+     * Board column count (used for horizontal bounds checking).
+     */
     protected final int colCount;
-    /** Board row count (used for bounds checking in the castling walk). */
+    /**
+     * Board row count (used for bounds checking in the castling walk).
+     */
     protected final int rowCount;
 
     /**
@@ -41,8 +49,8 @@ abstract class AbstractKingMoveGenerator {
      * @param board  the board state to inspect
      */
     protected AbstractKingMoveGenerator(Square square, Board board) {
-        this.square   = square;
-        this.board    = board;
+        this.square = square;
+        this.board = board;
         this.colCount = board.getColCount();
         this.rowCount = board.getRowCount();
     }
@@ -151,9 +159,7 @@ abstract class AbstractKingMoveGenerator {
                 x += direction;
                 continue;
             }
-            if (piece instanceof Rook rook
-                    && rook.getHasNotMoved()
-                    && piece.getPlayer().equals(owner)) {
+            if (piece instanceof Rook rook && rook.getHasNotMoved() && piece.getPlayer().equals(owner)) {
                 return onCastlingCandidateFound(y, kingFile, x, direction > 0);
             }
             // path blocked
@@ -172,8 +178,7 @@ abstract class AbstractKingMoveGenerator {
      * @param kingside {@code true} if walking towards the kingside (right), {@code false} for queenside
      * @return {@code true} if castling is allowed; {@code false} if additional checks fail
      */
-    protected abstract boolean onCastlingCandidateFound(int rank, int kingFile, int rookFile,
-                                                        boolean kingside);
+    protected abstract boolean onCastlingCandidateFound(int rank, int kingFile, int rookFile, boolean kingside);
 
     /**
      * Returns the square to add to the candidate list when castling in the given direction

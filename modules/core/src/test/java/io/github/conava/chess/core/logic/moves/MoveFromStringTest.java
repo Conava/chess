@@ -69,10 +69,8 @@ class MoveFromStringTest {
         //        e4 = rank 4 = row 3 (y=3), file e = col 4 (x=4)
         // Square(y, x): y = row/rank, x = column/file
         Move move = Move.fromString("e2-e4", WHITE);
-        assertEquals(new Square(1, 4), move.getStart(),
-                "e2 must map to Square(y=1, x=4): rank 2 = row index 1, file e = col index 4");
-        assertEquals(new Square(3, 4), move.getEnd(),
-                "e4 must map to Square(y=3, x=4): rank 4 = row index 3, file e = col index 4");
+        assertEquals(new Square(1, 4), move.getStart(), "e2 must map to Square(y=1, x=4): rank 2 = row index 1, file e = col index 4");
+        assertEquals(new Square(3, 4), move.getEnd(), "e4 must map to Square(y=3, x=4): rank 4 = row index 3, file e = col index 4");
     }
 
     // ---- promotion parsing ----
@@ -132,17 +130,13 @@ class MoveFromStringTest {
     @Test
     void fromString_promotionToKing_throwsIllegalArgumentException() {
         // KING is not a valid promotion target; fromString must now throw IllegalArgumentException.
-        assertThrows(IllegalArgumentException.class,
-                () -> Move.fromString("a7-a8=KING", WHITE),
-                "KING is not a valid promotion target; fromString must throw IllegalArgumentException");
+        assertThrows(IllegalArgumentException.class, () -> Move.fromString("a7-a8=KING", WHITE), "KING is not a valid promotion target; fromString must throw IllegalArgumentException");
     }
 
     @Test
     void fromString_promotionToPawn_throwsIllegalArgumentException() {
         // PAWN is not a valid promotion target; fromString must now throw IllegalArgumentException.
-        assertThrows(IllegalArgumentException.class,
-                () -> Move.fromString("a7-a8=PAWN", WHITE),
-                "PAWN is not a valid promotion target; fromString must throw IllegalArgumentException");
+        assertThrows(IllegalArgumentException.class, () -> Move.fromString("a7-a8=PAWN", WHITE), "PAWN is not a valid promotion target; fromString must throw IllegalArgumentException");
     }
 
     // ---- toProtocolString() round-trip tests ----

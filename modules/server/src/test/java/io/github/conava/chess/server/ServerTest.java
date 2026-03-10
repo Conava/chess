@@ -3,9 +3,7 @@ package io.github.conava.chess.server;
 import io.github.conava.chess.server.management.GameInstance;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,44 +43,38 @@ class ServerTest {
     @Test
     void server_constructor_gamesListIsNonNull() {
         Server server = new Server();
-        assertNotNull(server.getGamesList(),
-                "getGamesList() must return a non-null map immediately after construction");
+        assertNotNull(server.getGamesList(), "getGamesList() must return a non-null map immediately after construction");
     }
 
     @Test
     void server_constructor_gamesListIsEmpty() {
         Server server = new Server();
-        assertTrue(server.getGamesList().isEmpty(),
-                "getGamesList() must return an empty map immediately after construction");
+        assertTrue(server.getGamesList().isEmpty(), "getGamesList() must return an empty map immediately after construction");
     }
 
     @Test
     void server_constructor_gameSemaphoreIsNonNull() {
         Server server = new Server();
-        assertNotNull(server.getGameSemaphore(),
-                "getGameSemaphore() must return a non-null Semaphore immediately after construction");
+        assertNotNull(server.getGameSemaphore(), "getGameSemaphore() must return a non-null Semaphore immediately after construction");
     }
 
     @Test
     void server_constructor_gameSemaphoreHasFortyPermits() {
         Server server = new Server();
         Semaphore semaphore = server.getGameSemaphore();
-        assertEquals(MAX_GAMES, semaphore.availablePermits(),
-                "The game semaphore must be initialised with " + MAX_GAMES + " permits");
+        assertEquals(MAX_GAMES, semaphore.availablePermits(), "The game semaphore must be initialised with " + MAX_GAMES + " permits");
     }
 
     @Test
     void server_constructor_gameIdCounterIsNonNull() {
         Server server = new Server();
-        assertNotNull(server.getGameIdCounter(),
-                "getGameIdCounter() must return a non-null AtomicInteger immediately after construction");
+        assertNotNull(server.getGameIdCounter(), "getGameIdCounter() must return a non-null AtomicInteger immediately after construction");
     }
 
     @Test
     void server_constructor_gameIdCounterInitiallyZero() {
         Server server = new Server();
-        assertEquals(0, server.getGameIdCounter().get(),
-                "The game ID counter must start at 0");
+        assertEquals(0, server.getGameIdCounter().get(), "The game ID counter must start at 0");
     }
 
     // ---- Instance-based design: no shared static state ----
@@ -92,8 +84,7 @@ class ServerTest {
         Server server1 = new Server();
         Server server2 = new Server();
 
-        assertNotSame(server1.getGamesList(), server2.getGamesList(),
-                "Two Server instances must own separate games maps (not the same object)");
+        assertNotSame(server1.getGamesList(), server2.getGamesList(), "Two Server instances must own separate games maps (not the same object)");
     }
 
     @Test
@@ -101,8 +92,7 @@ class ServerTest {
         Server server1 = new Server();
         Server server2 = new Server();
 
-        assertNotSame(server1.getGameSemaphore(), server2.getGameSemaphore(),
-                "Two Server instances must own separate Semaphore objects");
+        assertNotSame(server1.getGameSemaphore(), server2.getGameSemaphore(), "Two Server instances must own separate Semaphore objects");
     }
 
     @Test
@@ -110,8 +100,7 @@ class ServerTest {
         Server server1 = new Server();
         Server server2 = new Server();
 
-        assertNotSame(server1.getGameIdCounter(), server2.getGameIdCounter(),
-                "Two Server instances must own separate AtomicInteger objects");
+        assertNotSame(server1.getGameIdCounter(), server2.getGameIdCounter(), "Two Server instances must own separate AtomicInteger objects");
     }
 
     @Test
@@ -123,10 +112,8 @@ class ServerTest {
         server1.getGameIdCounter().incrementAndGet();
         server1.addGame(1, new GameInstance(1, io.github.conava.chess.core.logic.ruleset.RulesetOptions.STANDARD));
 
-        assertEquals(0, server2.getGameIdCounter().get(),
-                "Incrementing server1's ID counter must not affect server2's counter");
-        assertTrue(server2.getGamesList().isEmpty(),
-                "Adding to server1's games map must not affect server2's games map");
+        assertEquals(0, server2.getGameIdCounter().get(), "Incrementing server1's ID counter must not affect server2's counter");
+        assertTrue(server2.getGamesList().isEmpty(), "Adding to server1's games map must not affect server2's games map");
     }
 
     @Test
@@ -137,9 +124,7 @@ class ServerTest {
         // Acquire a permit from server1; server2 must still have MAX_GAMES permits.
         server1.getGameSemaphore().tryAcquire();
 
-        assertEquals(MAX_GAMES, server2.getGameSemaphore().availablePermits(),
-                "Acquiring from server1's semaphore must not reduce server2's available permits");
-        assertEquals(MAX_GAMES - 1, server1.getGameSemaphore().availablePermits(),
-                "server1's semaphore must reflect the acquired permit");
+        assertEquals(MAX_GAMES, server2.getGameSemaphore().availablePermits(), "Acquiring from server1's semaphore must not reduce server2's available permits");
+        assertEquals(MAX_GAMES - 1, server1.getGameSemaphore().availablePermits(), "server1's semaphore must reflect the acquired permit");
     }
 }

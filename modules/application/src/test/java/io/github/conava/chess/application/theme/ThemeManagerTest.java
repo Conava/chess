@@ -1,6 +1,7 @@
 package io.github.conava.chess.application.theme;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ThemeManagerTest {
@@ -35,17 +36,17 @@ class ThemeManagerTest {
 
     @Test
     void themeCssFileReturnsCorrectPath() {
-        assertEquals("/css/themes/dark-purple.css",   Theme.DARK_PURPLE.cssFile());
+        assertEquals("/css/themes/dark-purple.css", Theme.DARK_PURPLE.cssFile());
         assertEquals("/css/themes/dark-charcoal.css", Theme.DARK_CHARCOAL.cssFile());
-        assertEquals("/css/themes/light-paper.css",   Theme.LIGHT_PAPER.cssFile());
-        assertEquals("/css/themes/light-arctic.css",  Theme.LIGHT_ARCTIC.cssFile());
+        assertEquals("/css/themes/light-paper.css", Theme.LIGHT_PAPER.cssFile());
+        assertEquals("/css/themes/light-arctic.css", Theme.LIGHT_ARCTIC.cssFile());
     }
 
     @Test
     void boardThemeCssFileReturnsCorrectPath() {
         assertEquals("/css/board/classic.css", BoardTheme.CLASSIC.cssFile());
-        assertEquals("/css/board/ocean.css",   BoardTheme.OCEAN.cssFile());
-        assertEquals("/css/board/walnut.css",  BoardTheme.WALNUT.cssFile());
+        assertEquals("/css/board/ocean.css", BoardTheme.OCEAN.cssFile());
+        assertEquals("/css/board/walnut.css", BoardTheme.WALNUT.cssFile());
     }
 
     @Test

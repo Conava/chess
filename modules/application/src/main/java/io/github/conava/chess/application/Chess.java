@@ -18,6 +18,7 @@ import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.application.network.ServerCommunicationTask;
 import javafx.application.Application;
 import javafx.stage.Stage;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +39,11 @@ public class Chess extends Application {
     private static final Logger LOGGER = Logger.getLogger(Chess.class.getName());
     private Game game;
 
-    /** No-arg constructor required by JavaFX Application and for unit tests. */
-    public Chess() {}
+    /**
+     * No-arg constructor required by JavaFX Application and for unit tests.
+     */
+    public Chess() {
+    }
 
     // ── JavaFX entry point ────────────────────────────────────────────────────
 
@@ -56,9 +60,9 @@ public class Chess extends Application {
         }
         LOGGER.log(Level.INFO, "Chess application started with GUI");
 
-        SettingsService settings   = new SettingsService();
-        ThemeManager themeManager  = new ThemeManager();
-        I18n i18n                  = new I18n(settings.loadLanguage());
+        SettingsService settings = new SettingsService();
+        ThemeManager themeManager = new ThemeManager();
+        I18n i18n = new I18n(settings.loadLanguage());
 
         themeManager.setTheme(settings.loadTheme());
         themeManager.setBoardTheme(settings.loadBoardTheme());
@@ -94,19 +98,20 @@ public class Chess extends Application {
     }
 
     private Game createOnlineGame(RulesetOptions selectedRuleset,
-                                   String playerWhiteName,
-                                   String playerBlackName,
-                                   Map<String, String> onlineGameSettings) {
-        String serverIP   = onlineGameSettings.get("ip");
-        int    serverPort = Integer.parseInt(onlineGameSettings.get("port"));
+                                  String playerWhiteName,
+                                  String playerBlackName,
+                                  Map<String, String> onlineGameSettings) {
+        String serverIP = onlineGameSettings.get("ip");
+        int serverPort = Integer.parseInt(onlineGameSettings.get("port"));
 
         CountDownLatch connectionLatch = new CountDownLatch(1);
-        CountDownLatch gameReadyLatch  = new CountDownLatch(1);
+        CountDownLatch gameReadyLatch = new CountDownLatch(1);
 
         Game[] gameHolder = new Game[1];
         Consumer<Message> handler = msg -> {
-            try { gameReadyLatch.await(); }
-            catch (InterruptedException e) {
+            try {
+                gameReadyLatch.await();
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;
             }
@@ -119,8 +124,11 @@ public class Chess extends Application {
         serverThread.setDaemon(true);
         serverThread.start();
 
-        try { connectionLatch.await(); }
-        catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        try {
+            connectionLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         Game onlineGame = Game.createGame(true, selectedRuleset,
                 playerWhiteName, playerBlackName, onlineGameSettings, task);
@@ -135,13 +143,33 @@ public class Chess extends Application {
         return onlineGame;
     }
 
-    public GameState getState()           { return game == null ? null : game.getState(); }
-    public Board     getBoard()           { return game == null ? null : game.getBoard(); }
-    public Player    getCurrentPlayer()   { return game == null ? null : game.getCurrentPlayer(); }
-    public Player    getPlayerWhite()     { return game == null ? null : game.getPlayerWhite(); }
-    public Player    getPlayerBlack()     { return game == null ? null : game.getPlayerBlack(); }
-    public String    getJoinCode()        { return game != null ? game.getJoinCode() : null; }
-    public String    getGameLabel()       { return game != null ? game.getRuleset() != null ? game.getRuleset().getGameLabel() : "" : ""; }
+    public GameState getState() {
+        return game == null ? null : game.getState();
+    }
+
+    public Board getBoard() {
+        return game == null ? null : game.getBoard();
+    }
+
+    public Player getCurrentPlayer() {
+        return game == null ? null : game.getCurrentPlayer();
+    }
+
+    public Player getPlayerWhite() {
+        return game == null ? null : game.getPlayerWhite();
+    }
+
+    public Player getPlayerBlack() {
+        return game == null ? null : game.getPlayerBlack();
+    }
+
+    public String getJoinCode() {
+        return game != null ? game.getJoinCode() : null;
+    }
+
+    public String getGameLabel() {
+        return game != null ? game.getRuleset() != null ? game.getRuleset().getGameLabel() : "" : "";
+    }
 
     public Piece getPieceAt(Square position) {
         return game == null ? null : game.getPieceAt(position);
@@ -160,13 +188,11 @@ public class Chess extends Application {
         game.addObserver(observer);
     }
 
-    public void removeObserver(GameObserver observer) {
-        if (game == null) throw new IllegalStateException("No active game");
-        game.removeObserver(observer);
-    }
-
     public void endGame() {
-        if (game != null) { game.endGame(); game = null; }
+        if (game != null) {
+            game.endGame();
+            game = null;
+        }
     }
 
     public void movePiece(Square start, Square end) throws IllegalMoveException {

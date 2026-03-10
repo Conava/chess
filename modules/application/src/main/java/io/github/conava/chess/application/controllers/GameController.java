@@ -4,7 +4,6 @@ import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.navigation.SceneManager;
 import io.github.conava.chess.application.tasks.ExecuteMove;
-import io.github.conava.chess.application.theme.ThemeManager;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.pieces.Piece;
@@ -30,6 +29,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,21 +41,29 @@ public class GameController implements GameObserver {
 
     private static final Logger LOGGER = Logger.getLogger(GameController.class.getName());
 
-    private final SceneManager   sceneManager;
-    private final Chess          chess;
-    private final ThemeManager   themeManager;
-    private final I18n           i18n;
+    private final SceneManager sceneManager;
+    private final Chess chess;
+    private final I18n i18n;
     private final RulesetOptions ruleset;
 
-    @FXML private Label    blackName;
-    @FXML private Label    blackActive;
-    @FXML private Label    whiteName;
-    @FXML private Label    whiteActive;
-    @FXML private Label    gameLabelDisplay;
-    @FXML private ListView<String> moveList;
-    @FXML private StackPane boardContainer;
-    @FXML private VBox      leftPanel;
-    @FXML private VBox      rightPanel;
+    @FXML
+    private Label blackName;
+    @FXML
+    private Label blackActive;
+    @FXML
+    private Label whiteName;
+    @FXML
+    private Label whiteActive;
+    @FXML
+    private Label gameLabelDisplay;
+    @FXML
+    private ListView<String> moveList;
+    @FXML
+    private StackPane boardContainer;
+    @FXML
+    private VBox leftPanel;
+    @FXML
+    private VBox rightPanel;
 
     private final StackPane[][] boardSquares = new StackPane[8][8];
     private final List<StackPane> markedSquares = new ArrayList<>();
@@ -64,20 +72,17 @@ public class GameController implements GameObserver {
     private Board localBoard;
     private NumberBinding squareSize;
 
-    private final ExecutorService executor =
-            Executors.newSingleThreadExecutor(r -> {
-                Thread t = new Thread(r, "chess-move-executor");
-                t.setDaemon(true);
-                return t;
-            });
+    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "chess-move-executor");
+        t.setDaemon(true);
+        return t;
+    });
 
-    public GameController(SceneManager sceneManager, Chess chess,
-                          ThemeManager themeManager, I18n i18n, RulesetOptions ruleset) {
+    public GameController(SceneManager sceneManager, Chess chess, I18n i18n, RulesetOptions ruleset) {
         this.sceneManager = sceneManager;
-        this.chess        = chess;
-        this.themeManager = themeManager;
-        this.i18n         = i18n;
-        this.ruleset      = ruleset;
+        this.chess = chess;
+        this.i18n = i18n;
+        this.ruleset = ruleset;
     }
 
     @FXML
@@ -95,15 +100,12 @@ public class GameController implements GameObserver {
         GridPane grid = new GridPane();
         grid.getStyleClass().add("chess-board");
 
-        squareSize = Bindings.min(
-                boardContainer.widthProperty(), boardContainer.heightProperty()
-        ).divide(8.0);
+        squareSize = Bindings.min(boardContainer.widthProperty(), boardContainer.heightProperty()).divide(8.0);
 
         for (int row = 7; row >= 0; row--) {
             for (int col = 0; col < 8; col++) {
                 StackPane square = new StackPane();
-                square.getStyleClass().addAll("board-square",
-                        (row + col) % 2 == 0 ? "light-square" : "dark-square");
+                square.getStyleClass().addAll("board-square", (row + col) % 2 == 0 ? "light-square" : "dark-square");
                 square.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
                 square.prefWidthProperty().bind(squareSize);
                 square.prefHeightProperty().bind(squareSize);
@@ -132,15 +134,12 @@ public class GameController implements GameObserver {
             for (int col = 0; col < 8; col++) {
                 StackPane sq = boardSquares[row][col];
                 boolean lightSquare = (row + col) % 2 == 0;
-                String colourClass = lightSquare ? "board-coord-label-on-light"
-                                                 : "board-coord-label-on-dark";
+                String colourClass = lightSquare ? "board-coord-label-on-light" : "board-coord-label-on-dark";
 
                 if (col == 0) {
                     Label rank = new Label(String.valueOf(row + 1));
                     rank.getStyleClass().addAll("board-coord-label", colourClass);
-                    rank.styleProperty().bind(squareSize.multiply(0.22)
-                            .asString("-fx-font-size: %.1fpx; -fx-font-weight: bold;"
-                                    + " -fx-padding: 2;"));
+                    rank.styleProperty().bind(squareSize.multiply(0.22).asString("-fx-font-size: %.1fpx; -fx-font-weight: bold;" + " -fx-padding: 2;"));
                     rank.setMouseTransparent(true);
                     StackPane.setAlignment(rank, Pos.TOP_LEFT);
                     sq.getChildren().add(rank);
@@ -149,9 +148,7 @@ public class GameController implements GameObserver {
                 if (row == 0) {
                     Label file = new Label(String.valueOf((char) ('a' + col)));
                     file.getStyleClass().addAll("board-coord-label", colourClass);
-                    file.styleProperty().bind(squareSize.multiply(0.22)
-                            .asString("-fx-font-size: %.1fpx; -fx-font-weight: bold;"
-                                    + " -fx-padding: 2;"));
+                    file.styleProperty().bind(squareSize.multiply(0.22).asString("-fx-font-size: %.1fpx; -fx-font-weight: bold;" + " -fx-padding: 2;"));
                     file.setMouseTransparent(true);
                     StackPane.setAlignment(file, Pos.BOTTOM_RIGHT);
                     sq.getChildren().add(file);
@@ -168,8 +165,7 @@ public class GameController implements GameObserver {
         Runnable attach = () -> {
             Scene scene = leftPanel.getScene();
             if (scene == null) return;
-            NumberBinding pw = Bindings.max(160.0,
-                    Bindings.min(scene.widthProperty().multiply(0.13), 300.0));
+            NumberBinding pw = Bindings.max(160.0, Bindings.min(scene.widthProperty().multiply(0.13), 300.0));
             leftPanel.prefWidthProperty().bind(pw);
             rightPanel.prefWidthProperty().bind(pw);
         };
@@ -201,9 +197,7 @@ public class GameController implements GameObserver {
         if (state == null || state == GameState.NO_GAME) return;
 
         switch (state) {
-            case RUNNING -> {
-                updateAll();
-            }
+            case RUNNING -> updateAll();
             case WAITING_FOR_PLAYER -> showWaitingDialog();
             case SERVER_ERROR -> showErrorAndReturnToMenu(i18n.get("error.server"));
             default -> showGameEndDialog(state);
@@ -256,8 +250,7 @@ public class GameController implements GameObserver {
         StackPane square = boardSquares[row][col];
         square.getChildren().removeIf(n -> "piece".equals(n.getUserData()));
         if (piece != null) {
-            String path = "/icon/" + piece.getType().name().toLowerCase()
-                    + "_" + piece.getPlayer().color().name().toLowerCase() + ".png";
+            String path = "/icon/" + piece.getType().name().toLowerCase() + "_" + piece.getPlayer().color().name().toLowerCase() + ".png";
             var url = getClass().getResource(path);
             if (url != null) {
                 ImageView iv = new ImageView(new Image(url.toExternalForm()));
@@ -279,7 +272,7 @@ public class GameController implements GameObserver {
 
     private void updateActivePlayerIndicator() {
         Player current = chess.getCurrentPlayer();
-        String activeText  = i18n.get("game.active");
+        String activeText = i18n.get("game.active");
         String waitingText = i18n.get("game.waiting");
         boolean isWhiteActive = current == chess.getPlayerWhite();
         whiteActive.setText(isWhiteActive ? activeText : waitingText);
@@ -290,12 +283,12 @@ public class GameController implements GameObserver {
 
     private void handleSquareClick(int row, int col) {
         Square clicked = new Square(row, col);
-        Piece  piece   = chess.getPieceAt(clicked);
+        Piece piece = chess.getPieceAt(clicked);
 
         if (piece != null && piece.getPlayer() == chess.getCurrentPlayer()) {
             clearLegalMoveMarkers();
             selectedSquare = clicked;
-            legalSquares   = chess.getLegalSquares(clicked);
+            legalSquares = chess.getLegalSquares(clicked);
             showLegalMoveMarkers(legalSquares);
             return;
         }
@@ -303,22 +296,19 @@ public class GameController implements GameObserver {
         if (selectedSquare != null && legalSquares.contains(clicked)) {
             clearLegalMoveMarkers();
             Piece movingPiece = chess.getPieceAt(selectedSquare);
-            if (movingPiece != null && movingPiece.getType() == Pieces.PAWN
-                    && (clicked.getY() == 0 || clicked.getY() == 7)) {
-                PromotionController promoCtrl =
-                        new PromotionController(movingPiece.getPlayer().color(),
-                                sceneManager::dismissOverlay, squareSize.multiply(0.9));
+            if (movingPiece != null && movingPiece.getType() == Pieces.PAWN && (clicked.getY() == 0 || clicked.getY() == 7)) {
+                PromotionController promoCtrl = new PromotionController(movingPiece.getPlayer().color(), sceneManager::dismissOverlay, squareSize.multiply(0.9));
                 sceneManager.showOverlay("/fxml/promotion.fxml", promoCtrl);
                 submitMove(selectedSquare, clicked, promoCtrl.getSelectedPiece());
             } else {
                 submitMove(selectedSquare, clicked, null);
             }
             selectedSquare = null;
-            legalSquares   = List.of();
+            legalSquares = List.of();
         } else {
             clearLegalMoveMarkers();
             selectedSquare = null;
-            legalSquares   = List.of();
+            legalSquares = List.of();
         }
     }
 
@@ -364,10 +354,7 @@ public class GameController implements GameObserver {
         String whitePlayerName = chess.getPlayerWhite() != null ? chess.getPlayerWhite().name() : "";
         String blackPlayerName = chess.getPlayerBlack() != null ? chess.getPlayerBlack().name() : "";
 
-        GameEndController ctrl = new GameEndController(
-                i18n, state, whitePlayerName, blackPlayerName, moveCount, isOnline,
-                sceneManager::dismissOverlay
-        );
+        GameEndController ctrl = new GameEndController(i18n, state, whitePlayerName, blackPlayerName, moveCount, isOnline, sceneManager::dismissOverlay);
         sceneManager.showOverlay("/fxml/game-end.fxml", ctrl);
 
         if (ctrl.getChoice() == GameEndController.Choice.RETURN) {
@@ -375,9 +362,7 @@ public class GameController implements GameObserver {
             sceneManager.showMainMenu();
         } else if (ctrl.getChoice() == GameEndController.Choice.REMATCH) {
             chess.endGame();
-            chess.startGame(isOnline,
-                    this.ruleset,
-                    whitePlayerName, blackPlayerName, Map.of());
+            chess.startGame(isOnline, this.ruleset, whitePlayerName, blackPlayerName, Map.of());
             sceneManager.showGame(this.ruleset);
         }
         // NONE = player dismissed without choosing (shouldn't happen in practice)

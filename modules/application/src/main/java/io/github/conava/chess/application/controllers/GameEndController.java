@@ -18,38 +18,46 @@ import java.util.MissingResourceException;
  */
 public class GameEndController {
 
-    /** Possible user choices when dismissing the game-end overlay. */
+    /**
+     * Possible user choices when dismissing the game-end overlay.
+     */
     public enum Choice {
         NONE, RETURN, REMATCH
     }
 
-    @FXML private Label  outcomeBadge;
-    @FXML private Label  outcomeTitle;
-    @FXML private Label  outcomeSubtitle;
-    @FXML private Label  playerWhiteLabel;
-    @FXML private Label  playerBlackLabel;
-    @FXML private Label  moveCountLabel;
-    @FXML private Button rematchBtn;
+    @FXML
+    private Label outcomeBadge;
+    @FXML
+    private Label outcomeTitle;
+    @FXML
+    private Label outcomeSubtitle;
+    @FXML
+    private Label playerWhiteLabel;
+    @FXML
+    private Label playerBlackLabel;
+    @FXML
+    private Label moveCountLabel;
+    @FXML
+    private Button rematchBtn;
 
-    private final I18n         i18n;
-    private final GameState    state;
-    private final String       whiteName;
-    private final String       blackName;
-    private final int          moveCount;
-    private final boolean      isOnline;
-    private final Runnable     closeAction;
+    private final I18n i18n;
+    private final GameState state;
+    private final String whiteName;
+    private final String blackName;
+    private final int moveCount;
+    private final boolean isOnline;
+    private final Runnable closeAction;
 
     private Choice choice = Choice.NONE;
 
-    public GameEndController(I18n i18n, GameState state, String whiteName, String blackName,
-                             int moveCount, boolean isOnline, Runnable closeAction) {
-        this.i18n         = i18n;
-        this.state        = state;
-        this.whiteName    = whiteName;
-        this.blackName    = blackName;
-        this.moveCount    = moveCount;
-        this.isOnline     = isOnline;
-        this.closeAction  = closeAction;
+    public GameEndController(I18n i18n, GameState state, String whiteName, String blackName, int moveCount, boolean isOnline, Runnable closeAction) {
+        this.i18n = i18n;
+        this.state = state;
+        this.whiteName = whiteName;
+        this.blackName = blackName;
+        this.moveCount = moveCount;
+        this.isOnline = isOnline;
+        this.closeAction = closeAction;
     }
 
     @FXML
@@ -58,7 +66,7 @@ public class GameEndController {
         String badgeText = resolveStateLabel();
         outcomeBadge.setText(badgeText);
 
-        boolean isWin  = state.name().startsWith("WHITE_WON") || state.name().startsWith("BLACK_WON");
+        boolean isWin = state.name().startsWith("WHITE_WON") || state.name().startsWith("BLACK_WON");
         boolean isDraw = state.name().startsWith("DRAW");
 
         if (isWin) {
@@ -109,7 +117,9 @@ public class GameEndController {
         closeAction.run();
     }
 
-    /** Returns the user's choice after the dialog has been dismissed. */
+    /**
+     * Returns the user's choice after the dialog has been dismissed.
+     */
     public Choice getChoice() {
         return choice;
     }

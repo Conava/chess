@@ -34,12 +34,7 @@ public class Chess960StartPosition {
      * <p>Maps n4 (0–9) to a pair of positions (0-indexed) among the 5 remaining squares
      * after placing both bishops and the queen. The two positions indicate where the knights go.
      */
-    private static final int[][] N5_TABLE = {
-            {0, 1}, {0, 2}, {0, 3}, {0, 4},
-            {1, 2}, {1, 3}, {1, 4},
-            {2, 3}, {2, 4},
-            {3, 4}
-    };
+    private static final int[][] N5_TABLE = {{0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 2}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}};
 
     private Chess960StartPosition() {
         // utility class — no instances
@@ -172,8 +167,7 @@ public class Chess960StartPosition {
      */
     public static Square[][] fromIndex(int index, Player white, Player black) {
         if (index < 0 || index > 959) {
-            throw new IllegalArgumentException(
-                    "Scharnagl index must be in [0, 959], got: " + index);
+            throw new IllegalArgumentException("Scharnagl index must be in [0, 959], got: " + index);
         }
 
         Piece[] whiteBackRank = new Piece[8];
@@ -253,7 +247,10 @@ public class Chess960StartPosition {
         // Find queen position among remaining 6
         int queenFile = -1;
         for (int x = 0; x < 8; x++) {
-            if (backRank[x] instanceof Queen) { queenFile = x; break; }
+            if (backRank[x] instanceof Queen) {
+                queenFile = x;
+                break;
+            }
         }
         int n3 = remaining.indexOf(queenFile);
         remaining.remove(Integer.valueOf(queenFile));
@@ -270,7 +267,9 @@ public class Chess960StartPosition {
         int kp2 = remaining.indexOf(knightFiles.get(1));
         // Ensure kp1 < kp2
         if (kp1 > kp2) {
-            int tmp = kp1; kp1 = kp2; kp2 = tmp;
+            int tmp = kp1;
+            kp1 = kp2;
+            kp2 = tmp;
         }
 
         // Find n4 from N5 table
@@ -334,12 +333,12 @@ public class Chess960StartPosition {
      * Creates a new piece of the same type for the given player.
      */
     private static Piece mirrorPiece(Piece template, Player player) {
-        if (template instanceof Rook)   return new Rook(player);
+        if (template instanceof Rook) return new Rook(player);
         if (template instanceof Knight) return new Knight(player);
         if (template instanceof Bishop) return new Bishop(player);
-        if (template instanceof Queen)  return new Queen(player);
-        if (template instanceof King)   return new King(player);
-        if (template instanceof Pawn)   return new Pawn(player);
+        if (template instanceof Queen) return new Queen(player);
+        if (template instanceof King) return new King(player);
+        if (template instanceof Pawn) return new Pawn(player);
         throw new IllegalArgumentException("Unknown piece type: " + template.getClass());
     }
 }

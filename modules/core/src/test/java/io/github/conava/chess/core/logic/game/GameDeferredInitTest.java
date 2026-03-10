@@ -1,17 +1,10 @@
 package io.github.conava.chess.core.logic.game;
 
-import io.github.conava.chess.core.data.Square;
-import io.github.conava.chess.core.data.board.Board;
-import io.github.conava.chess.core.data.player.Player;
-import io.github.conava.chess.core.data.player.PlayerColor;
-import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.core.logic.ruleset.chess960Ruleset.Chess960Ruleset;
 import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,15 +26,13 @@ class GameDeferredInitTest {
     @Test
     void getRuleset_returnsNonNullRulesetForStandardGame() {
         Game game = Game.createGame(false, RulesetOptions.STANDARD, "Alice", "Bob", null, null);
-        assertNotNull(game.getRuleset(),
-                "getRuleset() must return the active Ruleset, not null");
+        assertNotNull(game.getRuleset(), "getRuleset() must return the active Ruleset, not null");
     }
 
     @Test
     void getRuleset_returnsStandardRulesetForStandardGame() {
         Game game = Game.createGame(false, RulesetOptions.STANDARD, "Alice", "Bob", null, null);
-        assertTrue(game.getRuleset() instanceof StandardChessRuleset,
-                "Standard game must use StandardChessRuleset");
+        assertInstanceOf(StandardChessRuleset.class, game.getRuleset(), "Standard game must use StandardChessRuleset");
     }
 
     // -------------------------------------------------------------------------
@@ -51,8 +42,7 @@ class GameDeferredInitTest {
     @Test
     void chess960Game_getRuleset_returnsChess960Ruleset() {
         Game game = Game.createGame(false, RulesetOptions.CHESS960, "Alice", "Bob", null, null);
-        assertTrue(game.getRuleset() instanceof Chess960Ruleset,
-                "Chess960 game must use Chess960Ruleset, not the Standard placeholder");
+        assertInstanceOf(Chess960Ruleset.class, game.getRuleset(), "Chess960 game must use Chess960Ruleset, not the Standard placeholder");
     }
 
     @Test
@@ -60,10 +50,8 @@ class GameDeferredInitTest {
         Game game = Game.createGame(false, RulesetOptions.CHESS960, "Alice", "Bob", null, null);
         game.startGame();
         String label = game.getRuleset().getGameLabel();
-        assertFalse(label.isEmpty(),
-                "Chess960 ruleset must return a non-empty game label");
-        assertTrue(label.contains("960"),
-                "Chess960 game label must contain '960'");
+        assertFalse(label.isEmpty(), "Chess960 ruleset must return a non-empty game label");
+        assertTrue(label.contains("960"), "Chess960 game label must contain '960'");
     }
 
     // -------------------------------------------------------------------------
@@ -81,8 +69,7 @@ class GameDeferredInitTest {
     void createServerGame_withRuleset_usesProvidedRuleset() {
         Ruleset ruleset = new Chess960Ruleset(518); // index 518 = standard position
         Game game = Game.createServerGame(ruleset, "Alice", "Bob");
-        assertSame(ruleset, game.getRuleset(),
-                "createServerGame(Ruleset,...) must use the provided ruleset instance");
+        assertSame(ruleset, game.getRuleset(), "createServerGame(Ruleset,...) must use the provided ruleset instance");
     }
 
     @Test
@@ -118,8 +105,7 @@ class GameDeferredInitTest {
         Chess960Ruleset chess960 = new Chess960Ruleset();
         Game game = Game.createServerGame(chess960, "A", "B");
         // initializeBoard is protected and this test is in the same package, so it is accessible.
-        assertThrows(IllegalStateException.class,
-                () -> game.initializeBoard(new StandardChessRuleset()));
+        assertThrows(IllegalStateException.class, () -> game.initializeBoard(new StandardChessRuleset()));
     }
 
     // -------------------------------------------------------------------------

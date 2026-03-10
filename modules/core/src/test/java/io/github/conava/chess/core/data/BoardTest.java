@@ -1,6 +1,5 @@
 package io.github.conava.chess.core.data;
 
-import io.github.conava.chess.core.data.Square;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import io.github.conava.chess.core.data.board.Board;
@@ -17,37 +16,33 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class BoardTest {
     private Board board;
-    private Square[][] boardSquares;
     private Player player1;
 
-@BeforeEach
-public void setUp() {
-    player1 = new Player("p1", PlayerColor.WHITE);
-    boardSquares = new Square[8][8];
+    @BeforeEach
+    public void setUp() {
+        player1 = new Player("p1", PlayerColor.WHITE);
+        Square[][] boardSquares = new Square[8][8];
 
-    // Initialize each Square in the array
-    for (int i = 0; i < boardSquares.length; i++) {
-        for (int j = 0; j < boardSquares[i].length; j++) {
-            boardSquares[i][j] = new Square(i, j);
+        // Initialize each Square in the array
+        for (int i = 0; i < boardSquares.length; i++) {
+            for (int j = 0; j < boardSquares[i].length; j++) {
+                boardSquares[i][j] = new Square(i, j);
+            }
         }
+
+        // Now you can safely set a piece on a Square
+        boardSquares[4][1].setPiece(new Knight(player1));
+
+        board = new Board(boardSquares);
     }
-
-    // Now you can safely set a piece on a Square
-    boardSquares[4][1].setPiece(new Knight(player1));
-
-    board = new Board(boardSquares);
-}
 
     @Test
     void testBoard() {
         // Board must expose the knight placed in setUp at (y=4, x=1)
-        assertNotNull(board.getSquare(4, 1).getPiece(),
-                "Square (4,1) must contain the Knight placed during setUp");
-        assertInstanceOf(Knight.class, board.getSquare(4, 1).getPiece(),
-                "Piece at (4,1) must be a Knight");
+        assertNotNull(board.getSquare(4, 1).getPiece(), "Square (4,1) must contain the Knight placed during setUp");
+        assertInstanceOf(Knight.class, board.getSquare(4, 1).getPiece(), "Piece at (4,1) must be a Knight");
         // All other squares in this row must be empty
-        assertNull(board.getSquare(4, 0).getPiece(),
-                "Square (4,0) must be empty");
+        assertNull(board.getSquare(4, 0).getPiece(), "Square (4,0) must be empty");
     }
 
     // ---- Deep copy tests ----
@@ -75,8 +70,7 @@ public void setUp() {
 
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
-                assertNotSame(original.getSquare(y, x), copy.getSquare(y, x),
-                        "Square at [" + y + "][" + x + "] must be a new instance in the copy");
+                assertNotSame(original.getSquare(y, x), copy.getSquare(y, x), "Square at [" + y + "][" + x + "] must be a new instance in the copy");
             }
         }
     }
@@ -93,8 +87,7 @@ public void setUp() {
 
         Board copy = original.getCopy();
 
-        assertNotSame(knight, copy.getSquare(3, 3).getPiece(),
-                "Piece in the copy must be a distinct instance from the original");
+        assertNotSame(knight, copy.getSquare(3, 3).getPiece(), "Piece in the copy must be a distinct instance from the original");
     }
 
     /**
@@ -109,8 +102,7 @@ public void setUp() {
         Board copy = original.getCopy();
         copy.getSquare(3, 3).setPiece(null);
 
-        assertNotNull(original.getSquare(3, 3).getPiece(),
-                "Original square must still have its piece after the copy's square is cleared");
+        assertNotNull(original.getSquare(3, 3).getPiece(), "Original square must still have its piece after the copy's square is cleared");
     }
 
     /**
@@ -128,8 +120,7 @@ public void setUp() {
         Board copy = original.getCopy();
 
         King copiedKing = (King) copy.getSquare(0, 4).getPiece();
-        assertTrue(copiedKing.getHasMoved(),
-                "King.hasMoved must be true in the copied board");
+        assertTrue(copiedKing.getHasMoved(), "King.hasMoved must be true in the copied board");
     }
 
     /**
@@ -147,8 +138,7 @@ public void setUp() {
         Board copy = original.getCopy();
 
         Rook copiedRook = (Rook) copy.getSquare(0, 0).getPiece();
-        assertTrue(copiedRook.getHasNotMoved(),
-                "Rook.hasMoved must be false in the copied board when the original rook has not moved");
+        assertTrue(copiedRook.getHasNotMoved(), "Rook.hasMoved must be false in the copied board when the original rook has not moved");
     }
 
     /**
@@ -166,8 +156,7 @@ public void setUp() {
         Board copy = original.getCopy();
 
         Rook copiedRook = (Rook) copy.getSquare(0, 0).getPiece();
-        assertFalse(copiedRook.getHasNotMoved(),
-                "Rook.hasMoved must be true in the copied board when the original rook has moved");
+        assertFalse(copiedRook.getHasNotMoved(), "Rook.hasMoved must be true in the copied board when the original rook has moved");
     }
 
     /**
@@ -204,20 +193,15 @@ public void setUp() {
         enPassantBoard.executeMove(enPassantMove);
 
         // White pawn must now be on d6
-        assertNotNull(enPassantBoard.getSquare(5, 3).getPiece(),
-                "White pawn should be at d6 after en passant");
-        assertInstanceOf(Pawn.class, enPassantBoard.getSquare(5, 3).getPiece(),
-                "Piece at d6 should be a Pawn");
-        assertEquals(white, enPassantBoard.getSquare(5, 3).getPiece().getPlayer(),
-                "Piece at d6 should belong to white");
+        assertNotNull(enPassantBoard.getSquare(5, 3).getPiece(), "White pawn should be at d6 after en passant");
+        assertInstanceOf(Pawn.class, enPassantBoard.getSquare(5, 3).getPiece(), "Piece at d6 should be a Pawn");
+        assertEquals(white, enPassantBoard.getSquare(5, 3).getPiece().getPlayer(), "Piece at d6 should belong to white");
 
         // Black pawn must have been removed from d5
-        assertNull(enPassantBoard.getSquare(4, 3).getPiece(),
-                "Black pawn should have been removed from d5 by en passant");
+        assertNull(enPassantBoard.getSquare(4, 3).getPiece(), "Black pawn should have been removed from d5 by en passant");
 
         // e5 must be empty
-        assertNull(enPassantBoard.getSquare(4, 4).getPiece(),
-                "e5 should be empty after white pawn moved away");
+        assertNull(enPassantBoard.getSquare(4, 4).getPiece(), "e5 should be empty after white pawn moved away");
     }
 
     // ---- Chess960 castling tests (T03) ----

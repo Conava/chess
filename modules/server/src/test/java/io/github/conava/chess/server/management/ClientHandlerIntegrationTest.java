@@ -10,10 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -88,7 +85,9 @@ class ClientHandlerIntegrationTest {
             clientOut.println(line);
         }
 
-        /** Reads the next line from the server with a timeout. Returns null on timeout. */
+        /**
+         * Reads the next line from the server with a timeout. Returns null on timeout.
+         */
         String readLine() throws IOException {
             return clientIn.readLine();
         }
@@ -146,8 +145,7 @@ class ClientHandlerIntegrationTest {
             conn.send("GARBAGE_NOT_A_VALID_MESSAGE");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
-            assertNotNull(response,
-                    "A malformed (unparseable) message must produce an ERROR response");
+            assertNotNull(response, "A malformed (unparseable) message must produce an ERROR response");
         }
     }
 
@@ -163,8 +161,7 @@ class ClientHandlerIntegrationTest {
             // JOIN_GAME with missing gameId: should also return ERROR.
             conn.send("JOIN_GAME:playerName=Test");
             String secondError = readUntilType(conn, MessageType.ERROR.name());
-            assertNotNull(secondError,
-                    "Handler must continue processing after a malformed message");
+            assertNotNull(secondError, "Handler must continue processing after a malformed message");
         }
     }
 
@@ -178,8 +175,7 @@ class ClientHandlerIntegrationTest {
             conn.send("CREATE_GAME:ruleset=INVALID_RULESET playerName=Alice");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
-            assertNotNull(response,
-                    "CREATE_GAME with an invalid ruleset name must produce an ERROR response");
+            assertNotNull(response, "CREATE_GAME with an invalid ruleset name must produce an ERROR response");
         }
     }
 
@@ -189,8 +185,7 @@ class ClientHandlerIntegrationTest {
             conn.send("CREATE_GAME:playerName=Alice");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
-            assertNotNull(response,
-                    "CREATE_GAME without a ruleset parameter must produce an ERROR response");
+            assertNotNull(response, "CREATE_GAME without a ruleset parameter must produce an ERROR response");
         }
     }
 
@@ -205,8 +200,7 @@ class ClientHandlerIntegrationTest {
             conn.send("JOIN_GAME:gameId=999 playerName=Bob");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
-            assertNotNull(response,
-                    "JOIN_GAME with a non-existent game ID must produce an ERROR response");
+            assertNotNull(response, "JOIN_GAME with a non-existent game ID must produce an ERROR response");
         }
     }
 
@@ -216,8 +210,7 @@ class ClientHandlerIntegrationTest {
             conn.send("JOIN_GAME:gameId=NOT_A_NUMBER playerName=Bob");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
-            assertNotNull(response,
-                    "JOIN_GAME with a non-numeric gameId must produce an ERROR response");
+            assertNotNull(response, "JOIN_GAME with a non-numeric gameId must produce an ERROR response");
         }
     }
 
@@ -229,8 +222,7 @@ class ClientHandlerIntegrationTest {
     void joinGame_keyValueFormat_parsesGameIdCorrectly() throws Exception {
         // Create a game from connection 1, then join it from connection 2 using
         // the key=value format "gameId=<id> playerName=Bob".
-        try (Connection conn1 = openConnection();
-             Connection conn2 = openConnection()) {
+        try (Connection conn1 = openConnection(); Connection conn2 = openConnection()) {
 
             // Creator sends CREATE_GAME.
             conn1.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
@@ -250,14 +242,10 @@ class ClientHandlerIntegrationTest {
             String status1 = readUntilType(conn1, MessageType.GAME_STATUS.name());
             String status2 = readUntilType(conn2, MessageType.GAME_STATUS.name());
 
-            assertNotNull(status1,
-                    "Creator must receive GAME_STATUS after joiner connects (key=value format)");
-            assertNotNull(status2,
-                    "Joiner must receive GAME_STATUS after connecting (key=value format)");
-            assertTrue(status1.contains("RUNNING"),
-                    "GAME_STATUS sent to creator must indicate RUNNING state");
-            assertTrue(status2.contains("RUNNING"),
-                    "GAME_STATUS sent to joiner must indicate RUNNING state");
+            assertNotNull(status1, "Creator must receive GAME_STATUS after joiner connects (key=value format)");
+            assertNotNull(status2, "Joiner must receive GAME_STATUS after connecting (key=value format)");
+            assertTrue(status1.contains("RUNNING"), "GAME_STATUS sent to creator must indicate RUNNING state");
+            assertTrue(status2.contains("RUNNING"), "GAME_STATUS sent to joiner must indicate RUNNING state");
         }
     }
 
@@ -271,8 +259,7 @@ class ClientHandlerIntegrationTest {
             conn.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
 
             String response = readUntilType(conn, MessageType.JOIN_CODE.name());
-            assertNotNull(response,
-                    "CREATE_GAME with a valid ruleset and playerName must produce a JOIN_CODE response");
+            assertNotNull(response, "CREATE_GAME with a valid ruleset and playerName must produce a JOIN_CODE response");
         }
     }
 
@@ -283,8 +270,7 @@ class ClientHandlerIntegrationTest {
             conn.send("CREATE_GAME:ruleset=STANDARD");
 
             String response = readUntilType(conn, MessageType.JOIN_CODE.name());
-            assertNotNull(response,
-                    "CREATE_GAME without playerName must still produce a JOIN_CODE response using default name");
+            assertNotNull(response, "CREATE_GAME without playerName must still produce a JOIN_CODE response using default name");
         }
     }
 
@@ -299,8 +285,7 @@ class ClientHandlerIntegrationTest {
         // "No game instance available" ERROR instead of being dispatched to the game.
         // After the fix, the MOVE message must be dispatched to the game and return a
         // game-related response (not "No game instance available").
-        try (Connection conn1 = openConnection();
-             Connection conn2 = openConnection()) {
+        try (Connection conn1 = openConnection(); Connection conn2 = openConnection()) {
 
             // Set up the game.
             conn1.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
@@ -330,9 +315,7 @@ class ClientHandlerIntegrationTest {
             // If we got an ERROR here, check it is NOT the "No game instance" error.
             // It should be a game-level error (wrong turn or illegal move).
             if (response != null) {
-                assertFalse(response.contains("No game instance available"),
-                        "After joinGame(), the gameInstance field must be set; " +
-                        "MOVE must be dispatched to the game, not rejected with 'No game instance available'");
+                assertFalse(response.contains("No game instance available"), "After joinGame(), the gameInstance field must be set; " + "MOVE must be dispatched to the game, not rejected with 'No game instance available'");
             }
             // If no error was received within timeout (e.g., black's move was accepted
             // somehow or MOVE was echoed), the test also passes — the key assertion is
@@ -350,8 +333,7 @@ class ClientHandlerIntegrationTest {
         // GameInstance will call sendMessage() on the white handler from two threads
         // after a MOVE (both players receive the move relay concurrently).
         // We verify that every line received on the client side is parseable.
-        try (Connection conn1 = openConnection();
-             Connection conn2 = openConnection()) {
+        try (Connection conn1 = openConnection(); Connection conn2 = openConnection()) {
 
             conn1.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
             String joinCodeLine = readUntilType(conn1, MessageType.JOIN_CODE.name());
@@ -369,15 +351,13 @@ class ClientHandlerIntegrationTest {
             String moveLine = readUntilType(conn1, MessageType.MOVE.name());
             if (moveLine != null) {
                 // The line must be parseable without throwing.
-                assertDoesNotThrow(() -> MessageParser.parse(moveLine),
-                        "Each line received on the client must be parseable (no corruption from concurrent writes)");
+                assertDoesNotThrow(() -> MessageParser.parse(moveLine), "Each line received on the client must be parseable (no corruption from concurrent writes)");
             }
 
             // Also verify conn2 (black) received the MOVE relay.
             String moveLine2 = readUntilType(conn2, MessageType.MOVE.name());
             if (moveLine2 != null) {
-                assertDoesNotThrow(() -> MessageParser.parse(moveLine2),
-                        "Each line received on black's client must be parseable");
+                assertDoesNotThrow(() -> MessageParser.parse(moveLine2), "Each line received on black's client must be parseable");
             }
         }
     }

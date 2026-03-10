@@ -1,6 +1,5 @@
 package io.github.conava.chess.core.logic.ruleset;
 
-import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.player.PlayerColor;
@@ -9,8 +8,6 @@ import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,8 +30,7 @@ class RulesetDefaultMethodsTest {
 
     @Test
     void getGameLabel_returnsEmptyString() {
-        assertEquals("", ruleset.getGameLabel(),
-                "Default getGameLabel should return an empty string");
+        assertEquals("", ruleset.getGameLabel(), "Default getGameLabel should return an empty string");
     }
 
     @Test
@@ -59,15 +55,13 @@ class RulesetDefaultMethodsTest {
     @Test
     void deserializeMove_kingsideCastle_returnsCastleMove() {
         Move move = ruleset.deserializeMove("O-O", null, white);
-        assertInstanceOf(CastleMove.class, move,
-                "O-O should deserialize to a CastleMove");
+        assertInstanceOf(CastleMove.class, move, "O-O should deserialize to a CastleMove");
     }
 
     @Test
     void deserializeMove_queensideCastle_returnsCastleMove() {
         Move move = ruleset.deserializeMove("O-O-O", null, white);
-        assertInstanceOf(CastleMove.class, move,
-                "O-O-O should deserialize to a CastleMove");
+        assertInstanceOf(CastleMove.class, move, "O-O-O should deserialize to a CastleMove");
     }
 
     @Test

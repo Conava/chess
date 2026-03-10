@@ -42,7 +42,9 @@ public class GameInstance implements GameObserver {
     private final int gameId;
     private final RulesetOptions ruleset;
 
-    /** Scharnagl index for Chess960 games; {@code -1} for standard chess. */
+    /**
+     * Scharnagl index for Chess960 games; {@code -1} for standard chess.
+     */
     private final int positionIndex;
 
     private Game game;
@@ -67,9 +69,7 @@ public class GameInstance implements GameObserver {
     public GameInstance(int gameId, RulesetOptions ruleset) {
         this.gameId = gameId;
         this.ruleset = ruleset;
-        this.positionIndex = (ruleset == RulesetOptions.CHESS960)
-                ? new Random().nextInt(960)
-                : -1;
+        this.positionIndex = (ruleset == RulesetOptions.CHESS960) ? new Random().nextInt(960) : -1;
         this.game = null;
         this.previousState = null;
     }
@@ -93,16 +93,12 @@ public class GameInstance implements GameObserver {
         if (whitePlayerHandler == null) {
             whitePlayerHandler = clientHandler;
             whitePlayerName = (playerName != null && !playerName.isBlank()) ? playerName : "Player 1";
-            String whiteSuccessContent = (positionIndex >= 0)
-                    ? "player=white position=" + positionIndex + " ruleset=CHESS960"
-                    : "player=white";
+            String whiteSuccessContent = (positionIndex >= 0) ? "player=white position=" + positionIndex + " ruleset=CHESS960" : "player=white";
             clientHandler.sendMessage(new Message(MessageType.SUCCESS, whiteSuccessContent));
         } else if (blackPlayerHandler == null) {
             blackPlayerHandler = clientHandler;
             blackPlayerName = (playerName != null && !playerName.isBlank()) ? playerName : "Player 2";
-            String successContent = (positionIndex >= 0)
-                    ? "player=black position=" + positionIndex + " ruleset=CHESS960"
-                    : "player=black";
+            String successContent = (positionIndex >= 0) ? "player=black position=" + positionIndex + " ruleset=CHESS960" : "player=black";
             clientHandler.sendMessage(new Message(MessageType.SUCCESS, successContent));
             startGame();
         }
@@ -119,8 +115,7 @@ public class GameInstance implements GameObserver {
      */
     private void startGame() {
         if (positionIndex >= 0) {
-            this.game = Game.createServerGame(
-                    new Chess960Ruleset(positionIndex), whitePlayerName, blackPlayerName);
+            this.game = Game.createServerGame(new Chess960Ruleset(positionIndex), whitePlayerName, blackPlayerName);
         } else {
             this.game = Game.createServerGame(ruleset, whitePlayerName, blackPlayerName);
         }
@@ -164,16 +159,9 @@ public class GameInstance implements GameObserver {
      */
     private boolean isTerminalState(GameState state) {
         return switch (state) {
-            case WHITE_WON_BY_CHECKMATE,
-                 BLACK_WON_BY_CHECKMATE,
-                 WHITE_WON_BY_RESIGNATION,
-                 BLACK_WON_BY_RESIGNATION,
-                 WHITE_WON_BY_TIMEOUT,
-                 BLACK_WON_BY_TIMEOUT,
-                 DRAW_BY_STALEMATE,
-                 DRAW_BY_INSUFFICIENT_MATERIAL,
-                 DRAW_BY_THREEFOLD_REPETITION,
-                 DRAW_BY_FIFTY_MOVE_RULE -> true;
+            case WHITE_WON_BY_CHECKMATE, BLACK_WON_BY_CHECKMATE, WHITE_WON_BY_RESIGNATION, BLACK_WON_BY_RESIGNATION,
+                 WHITE_WON_BY_TIMEOUT, BLACK_WON_BY_TIMEOUT, DRAW_BY_STALEMATE, DRAW_BY_INSUFFICIENT_MATERIAL,
+                 DRAW_BY_THREEFOLD_REPETITION, DRAW_BY_FIFTY_MOVE_RULE -> true;
             default -> false;
         };
     }
@@ -246,13 +234,8 @@ public class GameInstance implements GameObserver {
             return;
         }
         try {
-            var player = Objects.equals(message.getParameterValue("playerColor"), "WHITE")
-                    ? game.getPlayerWhite()
-                    : game.getPlayerBlack();
-            Move move = game.getRuleset().deserializeMove(
-                    Objects.requireNonNull(message.getParameterValue("move")),
-                    game.getBoard(),
-                    player);
+            var player = Objects.equals(message.getParameterValue("playerColor"), "WHITE") ? game.getPlayerWhite() : game.getPlayerBlack();
+            Move move = game.getRuleset().deserializeMove(Objects.requireNonNull(message.getParameterValue("move")), game.getBoard(), player);
             game.movePiece(move.getStart(), move.getEnd());
             LOGGER.log(Level.INFO, "Move executed: {0}", message.content());
             sendMessageToPlayers(new Message(MessageType.MOVE, message.content()));
@@ -296,12 +279,9 @@ public class GameInstance implements GameObserver {
                     game.setGameState(newGameState);
                 }
             } catch (IllegalArgumentException | NullPointerException e) {
-                LOGGER.log(Level.WARNING,
-                        "Invalid gameState parameter in GAME_STATUS message: " + message.content(), e);
+                LOGGER.log(Level.WARNING, "Invalid gameState parameter in GAME_STATUS message: " + message.content(), e);
                 if (clientHandler != null) {
-                    clientHandler.sendMessage(new Message(
-                            MessageType.ERROR,
-                            "Malformed gameState parameter: " + message.getParameterValue("gameState")));
+                    clientHandler.sendMessage(new Message(MessageType.ERROR, "Malformed gameState parameter: " + message.getParameterValue("gameState")));
                 }
             }
         } else {
@@ -361,14 +341,12 @@ public class GameInstance implements GameObserver {
             if (clientHandler == whitePlayerHandler) {
                 game.setGameState(GameState.BLACK_WON_BY_RESIGNATION);
                 if (blackPlayerHandler != null) {
-                    blackPlayerHandler.sendMessage(new Message(MessageType.GAME_STATUS,
-                            "gameState=" + GameState.BLACK_WON_BY_RESIGNATION.name()));
+                    blackPlayerHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + GameState.BLACK_WON_BY_RESIGNATION.name()));
                 }
             } else if (clientHandler == blackPlayerHandler) {
                 game.setGameState(GameState.WHITE_WON_BY_RESIGNATION);
                 if (whitePlayerHandler != null) {
-                    whitePlayerHandler.sendMessage(new Message(MessageType.GAME_STATUS,
-                            "gameState=" + GameState.WHITE_WON_BY_RESIGNATION.name()));
+                    whitePlayerHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + GameState.WHITE_WON_BY_RESIGNATION.name()));
                 }
             }
         }

@@ -45,16 +45,12 @@ class ObservableTest {
 
     @Test
     void addObserver_nullThrowsNPE() {
-        assertThrows(NullPointerException.class,
-                () -> observable.addObserver(null),
-                "addObserver(null) must throw NullPointerException");
+        assertThrows(NullPointerException.class, () -> observable.addObserver(null), "addObserver(null) must throw NullPointerException");
     }
 
     @Test
     void removeObserver_nullThrowsNPE() {
-        assertThrows(NullPointerException.class,
-                () -> observable.removeObserver(null),
-                "removeObserver(null) must throw NullPointerException");
+        assertThrows(NullPointerException.class, () -> observable.removeObserver(null), "removeObserver(null) must throw NullPointerException");
     }
 
     // ---- concurrency test ----
@@ -73,7 +69,7 @@ class ObservableTest {
     @Test
     void notifyObservers_concurrentAddDoesNotThrow() throws InterruptedException {
         CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch  = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(1);
         AtomicBoolean writerFailed = new AtomicBoolean(false);
 
         // Register an observer that lets the writer thread run while we are iterating.
@@ -102,8 +98,7 @@ class ObservableTest {
         writer.start();
 
         // This must not throw.
-        assertDoesNotThrow(() -> observable.notifyObservers(),
-                "notifyObservers() must not throw when observers are added concurrently");
+        assertDoesNotThrow(() -> observable.notifyObservers(), "notifyObservers() must not throw when observers are added concurrently");
 
         writer.join(5_000);
         assertFalse(writer.isAlive(), "Writer thread must have terminated within the join timeout — possible deadlock");

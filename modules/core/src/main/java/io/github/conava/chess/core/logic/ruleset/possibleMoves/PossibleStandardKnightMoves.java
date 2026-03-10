@@ -36,22 +36,13 @@ public class PossibleStandardKnightMoves {
         List<Square> possibleMoves = new ArrayList<>();
         Player owner = square.isOccupiedBy();
         Square possibleSquare;
-        /*
-            -2 / +1
-            -2 / -1
-            -1 / +2
-            -1 / -2
-            +1 / +2
-            +1 / -2
-            +2 / +1
-            +2 / -1
-         */
+
         int[] arrY = {-2, -2, -1, -1, +1, +1, +2, +2};
         int[] arrX = {+1, -1, +2, -2, +2, -2, +1, -1};
 
         for (int i = 0; i < 8; i++) {
-            if(isInBounds(square.getY()+ arrY[i], square.getX() + arrX[i])) {
-                possibleSquare = board.getSquare(square.getY()+ arrY[i], square.getX() + arrX[i]);
+            if (isInBounds(square.getY() + arrY[i], square.getX() + arrX[i])) {
+                possibleSquare = board.getSquare(square.getY() + arrY[i], square.getX() + arrX[i]);
                 if (possibleSquare.isEmpty() || !possibleSquare.isOccupiedBy().equals(owner)) {
                     possibleMoves.add(possibleSquare);
                 }

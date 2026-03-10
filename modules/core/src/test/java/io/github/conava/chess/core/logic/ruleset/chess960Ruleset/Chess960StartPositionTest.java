@@ -71,9 +71,9 @@ class Chess960StartPositionTest {
             else if (p instanceof Knight) knights++;
         }
 
-        assertEquals(1, kings,   "Must have exactly 1 king");
-        assertEquals(1, queens,  "Must have exactly 1 queen");
-        assertEquals(2, rooks,   "Must have exactly 2 rooks");
+        assertEquals(1, kings, "Must have exactly 1 king");
+        assertEquals(1, queens, "Must have exactly 1 queen");
+        assertEquals(2, rooks, "Must have exactly 2 rooks");
         assertEquals(2, bishops, "Must have exactly 2 bishops");
         assertEquals(2, knights, "Must have exactly 2 knights");
     }
@@ -116,7 +116,7 @@ class Chess960StartPositionTest {
         }
 
         assertNotEquals(-1, kingFile, "Must find king");
-        assertNotEquals(-1, rookLeft,  "Must find rook to the left of king");
+        assertNotEquals(-1, rookLeft, "Must find rook to the left of king");
         assertNotEquals(-1, rookRight, "Must find rook to the right of king");
         assertTrue(rookLeft < kingFile, "Left rook must be left of king");
         assertTrue(rookRight > kingFile, "Right rook must be right of king");
@@ -164,14 +164,14 @@ class Chess960StartPositionTest {
         Square[][] board = Chess960StartPosition.fromIndex(518, white, black);
         Piece[] rank = backRank(board);
 
-        assertInstanceOf(Rook.class,   rank[0], "File a must be Rook");
+        assertInstanceOf(Rook.class, rank[0], "File a must be Rook");
         assertInstanceOf(Knight.class, rank[1], "File b must be Knight");
         assertInstanceOf(Bishop.class, rank[2], "File c must be Bishop");
-        assertInstanceOf(Queen.class,  rank[3], "File d must be Queen");
-        assertInstanceOf(King.class,   rank[4], "File e must be King");
+        assertInstanceOf(Queen.class, rank[3], "File d must be Queen");
+        assertInstanceOf(King.class, rank[4], "File e must be King");
         assertInstanceOf(Bishop.class, rank[5], "File f must be Bishop");
         assertInstanceOf(Knight.class, rank[6], "File g must be Knight");
-        assertInstanceOf(Rook.class,   rank[7], "File h must be Rook");
+        assertInstanceOf(Rook.class, rank[7], "File h must be Rook");
     }
 
     // -------------------------------------------------------------------------

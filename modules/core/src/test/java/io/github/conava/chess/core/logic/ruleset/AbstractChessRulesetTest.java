@@ -53,8 +53,7 @@ class AbstractChessRulesetTest {
         source.setPiece(new King(white));
         Square target = new Square(0, 6); // 2 squares right
 
-        assertTrue(ruleset.isCastlingCandidatePublic(source, target),
-                "King moving 2 squares right should be a castling candidate");
+        assertTrue(ruleset.isCastlingCandidatePublic(source, target), "King moving 2 squares right should be a castling candidate");
     }
 
     /**
@@ -66,8 +65,7 @@ class AbstractChessRulesetTest {
         source.setPiece(new King(white));
         Square target = new Square(0, 2); // 2 squares left
 
-        assertTrue(ruleset.isCastlingCandidatePublic(source, target),
-                "King moving 2 squares left should be a castling candidate");
+        assertTrue(ruleset.isCastlingCandidatePublic(source, target), "King moving 2 squares left should be a castling candidate");
     }
 
     /**
@@ -79,8 +77,7 @@ class AbstractChessRulesetTest {
         source.setPiece(new King(white));
         Square target = new Square(0, 5); // only 1 square
 
-        assertFalse(ruleset.isCastlingCandidatePublic(source, target),
-                "King moving 1 square should not be a castling candidate");
+        assertFalse(ruleset.isCastlingCandidatePublic(source, target), "King moving 1 square should not be a castling candidate");
     }
 
     /**
@@ -92,8 +89,7 @@ class AbstractChessRulesetTest {
         source.setPiece(new Rook(white));
         Square target = new Square(0, 2); // 2 squares, but not a king
 
-        assertFalse(ruleset.isCastlingCandidatePublic(source, target),
-                "A Rook moving 2 squares should not be a castling candidate");
+        assertFalse(ruleset.isCastlingCandidatePublic(source, target), "A Rook moving 2 squares should not be a castling candidate");
     }
 
     // -----------------------------------------------------------------------
@@ -106,7 +102,6 @@ class AbstractChessRulesetTest {
      */
     @Test
     void getGameLabel_inheritedDefault_returnsEmptyString() {
-        assertEquals("", ruleset.getGameLabel(),
-                "AbstractChessRuleset should inherit getGameLabel() returning \"\"");
+        assertEquals("", ruleset.getGameLabel(), "AbstractChessRuleset should inherit getGameLabel() returning \"\"");
     }
 }

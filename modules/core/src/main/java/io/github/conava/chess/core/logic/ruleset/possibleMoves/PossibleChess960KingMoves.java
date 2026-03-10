@@ -52,8 +52,7 @@ public class PossibleChess960KingMoves extends AbstractKingMoveGenerator {
      * @return {@code true} if the post-castle corridor is also clear
      */
     @Override
-    protected boolean onCastlingCandidateFound(int rank, int kingFile, int rookFile,
-                                               boolean kingside) {
+    protected boolean onCastlingCandidateFound(int rank, int kingFile, int rookFile, boolean kingside) {
         return isCorridorClear(rank, kingFile, rookFile, kingside);
     }
 
@@ -79,9 +78,7 @@ public class PossibleChess960KingMoves extends AbstractKingMoveGenerator {
                 x += direction;
                 continue;
             }
-            if (piece instanceof Rook rook
-                    && rook.getHasNotMoved()
-                    && piece.getPlayer().equals(owner)) {
+            if (piece instanceof Rook rook && rook.getHasNotMoved() && piece.getPlayer().equals(owner)) {
                 return board.getSquare(y, x);
             }
             // blocked
@@ -109,7 +106,7 @@ public class PossibleChess960KingMoves extends AbstractKingMoveGenerator {
      * @param rookFile the rook's current file (x-coordinate)
      * @param kingside {@code true} for kingside castling, {@code false} for queenside
      * @return {@code true} if every square in the destination corridor is unoccupied
-     *         (ignoring the king's and rook's own squares)
+     * (ignoring the king's and rook's own squares)
      */
     private boolean isCorridorClear(int rank, int kingFile, int rookFile, boolean kingside) {
         int lo, hi;

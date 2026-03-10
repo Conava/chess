@@ -64,11 +64,9 @@ public class PossibleChess960KingMovesTest {
         List<Square> squares = moves.getPossibleSquares();
 
         // In Chess960 mode the king "moves to the rook": candidate = x=7 (h-file)
-        assertTrue(squares.contains(grid[0][7]),
-                "Kingside castling candidate should be the rook's square (h-file, x=7)");
+        assertTrue(squares.contains(grid[0][7]), "Kingside castling candidate should be the rook's square (h-file, x=7)");
         // The standard g1 square (x=6) is NOT the castling candidate
-        assertFalse(squares.contains(grid[0][6]),
-                "Standard g1 (x=6) must not be added as the castling candidate");
+        assertFalse(squares.contains(grid[0][6]), "Standard g1 (x=6) must not be added as the castling candidate");
     }
 
     /**
@@ -87,11 +85,9 @@ public class PossibleChess960KingMovesTest {
         List<Square> squares = moves.getPossibleSquares();
 
         // In Chess960 mode the king "moves to the rook": candidate = x=0 (a-file)
-        assertTrue(squares.contains(grid[0][0]),
-                "Queenside castling candidate should be the rook's square (a-file, x=0)");
+        assertTrue(squares.contains(grid[0][0]), "Queenside castling candidate should be the rook's square (a-file, x=0)");
         // The standard c1 square (x=2) is NOT the castling candidate
-        assertFalse(squares.contains(grid[0][2]),
-                "Standard c1 (x=2) must not be added as the castling candidate");
+        assertFalse(squares.contains(grid[0][2]), "Standard c1 (x=2) must not be added as the castling candidate");
     }
 
     // -----------------------------------------------------------------------
@@ -114,10 +110,8 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][3], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][0]),
-                "Queenside castling must be blocked after king has moved");
-        assertFalse(squares.contains(grid[0][7]),
-                "Kingside castling must be blocked after king has moved");
+        assertFalse(squares.contains(grid[0][0]), "Queenside castling must be blocked after king has moved");
+        assertFalse(squares.contains(grid[0][7]), "Kingside castling must be blocked after king has moved");
     }
 
     // -----------------------------------------------------------------------
@@ -142,10 +136,8 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][3], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][0]),
-                "Queenside castling must be blocked after queenside rook has moved");
-        assertTrue(squares.contains(grid[0][7]),
-                "Kingside castling must still be available when only queenside rook moved");
+        assertFalse(squares.contains(grid[0][0]), "Queenside castling must be blocked after queenside rook has moved");
+        assertTrue(squares.contains(grid[0][7]), "Kingside castling must still be available when only queenside rook moved");
     }
 
     @Test
@@ -162,10 +154,8 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][3], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][7]),
-                "Kingside castling must be blocked after kingside rook has moved");
-        assertTrue(squares.contains(grid[0][0]),
-                "Queenside castling must still be available when only kingside rook moved");
+        assertFalse(squares.contains(grid[0][7]), "Kingside castling must be blocked after kingside rook has moved");
+        assertTrue(squares.contains(grid[0][0]), "Queenside castling must still be available when only kingside rook moved");
     }
 
     // -----------------------------------------------------------------------
@@ -188,8 +178,7 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][1], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][7]),
-                "Kingside castling must be blocked by piece on x=4");
+        assertFalse(squares.contains(grid[0][7]), "Kingside castling must be blocked by piece on x=4");
     }
 
     @Test
@@ -204,8 +193,7 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][6], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][0]),
-                "Queenside castling must be blocked by piece on x=3");
+        assertFalse(squares.contains(grid[0][0]), "Queenside castling must be blocked by piece on x=3");
     }
 
     // -----------------------------------------------------------------------
@@ -223,8 +211,7 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][3], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][7]),
-                "Enemy rook must not be a castling candidate");
+        assertFalse(squares.contains(grid[0][7]), "Enemy rook must not be a castling candidate");
     }
 
     // -----------------------------------------------------------------------
@@ -248,10 +235,8 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][4], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertTrue(squares.contains(grid[0][0]),
-                "Queenside castling candidate must be a1 (x=0) in Chess960 encoding");
-        assertTrue(squares.contains(grid[0][7]),
-                "Kingside castling candidate must be h1 (x=7) in Chess960 encoding");
+        assertTrue(squares.contains(grid[0][0]), "Queenside castling candidate must be a1 (x=0) in Chess960 encoding");
+        assertTrue(squares.contains(grid[0][7]), "Kingside castling candidate must be h1 (x=7) in Chess960 encoding");
     }
 
     // -----------------------------------------------------------------------
@@ -296,8 +281,7 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][1], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][0]),
-                "Queenside castling must be blocked when king's destination (c1) is occupied");
+        assertFalse(squares.contains(grid[0][0]), "Queenside castling must be blocked when king's destination (c1) is occupied");
     }
 
     /**
@@ -315,8 +299,7 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][1], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertTrue(squares.contains(grid[0][0]),
-                "Queenside castling should be legal when corridor is clear (rook at a1)");
+        assertTrue(squares.contains(grid[0][0]), "Queenside castling should be legal when corridor is clear (rook at a1)");
     }
 
     /**
@@ -336,8 +319,7 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][6], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][7]),
-                "Kingside castling must be blocked when rook's destination (f1) is occupied");
+        assertFalse(squares.contains(grid[0][7]), "Kingside castling must be blocked when rook's destination (f1) is occupied");
     }
 
     /**
@@ -355,7 +337,6 @@ public class PossibleChess960KingMovesTest {
         PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][4], board);
         List<Square> squares = moves.getPossibleSquares();
 
-        assertFalse(squares.contains(grid[0][5]),
-                "King must not move to a square occupied by a friendly piece");
+        assertFalse(squares.contains(grid[0][5]), "King must not move to a square occupied by a friendly piece");
     }
 }

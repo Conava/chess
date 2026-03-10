@@ -17,10 +17,14 @@ import io.github.conava.chess.core.data.Square;
  */
 public class CastleMove extends Move {
 
-    /** File index of the rook involved in this castle, or {@code -1} for standard chess. */
+    /**
+     * File index of the rook involved in this castle, or {@code -1} for standard chess.
+     */
     private final int rookOriginFile;
 
-    /** File index where the king lands after castling, or {@code -1} for standard chess. */
+    /**
+     * File index where the king lands after castling, or {@code -1} for standard chess.
+     */
     private final int kingDestFile;
 
     /**
@@ -34,7 +38,7 @@ public class CastleMove extends Move {
     public CastleMove(Square start, Square end) {
         super(start, end);
         this.rookOriginFile = -1;
-        this.kingDestFile   = -1;
+        this.kingDestFile = -1;
     }
 
     /**
@@ -52,7 +56,7 @@ public class CastleMove extends Move {
     public CastleMove(Square start, Square end, int rookOriginFile, int kingDestFile) {
         super(start, end);
         this.rookOriginFile = rookOriginFile;
-        this.kingDestFile   = kingDestFile;
+        this.kingDestFile = kingDestFile;
     }
 
     /**

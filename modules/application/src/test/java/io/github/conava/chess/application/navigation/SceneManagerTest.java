@@ -26,19 +26,18 @@ class SceneManagerTest {
 
     @Test
     void accessors_returnInjectedDependencies() {
-        Stage mockStage             = mock(Stage.class);
-        Chess mockChess             = mock(Chess.class);
-        ThemeManager mockTheme      = mock(ThemeManager.class);
-        I18n mockI18n               = mock(I18n.class);
+        Stage mockStage = mock(Stage.class);
+        Chess mockChess = mock(Chess.class);
+        ThemeManager mockTheme = mock(ThemeManager.class);
+        I18n mockI18n = mock(I18n.class);
         SettingsService mockSettings = mock(SettingsService.class);
 
-        SceneManager sm = new SceneManager(
-                mockStage, mockChess, mockTheme, mockI18n, mockSettings);
+        SceneManager sm = new SceneManager(mockStage, mockChess, mockTheme, mockI18n, mockSettings);
 
-        assertSame(mockStage,    sm.getPrimaryStage(),   "getPrimaryStage");
-        assertSame(mockChess,    sm.getChess(),           "getChess");
-        assertSame(mockTheme,    sm.getThemeManager(),    "getThemeManager");
-        assertSame(mockI18n,     sm.getI18n(),            "getI18n");
+        assertSame(mockStage, sm.getPrimaryStage(), "getPrimaryStage");
+        assertSame(mockChess, sm.getChess(), "getChess");
+        assertSame(mockTheme, sm.getThemeManager(), "getThemeManager");
+        assertSame(mockI18n, sm.getI18n(), "getI18n");
         assertSame(mockSettings, sm.getSettingsService(), "getSettingsService");
     }
 
@@ -46,28 +45,16 @@ class SceneManagerTest {
 
     @Test
     void showConfirm_beforeSceneShown_throwsIllegalStateException() {
-        SceneManager sm = new SceneManager(
-                mock(Stage.class),
-                mock(Chess.class),
-                mock(ThemeManager.class),
-                mock(I18n.class),
-                mock(SettingsService.class));
+        SceneManager sm = new SceneManager(mock(Stage.class), mock(Chess.class), mock(ThemeManager.class), mock(I18n.class), mock(SettingsService.class));
 
-        assertThrows(IllegalStateException.class, () -> sm.showConfirm("test"),
-                "showConfirm should throw before any show* method is called");
+        assertThrows(IllegalStateException.class, () -> sm.showConfirm("test"), "showConfirm should throw before any show* method is called");
     }
 
     @Test
     void dismissOverlay_beforeSceneShown_throwsIllegalStateException() {
-        SceneManager sm = new SceneManager(
-                mock(Stage.class),
-                mock(Chess.class),
-                mock(ThemeManager.class),
-                mock(I18n.class),
-                mock(SettingsService.class));
+        SceneManager sm = new SceneManager(mock(Stage.class), mock(Chess.class), mock(ThemeManager.class), mock(I18n.class), mock(SettingsService.class));
 
-        assertThrows(IllegalStateException.class, sm::dismissOverlay,
-                "dismissOverlay should throw before any show* method is called");
+        assertThrows(IllegalStateException.class, sm::dismissOverlay, "dismissOverlay should throw before any show* method is called");
     }
 
     // ── FX-thread tests ───────────────────────────────────────────────────────
@@ -105,20 +92,17 @@ class SceneManagerTest {
 
         Platform.runLater(() -> {
             try {
-                Stage stage             = new Stage();
+                Stage stage = new Stage();
                 ThemeManager themeManager = mock(ThemeManager.class);
                 // registerScene is a no-op by default in Mockito (void method)
-                I18n i18n               = new I18n(I18n.Language.EN);
-                SettingsService settings = new SettingsService(
-                        Preferences.userRoot().node("chess-test-" + System.nanoTime()));
+                I18n i18n = new I18n(I18n.Language.EN);
+                SettingsService settings = new SettingsService(Preferences.userRoot().node("chess-test-" + System.nanoTime()));
 
-                SceneManager sm = new SceneManager(
-                        stage, mock(Chess.class), themeManager, i18n, settings);
+                SceneManager sm = new SceneManager(stage, mock(Chess.class), themeManager, i18n, settings);
 
                 sm.showGame(RulesetOptions.STANDARD);
 
-                assertTrue(stage.isMaximized(),
-                        "showGame should maximize the stage");
+                assertTrue(stage.isMaximized(), "showGame should maximize the stage");
             } catch (Throwable t) {
                 error.set(t);
             } finally {
@@ -142,21 +126,18 @@ class SceneManagerTest {
 
         Platform.runLater(() -> {
             try {
-                Stage stage               = new Stage();
+                Stage stage = new Stage();
                 ThemeManager themeManager = mock(ThemeManager.class);
-                I18n i18n                 = new I18n(I18n.Language.EN);
-                SettingsService settings  = new SettingsService(
-                        Preferences.userRoot().node("chess-test-" + System.nanoTime()));
+                I18n i18n = new I18n(I18n.Language.EN);
+                SettingsService settings = new SettingsService(Preferences.userRoot().node("chess-test-" + System.nanoTime()));
 
-                SceneManager sm = new SceneManager(
-                        stage, mock(Chess.class), themeManager, i18n, settings);
+                SceneManager sm = new SceneManager(stage, mock(Chess.class), themeManager, i18n, settings);
 
                 sm.showMainMenu();
 
-                assertFalse(stage.isMaximized(),
-                        "showMainMenu should not maximize the stage");
+                assertFalse(stage.isMaximized(), "showMainMenu should not maximize the stage");
                 // The SceneManager sets 900 x 650 on first show
-                assertEquals(900.0, stage.getScene().getWidth(),  1.0, "scene width");
+                assertEquals(900.0, stage.getScene().getWidth(), 1.0, "scene width");
                 assertEquals(650.0, stage.getScene().getHeight(), 1.0, "scene height");
             } catch (Throwable t) {
                 error.set(t);

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests for checkmate and stalemate detection through {@link Game#evaluateGameEnd()}.
+ * Integration tests for checkmate and stalemate detection through .
  * All tests use {@link OfflineGame} via the standard constructor.
  */
 class CheckmateDetectionTest {
@@ -26,7 +26,7 @@ class CheckmateDetectionTest {
     /**
      * Fool's Mate: the fastest possible checkmate (4 half-moves).
      * 1. f3 e5  2. g4 Qh4#
-     *
+     * <p>
      * Coordinate mapping (y=0 is white's back rank, x=0 is a-file):
      * f2-f3 = (1,5)-(2,5)
      * e7-e5 = (6,4)-(4,4)
@@ -48,7 +48,7 @@ class CheckmateDetectionTest {
     /**
      * Scholar's Mate (4 moves for white):
      * 1. e4 e5  2. Bc4 Nc6  3. Qh5 Nf6  4. Qxf7#
-     *
+     * <p>
      * e2-e4 = (1,4)-(3,4)
      * e7-e5 = (6,4)-(4,4)
      * Bf1-c4 = (0,5)-(3,2)
@@ -75,12 +75,12 @@ class CheckmateDetectionTest {
     /**
      * Stalemate position: a minimal position where the side to move has no legal move
      * but is not in check.
-     *
+     * <p>
      * This is the Sam Loyd 10-move stalemate:
      * 1. e3 a5  2. Qh5 Ra6  3. Qxa5 h5  4. Qxc7 Rah6  5. h4 f6
      * 6. Qxd7+ Kf7  7. Qxb7 Qd3  8. Qxb8 Qh7  9. Qxc8 Kg6
      * 10. Qe6 (stalemate)
-     *
+     * <p>
      * Coordinate convention: y=0 is rank 1 (white back rank), x=0 is a-file.
      */
     @Test

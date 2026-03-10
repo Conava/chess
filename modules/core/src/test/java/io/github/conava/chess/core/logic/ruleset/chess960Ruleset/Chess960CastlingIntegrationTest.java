@@ -69,7 +69,9 @@ class Chess960CastlingIntegrationTest {
     // Helper utilities
     // =========================================================================
 
-    /** Builds an 8×8 board of empty squares. */
+    /**
+     * Builds an 8×8 board of empty squares.
+     */
     private Square[][] emptyBoard() {
         Square[][] squares = new Square[8][8];
         for (int y = 0; y < 8; y++) {
@@ -80,7 +82,9 @@ class Chess960CastlingIntegrationTest {
         return squares;
     }
 
-    /** Convenience helper to get the piece at (y, x) from a board. */
+    /**
+     * Convenience helper to get the piece at (y, x) from a board.
+     */
     private Piece pieceAt(Board board, int y, int x) {
         return board.getSquare(y, x).getPiece();
     }
@@ -109,16 +113,12 @@ class Chess960CastlingIntegrationTest {
 
         // Execute Chess960 kingside castle: king "moves to" rook at x=5
         // rookOriginFile=5, kingDestFile=6 → standard FIDE outcome
-        board.executeMove(new CastleMove(
-                board.getSquare(0, 3), board.getSquare(0, 5),
+        board.executeMove(new CastleMove(board.getSquare(0, 3), board.getSquare(0, 5),
                 /*rookOriginFile=*/ 5, /*kingDestFile=*/ 6));
 
-        assertInstanceOf(King.class, pieceAt(board, 0, 6),
-                "King must land on g-file (x=6) after kingside castle with rookOriginFile=5");
-        assertInstanceOf(Rook.class, pieceAt(board, 0, 5),
-                "Rook must land on f-file (x=5) after kingside castle with rookOriginFile=5");
-        assertNull(pieceAt(board, 0, 3),
-                "King's original square (x=3) must be empty after castle");
+        assertInstanceOf(King.class, pieceAt(board, 0, 6), "King must land on g-file (x=6) after kingside castle with rookOriginFile=5");
+        assertInstanceOf(Rook.class, pieceAt(board, 0, 5), "Rook must land on f-file (x=5) after kingside castle with rookOriginFile=5");
+        assertNull(pieceAt(board, 0, 3), "King's original square (x=3) must be empty after castle");
     }
 
     @Test
@@ -135,12 +135,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 3), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 3), board, new ArrayList<>(), white, black);
 
-        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 5),
-                "getLegalSquares must include rook's file (x=5) as the castling target " +
-                "(T03 deferred scenario: rookOriginFile=5, kingDestFile=6)");
+        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 5), "getLegalSquares must include rook's file (x=5) as the castling target " + "(T03 deferred scenario: rookOriginFile=5, kingDestFile=6)");
     }
 
     // =========================================================================
@@ -163,18 +160,13 @@ class Chess960CastlingIntegrationTest {
         squares[7][4].setPiece(blackKing);
         Board board = new Board(squares);
 
-        board.executeMove(new CastleMove(
-                board.getSquare(0, 4), board.getSquare(0, 1),
+        board.executeMove(new CastleMove(board.getSquare(0, 4), board.getSquare(0, 1),
                 /*rookOriginFile=*/ 1, /*kingDestFile=*/ 2));
 
-        assertInstanceOf(King.class, pieceAt(board, 0, 2),
-                "King must land on c-file (x=2) after queenside castle with rookOriginFile=1");
-        assertInstanceOf(Rook.class, pieceAt(board, 0, 3),
-                "Rook must land on d-file (x=3) after queenside castle with rookOriginFile=1");
-        assertNull(pieceAt(board, 0, 4),
-                "King's original square (x=4) must be empty after castle");
-        assertNull(pieceAt(board, 0, 1),
-                "Rook's original square (x=1) must be empty after castle");
+        assertInstanceOf(King.class, pieceAt(board, 0, 2), "King must land on c-file (x=2) after queenside castle with rookOriginFile=1");
+        assertInstanceOf(Rook.class, pieceAt(board, 0, 3), "Rook must land on d-file (x=3) after queenside castle with rookOriginFile=1");
+        assertNull(pieceAt(board, 0, 4), "King's original square (x=4) must be empty after castle");
+        assertNull(pieceAt(board, 0, 1), "Rook's original square (x=1) must be empty after castle");
     }
 
     @Test
@@ -190,16 +182,12 @@ class Chess960CastlingIntegrationTest {
         squares[7][4].setPiece(blackKing);
         Board board = new Board(squares);
 
-        board.executeMove(new CastleMove(
-                board.getSquare(0, 4), board.getSquare(0, 3),
+        board.executeMove(new CastleMove(board.getSquare(0, 4), board.getSquare(0, 3),
                 /*rookOriginFile=*/ 3, /*kingDestFile=*/ 2));
 
-        assertInstanceOf(King.class, pieceAt(board, 0, 2),
-                "King must land on c-file (x=2) after queenside castle with rookOriginFile=3");
-        assertInstanceOf(Rook.class, pieceAt(board, 0, 3),
-                "Rook must remain on d-file (x=3) after queenside castle with rookOriginFile=3");
-        assertNull(pieceAt(board, 0, 4),
-                "King's original square (x=4) must be empty after castle");
+        assertInstanceOf(King.class, pieceAt(board, 0, 2), "King must land on c-file (x=2) after queenside castle with rookOriginFile=3");
+        assertInstanceOf(Rook.class, pieceAt(board, 0, 3), "Rook must remain on d-file (x=3) after queenside castle with rookOriginFile=3");
+        assertNull(pieceAt(board, 0, 4), "King's original square (x=4) must be empty after castle");
     }
 
     @Test
@@ -216,11 +204,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 1),
-                "getLegalSquares must include rook's square (x=1) as queenside castling target");
+        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 1), "getLegalSquares must include rook's square (x=1) as queenside castling target");
     }
 
     @Test
@@ -237,11 +223,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 3),
-                "getLegalSquares must include adjacent rook's square (x=3) as queenside castling target");
+        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 3), "getLegalSquares must include adjacent rook's square (x=3) as queenside castling target");
     }
 
     // =========================================================================
@@ -270,16 +254,12 @@ class Chess960CastlingIntegrationTest {
         squares[7][4].setPiece(blackKing);
         Board board = new Board(squares);
 
-        board.executeMove(new CastleMove(
-                board.getSquare(0, 5), board.getSquare(0, 6),
+        board.executeMove(new CastleMove(board.getSquare(0, 5), board.getSquare(0, 6),
                 /*rookOriginFile=*/ 6, /*kingDestFile=*/ 6));
 
-        assertInstanceOf(King.class, pieceAt(board, 0, 6),
-                "King must be on g-file (x=6) after kingside swap castle");
-        assertInstanceOf(Rook.class, pieceAt(board, 0, 5),
-                "Rook must be on f-file (x=5) after kingside swap castle");
-        assertNull(pieceAt(board, 0, 4),
-                "File x=4 must remain empty");
+        assertInstanceOf(King.class, pieceAt(board, 0, 6), "King must be on g-file (x=6) after kingside swap castle");
+        assertInstanceOf(Rook.class, pieceAt(board, 0, 5), "Rook must be on f-file (x=5) after kingside swap castle");
+        assertNull(pieceAt(board, 0, 4), "File x=4 must remain empty");
     }
 
     @Test
@@ -295,16 +275,12 @@ class Chess960CastlingIntegrationTest {
         squares[7][4].setPiece(blackKing);
         Board board = new Board(squares);
 
-        board.executeMove(new CastleMove(
-                board.getSquare(0, 4), board.getSquare(0, 2),
+        board.executeMove(new CastleMove(board.getSquare(0, 4), board.getSquare(0, 2),
                 /*rookOriginFile=*/ 2, /*kingDestFile=*/ 2));
 
-        assertInstanceOf(King.class, pieceAt(board, 0, 2),
-                "King must be on c-file (x=2) after queenside swap castle with rook at x=2");
-        assertInstanceOf(Rook.class, pieceAt(board, 0, 3),
-                "Rook must be on d-file (x=3) after queenside swap castle");
-        assertNull(pieceAt(board, 0, 4),
-                "King's original square (x=4) must be empty after castle");
+        assertInstanceOf(King.class, pieceAt(board, 0, 2), "King must be on c-file (x=2) after queenside swap castle with rook at x=2");
+        assertInstanceOf(Rook.class, pieceAt(board, 0, 3), "Rook must be on d-file (x=3) after queenside swap castle");
+        assertNull(pieceAt(board, 0, 4), "King's original square (x=4) must be empty after castle");
     }
 
     // =========================================================================
@@ -330,18 +306,13 @@ class Chess960CastlingIntegrationTest {
         squares[7][4].setPiece(blackKing);
         Board board = new Board(squares);
 
-        board.executeMove(new CastleMove(
-                board.getSquare(0, 1), board.getSquare(0, 0),
+        board.executeMove(new CastleMove(board.getSquare(0, 1), board.getSquare(0, 0),
                 /*rookOriginFile=*/ 0, /*kingDestFile=*/ 2));
 
-        assertInstanceOf(King.class, pieceAt(board, 0, 2),
-                "King must land on c1 (x=2) after queenside castle with king at b1 and rook at a1");
-        assertInstanceOf(Rook.class, pieceAt(board, 0, 3),
-                "Rook must land on d1 (x=3) after queenside castle with king at b1 and rook at a1");
-        assertNull(pieceAt(board, 0, 1),
-                "King's original square (x=1, b1) must be empty after castle");
-        assertNull(pieceAt(board, 0, 0),
-                "Rook's original square (x=0, a1) must be empty after castle");
+        assertInstanceOf(King.class, pieceAt(board, 0, 2), "King must land on c1 (x=2) after queenside castle with king at b1 and rook at a1");
+        assertInstanceOf(Rook.class, pieceAt(board, 0, 3), "Rook must land on d1 (x=3) after queenside castle with king at b1 and rook at a1");
+        assertNull(pieceAt(board, 0, 1), "King's original square (x=1, b1) must be empty after castle");
+        assertNull(pieceAt(board, 0, 0), "Rook's original square (x=0, a1) must be empty after castle");
     }
 
     // =========================================================================
@@ -366,11 +337,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "Kingside castling must be illegal when g-file (x=6, king destination) is blocked");
+        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "Kingside castling must be illegal when g-file (x=6, king destination) is blocked");
     }
 
     @Test
@@ -388,11 +357,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 0),
-                "Queenside castling must be illegal when d-file (x=3, rook destination) is blocked");
+        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 0), "Queenside castling must be illegal when d-file (x=3, rook destination) is blocked");
     }
 
     @Test
@@ -410,11 +377,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "Kingside castling must be illegal when path between king and rook is blocked");
+        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "Kingside castling must be illegal when path between king and rook is blocked");
     }
 
     // =========================================================================
@@ -439,11 +404,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 5), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 5), board, new ArrayList<>(), white, black);
 
-        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "King at non-standard file 5 with rook at h-file must have rook's square as legal castling target");
+        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "King at non-standard file 5 with rook at h-file must have rook's square as legal castling target");
     }
 
     @Test
@@ -460,11 +423,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 1),
-                "Non-standard queenside rook at file 1 must be a legal castling target when corridor is clear");
+        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 1), "Non-standard queenside rook at file 1 must be a legal castling target when corridor is clear");
     }
 
     @Test
@@ -480,16 +441,12 @@ class Chess960CastlingIntegrationTest {
         squares[7][7].setPiece(blackKing);
         Board board = new Board(squares);
 
-        board.executeMove(new CastleMove(
-                board.getSquare(0, 4), board.getSquare(0, 5),
+        board.executeMove(new CastleMove(board.getSquare(0, 4), board.getSquare(0, 5),
                 /*rookOriginFile=*/ 5, /*kingDestFile=*/ 6));
 
-        assertInstanceOf(King.class, pieceAt(board, 0, 6),
-                "King must be on g-file (x=6) after kingside castle with rook at x=5");
-        assertInstanceOf(Rook.class, pieceAt(board, 0, 5),
-                "Rook must be on f-file (x=5) after kingside castle with rook at x=5");
-        assertNull(pieceAt(board, 0, 4),
-                "King's original square (x=4) must be empty");
+        assertInstanceOf(King.class, pieceAt(board, 0, 6), "King must be on g-file (x=6) after kingside castle with rook at x=5");
+        assertInstanceOf(Rook.class, pieceAt(board, 0, 5), "Rook must be on f-file (x=5) after kingside castle with rook at x=5");
+        assertNull(pieceAt(board, 0, 4), "King's original square (x=4) must be empty");
     }
 
     // =========================================================================
@@ -520,21 +477,16 @@ class Chess960CastlingIntegrationTest {
         moveHistory.add(new Move(new Square(6, 3), new Square(4, 3)));
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> pawnLegal = ruleset.getLegalSquares(
-                board.getSquare(4, 4), board, moveHistory, white, black);
+        List<Square> pawnLegal = ruleset.getLegalSquares(board.getSquare(4, 4), board, moveHistory, white, black);
 
-        assertTrue(pawnLegal.stream().anyMatch(s -> s.getY() == 5 && s.getX() == 3),
-                "En passant capture square (y=5, x=3) must be legal in a Chess960 game");
+        assertTrue(pawnLegal.stream().anyMatch(s -> s.getY() == 5 && s.getX() == 3), "En passant capture square (y=5, x=3) must be legal in a Chess960 game");
 
         // Execute en passant
         board.executeMove(new Move(board.getSquare(4, 4), board.getSquare(5, 3)));
 
-        assertInstanceOf(Pawn.class, pieceAt(board, 5, 3),
-                "White pawn must be at (y=5, x=3) after en passant capture");
-        assertNull(pieceAt(board, 4, 3),
-                "Captured black pawn must be removed from (y=4, x=3) after en passant");
-        assertNull(pieceAt(board, 4, 4),
-                "White pawn's original square must be empty after en passant");
+        assertInstanceOf(Pawn.class, pieceAt(board, 5, 3), "White pawn must be at (y=5, x=3) after en passant capture");
+        assertNull(pieceAt(board, 4, 3), "Captured black pawn must be removed from (y=4, x=3) after en passant");
+        assertNull(pieceAt(board, 4, 4), "White pawn's original square must be empty after en passant");
     }
 
     // =========================================================================
@@ -560,13 +512,11 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> rookLegal = ruleset.getLegalSquares(
-                board.getSquare(0, 2), board, new ArrayList<>(), white, black);
+        List<Square> rookLegal = ruleset.getLegalSquares(board.getSquare(0, 2), board, new ArrayList<>(), white, black);
 
         // Pinned rook must not be able to move to rank 2 (would expose king)
         boolean hasOffRankMove = rookLegal.stream().anyMatch(s -> s.getY() != 0);
-        assertFalse(hasOffRankMove,
-                "Pinned rook must not be allowed to move off rank 0 (would expose king to check)");
+        assertFalse(hasOffRankMove, "Pinned rook must not be allowed to move off rank 0 (would expose king to check)");
     }
 
     @Test
@@ -583,15 +533,11 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> kingLegal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> kingLegal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 5),
-                "King must not be able to move to (0,5) — attacked by black rook on rank 0");
-        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 6),
-                "King must not be able to move to (0,6) — attacked by black rook on rank 0");
-        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 1),
-                "King must be able to move to rank 1 (safe from black rook)");
+        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 5), "King must not be able to move to (0,5) — attacked by black rook on rank 0");
+        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 6), "King must not be able to move to (0,6) — attacked by black rook on rank 0");
+        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 1), "King must be able to move to rank 1 (safe from black rook)");
     }
 
     @Test
@@ -610,11 +556,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> kingLegal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> kingLegal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "Castling must be illegal when king is currently in check");
+        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "Castling must be illegal when king is currently in check");
     }
 
     // =========================================================================
@@ -639,14 +583,10 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "getLegalSquares must include rook's square (x=7) as castling target in Chess960");
-        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 6 && s.getX() != 7),
-                "getLegalSquares must NOT include the standard g-file (x=6) as a separate target — " +
-                "Chess960 uses king-to-rook encoding, not 2-square delta");
+        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "getLegalSquares must include rook's square (x=7) as castling target in Chess960");
+        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 6), "getLegalSquares must NOT include the standard g-file (x=6) as a separate target — " + "Chess960 uses king-to-rook encoding, not 2-square delta");
     }
 
     @Test
@@ -663,11 +603,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 0),
-                "getLegalSquares must include rook's square (x=0) as queenside castling target in Chess960");
+        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 0), "getLegalSquares must include rook's square (x=0) as queenside castling target in Chess960");
     }
 
     @Test
@@ -684,11 +622,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 3), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 3), board, new ArrayList<>(), white, black);
 
-        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 5),
-                "getLegalSquares must include file 5 (rookOriginFile=5) as castling target — T03 deferred scenario");
+        assertTrue(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 5), "getLegalSquares must include file 5 (rookOriginFile=5) as castling target — T03 deferred scenario");
     }
 
     @Test
@@ -705,11 +641,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "Castling must be illegal when the rook has already moved");
+        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "Castling must be illegal when the rook has already moved");
     }
 
     // =========================================================================
@@ -737,12 +671,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> kingLegal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> kingLegal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "Kingside castling must be illegal when the king's transit square (f1, x=5) " +
-                "is controlled by an enemy rook — isKingTransitAttacked must fire");
+        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "Kingside castling must be illegal when the king's transit square (f1, x=5) " + "is controlled by an enemy rook — isKingTransitAttacked must fire");
     }
 
     @Test
@@ -759,11 +690,9 @@ class Chess960CastlingIntegrationTest {
         Board board = new Board(squares);
 
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        List<Square> legal = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+        List<Square> legal = ruleset.getLegalSquares(board.getSquare(0, 4), board, new ArrayList<>(), white, black);
 
-        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "Castling must be illegal when the king has already moved");
+        assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "Castling must be illegal when the king has already moved");
     }
 
     // =========================================================================
@@ -775,8 +704,7 @@ class Chess960CastlingIntegrationTest {
     // =========================================================================
 
     @Test
-    void fullPipeline_chess960Position518_kingsideCastle_viaGameMovePiece()
-            throws IllegalMoveException {
+    void fullPipeline_chess960Position518_kingsideCastle_viaGameMovePiece() throws IllegalMoveException {
         // Position 518 = RNBQKBNR (standard back rank).
         // Use createServerGame to inject Chess960Ruleset(518) deterministically.
         Chess960Ruleset ruleset518 = new Chess960Ruleset(518);
@@ -794,26 +722,20 @@ class Chess960CastlingIntegrationTest {
 
         // In Chess960, the king's castling target is the ROOK'S square (x=7), not g-file (x=6)
         List<Square> kingLegal = game.getLegalSquares(new Square(0, 4));
-        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
-                "In Chess960, king's castling target must be the rook's square (x=7)");
+        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7), "In Chess960, king's castling target must be the rook's square (x=7)");
 
         // Execute the castling move: king moves to the rook's square (x=7)
         game.movePiece(new Square(0, 4), new Square(0, 7));
 
         // After the castle: king on g1 (x=6), rook on f1 (x=5)
-        assertInstanceOf(King.class, game.getPieceAt(new Square(0, 6)),
-                "King must be on g1 (x=6) after Chess960 kingside castle");
-        assertInstanceOf(Rook.class, game.getPieceAt(new Square(0, 5)),
-                "Rook must be on f1 (x=5) after Chess960 kingside castle");
-        assertNull(game.getPieceAt(new Square(0, 7)),
-                "h1 (x=7) must be empty after Chess960 kingside castle");
-        assertNull(game.getPieceAt(new Square(0, 4)),
-                "King's original square e1 (x=4) must be empty after castle");
+        assertInstanceOf(King.class, game.getPieceAt(new Square(0, 6)), "King must be on g1 (x=6) after Chess960 kingside castle");
+        assertInstanceOf(Rook.class, game.getPieceAt(new Square(0, 5)), "Rook must be on f1 (x=5) after Chess960 kingside castle");
+        assertNull(game.getPieceAt(new Square(0, 7)), "h1 (x=7) must be empty after Chess960 kingside castle");
+        assertNull(game.getPieceAt(new Square(0, 4)), "King's original square e1 (x=4) must be empty after castle");
     }
 
     @Test
-    void fullPipeline_chess960Position518_queensideCastle_viaGameMovePiece()
-            throws IllegalMoveException {
+    void fullPipeline_chess960Position518_queensideCastle_viaGameMovePiece() throws IllegalMoveException {
         Chess960Ruleset ruleset518 = new Chess960Ruleset(518);
         Game game = Game.createServerGame(ruleset518, "W", "B");
         game.startGame();
@@ -830,20 +752,15 @@ class Chess960CastlingIntegrationTest {
 
         // In Chess960, queenside castling target is the rook's square (x=0)
         List<Square> kingLegal = game.getLegalSquares(new Square(0, 4));
-        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 0),
-                "In Chess960, king's queenside castling target must be the rook's square (x=0)");
+        assertTrue(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 0), "In Chess960, king's queenside castling target must be the rook's square (x=0)");
 
         // Execute: king moves to the rook's square (x=0)
         game.movePiece(new Square(0, 4), new Square(0, 0));
 
         // After castle: king on c1 (x=2), rook on d1 (x=3)
-        assertInstanceOf(King.class, game.getPieceAt(new Square(0, 2)),
-                "King must be on c1 (x=2) after Chess960 queenside castle");
-        assertInstanceOf(Rook.class, game.getPieceAt(new Square(0, 3)),
-                "Rook must be on d1 (x=3) after Chess960 queenside castle");
-        assertNull(game.getPieceAt(new Square(0, 0)),
-                "a1 (x=0) must be empty after Chess960 queenside castle");
-        assertNull(game.getPieceAt(new Square(0, 4)),
-                "King's original square e1 (x=4) must be empty after castle");
+        assertInstanceOf(King.class, game.getPieceAt(new Square(0, 2)), "King must be on c1 (x=2) after Chess960 queenside castle");
+        assertInstanceOf(Rook.class, game.getPieceAt(new Square(0, 3)), "Rook must be on d1 (x=3) after Chess960 queenside castle");
+        assertNull(game.getPieceAt(new Square(0, 0)), "a1 (x=0) must be empty after Chess960 queenside castle");
+        assertNull(game.getPieceAt(new Square(0, 4)), "King's original square e1 (x=4) must be empty after castle");
     }
 }

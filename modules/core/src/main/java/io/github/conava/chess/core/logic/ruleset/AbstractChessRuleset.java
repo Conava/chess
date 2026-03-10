@@ -59,9 +59,7 @@ public abstract class AbstractChessRuleset implements Ruleset {
     @Override
     public List<Move> getLegalMoves(Square square, Board board, List<Move> moves, Player player1, Player player2) {
         List<Square> legalSquares = getLegalSquares(square, board, moves, player1, player2);
-        return legalSquares.stream()
-                .map(target -> new Move(square, target))
-                .collect(Collectors.toList());
+        return legalSquares.stream().map(target -> new Move(square, target)).collect(Collectors.toList());
     }
 
     /**
@@ -85,7 +83,7 @@ public abstract class AbstractChessRuleset implements Ruleset {
      *                the moving player from {@code square.getPiece().getPlayer()})
      * @param player2 Player opponent
      * @return List of LEGAL squares — moves that do not leave the moving player's king
-     *         (derived from the piece on {@code square}) in check.
+     * (derived from the piece on {@code square}) in check.
      */
     @Override
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
@@ -123,9 +121,7 @@ public abstract class AbstractChessRuleset implements Ruleset {
             Board finalBoardCopy = board.getCopy();
             Square finalStart = finalBoardCopy.getSquare(square.getY(), square.getX());
             Square finalEnd = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
-            finalBoardCopy.executeMove(isCastlingCandidate(square, targetSquare)
-                    ? new CastleMove(finalStart, finalEnd)
-                    : new Move(finalStart, finalEnd));
+            finalBoardCopy.executeMove(isCastlingCandidate(square, targetSquare) ? new CastleMove(finalStart, finalEnd) : new Move(finalStart, finalEnd));
             if (!isCheck(finalBoardCopy, movingPlayer, moves)) {
                 legal.add(targetSquare);
             }
@@ -149,11 +145,10 @@ public abstract class AbstractChessRuleset implements Ruleset {
      * @param moves  move history (forwarded to {@link #isCheck} for en passant detection)
      * @return {@code true} if the position after the move is not check for {@code player}
      */
-    protected boolean isLegalAfterSimulation(Board board, Square from, Square to,
-                                              Player player, List<Move> moves) {
+    protected boolean isLegalAfterSimulation(Board board, Square from, Square to, Player player, List<Move> moves) {
         Board copy = board.getCopy();
         Square copyFrom = copy.getSquare(from.getY(), from.getX());
-        Square copyTo   = copy.getSquare(to.getY(), to.getX());
+        Square copyTo = copy.getSquare(to.getY(), to.getX());
         copy.executeMove(new Move(copyFrom, copyTo));
         return !isCheck(copy, player, moves);
     }
@@ -221,8 +216,7 @@ public abstract class AbstractChessRuleset implements Ruleset {
      * @return true if this move is a castling candidate
      */
     protected boolean isCastlingCandidate(Square source, Square target) {
-        return source.getPiece() instanceof King
-                && Math.abs(target.getX() - source.getX()) == 2;
+        return source.getPiece() instanceof King && Math.abs(target.getX() - source.getX()) == 2;
     }
 
     /**

@@ -89,19 +89,17 @@ class Chess960RulesetTest {
             }
         }
 
-        assertNotEquals(-1, kingFile,  "Must find king");
-        assertNotEquals(-1, rookLeft,  "Must find rook to the left of king");
+        assertNotEquals(-1, kingFile, "Must find king");
+        assertNotEquals(-1, rookLeft, "Must find rook to the left of king");
         assertNotEquals(-1, rookRight, "Must find rook to the right of king");
-        assertTrue(rookLeft < kingFile && rookRight > kingFile,
-                "King must be between both rooks");
+        assertTrue(rookLeft < kingFile && rookRight > kingFile, "King must be between both rooks");
     }
 
     @Test
     void randomConstructor_indexIsInValidRange() {
         Chess960Ruleset ruleset = new Chess960Ruleset();
         int index = ruleset.getIndex();
-        assertTrue(index >= 0 && index <= 959,
-                "Scharnagl index must be in [0, 959], got: " + index);
+        assertTrue(index >= 0 && index <= 959, "Scharnagl index must be in [0, 959], got: " + index);
     }
 
     // -------------------------------------------------------------------------
@@ -113,14 +111,14 @@ class Chess960RulesetTest {
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
         Square[][] startBoard = ruleset.getStartBoard(white, black);
 
-        assertInstanceOf(Rook.class,   startBoard[0][0].getPiece(), "File a must be Rook");
+        assertInstanceOf(Rook.class, startBoard[0][0].getPiece(), "File a must be Rook");
         assertInstanceOf(Knight.class, startBoard[0][1].getPiece(), "File b must be Knight");
         assertInstanceOf(Bishop.class, startBoard[0][2].getPiece(), "File c must be Bishop");
-        assertInstanceOf(Queen.class,  startBoard[0][3].getPiece(), "File d must be Queen");
-        assertInstanceOf(King.class,   startBoard[0][4].getPiece(), "File e must be King");
+        assertInstanceOf(Queen.class, startBoard[0][3].getPiece(), "File d must be Queen");
+        assertInstanceOf(King.class, startBoard[0][4].getPiece(), "File e must be King");
         assertInstanceOf(Bishop.class, startBoard[0][5].getPiece(), "File f must be Bishop");
         assertInstanceOf(Knight.class, startBoard[0][6].getPiece(), "File g must be Knight");
-        assertInstanceOf(Rook.class,   startBoard[0][7].getPiece(), "File h must be Rook");
+        assertInstanceOf(Rook.class, startBoard[0][7].getPiece(), "File h must be Rook");
     }
 
     @Test
@@ -146,19 +144,19 @@ class Chess960RulesetTest {
     @Test
     void getGameLabel_returnsChess960LabelWithIndex() {
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        assertEquals("Chess 960 \u2014 Position 518", ruleset.getGameLabel());
+        assertEquals("Chess 960 — Position 518", ruleset.getGameLabel());
     }
 
     @Test
     void getGameLabel_index0_containsZero() {
         Chess960Ruleset ruleset = new Chess960Ruleset(0);
-        assertEquals("Chess 960 \u2014 Position 0", ruleset.getGameLabel());
+        assertEquals("Chess 960 — Position 0", ruleset.getGameLabel());
     }
 
     @Test
     void getGameLabel_index959_contains959() {
         Chess960Ruleset ruleset = new Chess960Ruleset(959);
-        assertEquals("Chess 960 \u2014 Position 959", ruleset.getGameLabel());
+        assertEquals("Chess 960 — Position 959", ruleset.getGameLabel());
     }
 
     // -------------------------------------------------------------------------
@@ -181,10 +179,8 @@ class Chess960RulesetTest {
         assertInstanceOf(CastleMove.class, move, "O-O must return a CastleMove");
         CastleMove castle = (CastleMove) move;
         // King is at file 4 (e-file), kingside rook is at file 7 (h-file)
-        assertEquals(7, castle.getRookOriginFile(),
-                "Kingside rook is at file 7 for position 518");
-        assertEquals(6, castle.getKingDestFile(),
-                "King lands on file 6 (g-file) for kingside castling");
+        assertEquals(7, castle.getRookOriginFile(), "Kingside rook is at file 7 for position 518");
+        assertEquals(6, castle.getKingDestFile(), "King lands on file 6 (g-file) for kingside castling");
     }
 
     /**
@@ -218,10 +214,8 @@ class Chess960RulesetTest {
         assertInstanceOf(CastleMove.class, move, "O-O must return a CastleMove");
         CastleMove castle = (CastleMove) move;
         // King at file 1, kingside rook is at file 2 (the rook to the right of king)
-        assertEquals(2, castle.getRookOriginFile(),
-                "Kingside rook is the unmoved rook to the right of king (file 2)");
-        assertEquals(6, castle.getKingDestFile(),
-                "King always lands on g-file (6) for kingside castling");
+        assertEquals(2, castle.getRookOriginFile(), "Kingside rook is the unmoved rook to the right of king (file 2)");
+        assertEquals(6, castle.getKingDestFile(), "King always lands on g-file (6) for kingside castling");
     }
 
     // -------------------------------------------------------------------------
@@ -239,10 +233,8 @@ class Chess960RulesetTest {
         assertInstanceOf(CastleMove.class, move, "O-O-O must return a CastleMove");
         CastleMove castle = (CastleMove) move;
         // King is at file 4 (e-file), queenside rook is at file 0 (a-file)
-        assertEquals(0, castle.getRookOriginFile(),
-                "Queenside rook is at file 0 for position 518");
-        assertEquals(2, castle.getKingDestFile(),
-                "King lands on file 2 (c-file) for queenside castling");
+        assertEquals(0, castle.getRookOriginFile(), "Queenside rook is at file 0 for position 518");
+        assertEquals(2, castle.getKingDestFile(), "King lands on file 2 (c-file) for queenside castling");
     }
 
     @Test
@@ -263,10 +255,8 @@ class Chess960RulesetTest {
         assertInstanceOf(CastleMove.class, move, "O-O-O must return a CastleMove");
         CastleMove castle = (CastleMove) move;
         // Queenside rook is at file 3 (to the left of king at file 5)
-        assertEquals(3, castle.getRookOriginFile(),
-                "Queenside rook is the unmoved rook to the left of king (file 3)");
-        assertEquals(2, castle.getKingDestFile(),
-                "King always lands on c-file (2) for queenside castling");
+        assertEquals(3, castle.getRookOriginFile(), "Queenside rook is the unmoved rook to the left of king (file 3)");
+        assertEquals(2, castle.getKingDestFile(), "King always lands on c-file (2) for queenside castling");
     }
 
     // -------------------------------------------------------------------------
@@ -300,10 +290,8 @@ class Chess960RulesetTest {
 
         assertInstanceOf(CastleMove.class, move, "O-O for black must return a CastleMove");
         CastleMove castle = (CastleMove) move;
-        assertEquals(7, castle.getRookOriginFile(),
-                "Black's kingside rook is at file 7 for position 518");
-        assertEquals(6, castle.getKingDestFile(),
-                "King lands on g-file (6) for kingside castling");
+        assertEquals(7, castle.getRookOriginFile(), "Black's kingside rook is at file 7 for position 518");
+        assertEquals(6, castle.getKingDestFile(), "King lands on g-file (6) for kingside castling");
     }
 
     @Test
@@ -316,10 +304,8 @@ class Chess960RulesetTest {
 
         assertInstanceOf(CastleMove.class, move, "O-O-O for black must return a CastleMove");
         CastleMove castle = (CastleMove) move;
-        assertEquals(0, castle.getRookOriginFile(),
-                "Black's queenside rook is at file 0 for position 518");
-        assertEquals(2, castle.getKingDestFile(),
-                "King lands on c-file (2) for queenside castling");
+        assertEquals(0, castle.getRookOriginFile(), "Black's queenside rook is at file 0 for position 518");
+        assertEquals(2, castle.getKingDestFile(), "King lands on c-file (2) for queenside castling");
     }
 
     // -------------------------------------------------------------------------
@@ -334,7 +320,7 @@ class Chess960RulesetTest {
 
         King whiteKing = new King(white);
         Rook queenRook = new Rook(white);
-        Rook kingRook  = new Rook(white);
+        Rook kingRook = new Rook(white);
         King blackKing = new King(black);
 
         squares[0][4].setPiece(whiteKing);  // white king at e1 (file 4)
@@ -346,26 +332,19 @@ class Chess960RulesetTest {
         Chess960Ruleset ruleset = new Chess960Ruleset(518);
         List<Move> emptyHistory = new ArrayList<>();
 
-        List<Square> legalSquares = ruleset.getLegalSquares(
-                board.getSquare(0, 4), board, emptyHistory, white, black);
+        List<Square> legalSquares = ruleset.getLegalSquares(board.getSquare(0, 4), board, emptyHistory, white, black);
 
         // The kingside rook square (file 7) must be a legal castling target
-        boolean containsKingsideRook = legalSquares.stream()
-                .anyMatch(s -> s.getY() == 0 && s.getX() == 7);
-        assertTrue(containsKingsideRook,
-                "Kingside rook square (file 7) must be in king's legal squares for castling");
+        boolean containsKingsideRook = legalSquares.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7);
+        assertTrue(containsKingsideRook, "Kingside rook square (file 7) must be in king's legal squares for castling");
 
         // The queenside rook square (file 0) must also be a legal castling target
-        boolean containsQueensideRook = legalSquares.stream()
-                .anyMatch(s -> s.getY() == 0 && s.getX() == 0);
-        assertTrue(containsQueensideRook,
-                "Queenside rook square (file 0) must be in king's legal squares for castling");
+        boolean containsQueensideRook = legalSquares.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 0);
+        assertTrue(containsQueensideRook, "Queenside rook square (file 0) must be in king's legal squares for castling");
 
         // A square the king cannot move to (e.g. file 4 itself — the king's own square)
-        boolean containsOwnSquare = legalSquares.stream()
-                .anyMatch(s -> s.getY() == 0 && s.getX() == 4);
-        assertFalse(containsOwnSquare,
-                "The king's own square must not be in legal squares");
+        boolean containsOwnSquare = legalSquares.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 4);
+        assertFalse(containsOwnSquare, "The king's own square must not be in legal squares");
     }
 
     // -------------------------------------------------------------------------

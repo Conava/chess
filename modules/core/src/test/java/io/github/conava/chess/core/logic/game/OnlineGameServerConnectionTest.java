@@ -151,8 +151,7 @@ class OnlineGameServerConnectionTest {
         Message gameStatusMsg = new Message(MessageType.GAME_STATUS, "gameState=RUNNING");
         game.handleMessage(gameStatusMsg);
 
-        assertTrue(observer.notified,
-                "onGameStateChanged() must be called when a GAME_STATUS message is received");
+        assertTrue(observer.notified, "onGameStateChanged() must be called when a GAME_STATUS message is received");
     }
 
     // ---- handleMessage() dispatches JOIN_CODE without throwing ----
@@ -187,10 +186,8 @@ class OnlineGameServerConnectionTest {
         // The local player is WHITE; send a MOVE message attributed to BLACK so handleMove()
         // does not skip it via the early-return guard.  The MOVE_PARAM value is intentionally
         // garbled so Move.fromString() will throw a RuntimeException internally.
-        Message malformedMsg = new Message(MessageType.MOVE,
-                "move=THIS_IS_NOT_A_VALID_MOVE playerColor=BLACK");
-        assertDoesNotThrow(() -> game.handleMessage(malformedMsg),
-                "A malformed MOVE message must not propagate any exception out of handleMessage()");
+        Message malformedMsg = new Message(MessageType.MOVE, "move=THIS_IS_NOT_A_VALID_MOVE playerColor=BLACK");
+        assertDoesNotThrow(() -> game.handleMessage(malformedMsg), "A malformed MOVE message must not propagate any exception out of handleMessage()");
     }
 
     // ---- OnlineGame.create() must not send any messages before connectToServerGame() ----
@@ -200,13 +197,14 @@ class OnlineGameServerConnectionTest {
         RecordingConnection freshConn = new RecordingConnection();
         // Construct only — do NOT call connectToServerGame()
         OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new java.util.HashMap<>(), freshConn);
-        assertEquals(0, freshConn.sentMessages.size(),
-                "OnlineGame.create() must not send any messages before connectToServerGame() is called");
+        assertEquals(0, freshConn.sentMessages.size(), "OnlineGame.create() must not send any messages before connectToServerGame() is called");
     }
 
     // ---- backupGameState / restoreGameState cover halfMoveClock and positionHistory ----
 
-    /** Reads a protected field from Game via reflection. */
+    /**
+     * Reads a protected field from Game via reflection.
+     */
     @SuppressWarnings("unchecked")
     private static <T> T readGameField(OnlineGame g, String fieldName) throws Exception {
         java.lang.reflect.Field f = Game.class.getDeclaredField(fieldName);
@@ -214,7 +212,9 @@ class OnlineGameServerConnectionTest {
         return (T) f.get(g);
     }
 
-    /** Writes a protected field on Game via reflection. */
+    /**
+     * Writes a protected field on Game via reflection.
+     */
     private static void writeGameField(OnlineGame g, String fieldName, Object value) throws Exception {
         java.lang.reflect.Field f = Game.class.getDeclaredField(fieldName);
         f.setAccessible(true);
@@ -242,8 +242,7 @@ class OnlineGameServerConnectionTest {
         g.restoreGameState();
 
         int restored = readGameField(g, "halfMoveClock");
-        assertEquals(7, restored,
-                "restoreGameState() must restore halfMoveClock to the backed-up value");
+        assertEquals(7, restored, "restoreGameState() must restore halfMoveClock to the backed-up value");
     }
 
     @Test
@@ -261,12 +260,9 @@ class OnlineGameServerConnectionTest {
         g.restoreGameState();
 
         Map<String, Integer> restored = readGameField(g, "positionHistory");
-        assertTrue(restored.containsKey("KEY_A"),
-                "restoreGameState() must restore all backed-up position history entries");
-        assertFalse(restored.containsKey("KEY_B"),
-                "restoreGameState() must not include entries added after the backup");
-        assertEquals(2, restored.get("KEY_A"),
-                "restoreGameState() must restore the correct count for each position history entry");
+        assertTrue(restored.containsKey("KEY_A"), "restoreGameState() must restore all backed-up position history entries");
+        assertFalse(restored.containsKey("KEY_B"), "restoreGameState() must not include entries added after the backup");
+        assertEquals(2, restored.get("KEY_A"), "restoreGameState() must restore the correct count for each position history entry");
     }
 
     @Test
@@ -283,8 +279,7 @@ class OnlineGameServerConnectionTest {
         g.restoreGameState();
 
         Map<String, Integer> restored = readGameField(g, "positionHistory");
-        assertEquals(1, restored.get("KEY_A"),
-                "The backed-up positionHistory must be a deep copy; mutating the live map after backup must not affect the restored value");
+        assertEquals(1, restored.get("KEY_A"), "The backed-up positionHistory must be a deep copy; mutating the live map after backup must not affect the restored value");
     }
 
     // ---- T12: NumberFormatException fallback for invalid position param ----
@@ -297,13 +292,9 @@ class OnlineGameServerConnectionTest {
 
         // position=abc is non-numeric — NumberFormatException must be caught, and the game
         // must fall back to the standard ruleset and still have a non-null board.
-        assertDoesNotThrow(() ->
-                g.handleMessage(new Message(MessageType.JOIN_CODE,
-                        "joinCode=5 position=abc ruleset=CHESS960")),
-                "A non-numeric position param must not propagate any exception");
+        assertDoesNotThrow(() -> g.handleMessage(new Message(MessageType.JOIN_CODE, "joinCode=5 position=abc ruleset=CHESS960")), "A non-numeric position param must not propagate any exception");
 
-        assertNotNull(g.getBoard(),
-                "Board must be initialized even when position= is non-numeric (fallback to standard)");
+        assertNotNull(g.getBoard(), "Board must be initialized even when position= is non-numeric (fallback to standard)");
     }
 
     // ---- T10: deferred board initialization ----
@@ -314,8 +305,7 @@ class OnlineGameServerConnectionTest {
         OnlineGame freshGame = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
         freshGame.connectToServerGame();
         // board must be null until JOIN_CODE arrives
-        assertNull(freshGame.getBoard(),
-                "OnlineGame board must be null after construction, before JOIN_CODE is received");
+        assertNull(freshGame.getBoard(), "OnlineGame board must be null after construction, before JOIN_CODE is received");
     }
 
     @Test
@@ -326,15 +316,12 @@ class OnlineGameServerConnectionTest {
 
         assertNull(g.getBoard(), "Board must be null before JOIN_CODE");
 
-        g.handleMessage(new Message(MessageType.JOIN_CODE,
-                "joinCode=7 position=518 ruleset=CHESS960"));
+        g.handleMessage(new Message(MessageType.JOIN_CODE, "joinCode=7 position=518 ruleset=CHESS960"));
 
         assertNotNull(g.getBoard(), "Board must be initialized after JOIN_CODE with Chess960 params");
         assertNotNull(g.getRuleset(), "Ruleset must be set after JOIN_CODE with Chess960 params");
-        assertInstanceOf(Chess960Ruleset.class, g.getRuleset(),
-                "Ruleset must be Chess960Ruleset when JOIN_CODE carries ruleset=CHESS960");
-        assertEquals(518, ((Chess960Ruleset) g.getRuleset()).getIndex(),
-                "Chess960Ruleset must use position index from JOIN_CODE message");
+        assertInstanceOf(Chess960Ruleset.class, g.getRuleset(), "Ruleset must be Chess960Ruleset when JOIN_CODE carries ruleset=CHESS960");
+        assertEquals(518, ((Chess960Ruleset) g.getRuleset()).getIndex(), "Chess960Ruleset must use position index from JOIN_CODE message");
     }
 
     @Test
@@ -360,14 +347,11 @@ class OnlineGameServerConnectionTest {
 
         assertNull(g.getBoard(), "Board must be null before SUCCESS");
 
-        g.handleMessage(new Message(MessageType.SUCCESS,
-                "player=black position=100 ruleset=CHESS960"));
+        g.handleMessage(new Message(MessageType.SUCCESS, "player=black position=100 ruleset=CHESS960"));
 
         assertNotNull(g.getBoard(), "Board must be initialized after SUCCESS with Chess960 params");
-        assertInstanceOf(Chess960Ruleset.class, g.getRuleset(),
-                "Ruleset must be Chess960Ruleset when SUCCESS carries ruleset=CHESS960");
-        assertEquals(100, ((Chess960Ruleset) g.getRuleset()).getIndex(),
-                "Chess960Ruleset must use position index from SUCCESS message");
+        assertInstanceOf(Chess960Ruleset.class, g.getRuleset(), "Ruleset must be Chess960Ruleset when SUCCESS carries ruleset=CHESS960");
+        assertEquals(100, ((Chess960Ruleset) g.getRuleset()).getIndex(), "Chess960Ruleset must use position index from SUCCESS message");
     }
 
     @Test
@@ -393,8 +377,7 @@ class OnlineGameServerConnectionTest {
 
         List<Square> result = g.getLegalSquares(new Square(1, 4));
         assertNotNull(result, "getLegalSquares must never return null");
-        assertTrue(result.isEmpty(),
-                "getLegalSquares must return an empty list when board is null (deferred init window)");
+        assertTrue(result.isEmpty(), "getLegalSquares must return an empty list when board is null (deferred init window)");
     }
 
     @Test
@@ -403,10 +386,8 @@ class OnlineGameServerConnectionTest {
         OnlineGame g = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
         g.connectToServerGame();
 
-        boolean hasRulesetSTANDARD = conn.sentMessages.stream()
-                .anyMatch(m -> m.contains("ruleset=STANDARD"));
-        assertTrue(hasRulesetSTANDARD,
-                "CREATE_GAME must send ruleset=STANDARD (enum name), not the display name, so the server can parse it");
+        boolean hasRulesetSTANDARD = conn.sentMessages.stream().anyMatch(m -> m.contains("ruleset=STANDARD"));
+        assertTrue(hasRulesetSTANDARD, "CREATE_GAME must send ruleset=STANDARD (enum name), not the display name, so the server can parse it");
     }
 
     // ---- simple capturing observer ----

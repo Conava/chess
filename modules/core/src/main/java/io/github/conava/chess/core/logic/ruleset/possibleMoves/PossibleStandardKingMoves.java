@@ -36,8 +36,7 @@ public class PossibleStandardKingMoves extends AbstractKingMoveGenerator {
      * @return always {@code true}
      */
     @Override
-    protected boolean onCastlingCandidateFound(int rank, int kingFile, int rookFile,
-                                               boolean kingside) {
+    protected boolean onCastlingCandidateFound(int rank, int kingFile, int rookFile, boolean kingside) {
         return true;
     }
 

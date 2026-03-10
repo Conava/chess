@@ -22,24 +22,22 @@ class CastleMoveTest {
     @Test
     void defaultConstructor_rookOriginFile_isMinusOne() {
         CastleMove move = new CastleMove(square(0, 4), square(0, 6));
-        assertEquals(-1, move.getRookOriginFile(),
-                "rookOriginFile should default to -1 for standard castle");
+        assertEquals(-1, move.getRookOriginFile(), "rookOriginFile should default to -1 for standard castle");
     }
 
     @Test
     void defaultConstructor_kingDestFile_isMinusOne() {
         CastleMove move = new CastleMove(square(0, 4), square(0, 2));
-        assertEquals(-1, move.getKingDestFile(),
-                "kingDestFile should default to -1 for standard castle");
+        assertEquals(-1, move.getKingDestFile(), "kingDestFile should default to -1 for standard castle");
     }
 
     @Test
     void defaultConstructor_startAndEnd_arePreserved() {
         Square start = square(0, 4);
-        Square end   = square(0, 6);
+        Square end = square(0, 6);
         CastleMove move = new CastleMove(start, end);
         assertSame(start, move.getStart());
-        assertSame(end,   move.getEnd());
+        assertSame(end, move.getEnd());
     }
 
     // ---------------------------------------------------------------
@@ -68,10 +66,10 @@ class CastleMoveTest {
     @Test
     void chess960Constructor_startAndEnd_arePreserved() {
         Square start = square(0, 4);
-        Square end   = square(0, 7);
+        Square end = square(0, 7);
         CastleMove move = new CastleMove(start, end, 7, 6);
         assertSame(start, move.getStart());
-        assertSame(end,   move.getEnd());
+        assertSame(end, move.getEnd());
     }
 
     // ---------------------------------------------------------------
@@ -83,6 +81,6 @@ class CastleMoveTest {
         CastleMove standard = new CastleMove(square(0, 4), square(0, 6));
         CastleMove explicit = new CastleMove(square(0, 4), square(0, 6), -1, -1);
         assertEquals(standard.getRookOriginFile(), explicit.getRookOriginFile());
-        assertEquals(standard.getKingDestFile(),   explicit.getKingDestFile());
+        assertEquals(standard.getKingDestFile(), explicit.getKingDestFile());
     }
 }

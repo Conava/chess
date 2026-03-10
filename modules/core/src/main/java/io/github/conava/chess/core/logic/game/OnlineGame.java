@@ -65,11 +65,7 @@ public class OnlineGame extends Game {
      * @param onlineGameSettings The settings for the online game, including join code.
      * @param connection         An already-established {@link ServerConnection} to the game server.
      */
-    private OnlineGame(RulesetOptions selectedRuleset,
-                       String playerWhiteName,
-                       String playerBlackName,
-                       Map<String, String> onlineGameSettings,
-                       ServerConnection connection) {
+    private OnlineGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings, ServerConnection connection) {
         super(selectedRuleset, playerWhiteName, playerBlackName, true); // deferBoardInit=true
         this.gameState = GameState.NO_GAME;
         this.joinCode = onlineGameSettings.get("joinCode");
@@ -89,11 +85,7 @@ public class OnlineGame extends Game {
      * @param connection         An already-established {@link ServerConnection} to the game server.
      * @return A newly constructed {@link OnlineGame} instance.
      */
-    public static OnlineGame create(RulesetOptions selectedRuleset,
-                                    String playerWhiteName,
-                                    String playerBlackName,
-                                    Map<String, String> onlineGameSettings,
-                                    ServerConnection connection) {
+    public static OnlineGame create(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings, ServerConnection connection) {
         return new OnlineGame(selectedRuleset, playerWhiteName, playerBlackName, onlineGameSettings, connection);
     }
 
@@ -227,8 +219,7 @@ public class OnlineGame extends Game {
 
         try {
             String wireString = Objects.requireNonNull(message.getParameterValue(MOVE_PARAM));
-            Player player =
-                    Objects.equals(message.getParameterValue(PLAYER_COLOR_PARAM), "WHITE") ? player0 : player1;
+            Player player = Objects.equals(message.getParameterValue(PLAYER_COLOR_PARAM), "WHITE") ? player0 : player1;
             Move move = ruleset.deserializeMove(wireString, board, player);
             executeMoveFromRemote(move);
         } catch (IllegalMoveException e) {
@@ -339,7 +330,7 @@ public class OnlineGame extends Game {
             super.executeMove(move);
             sendMoveToServer(move);
         } else {
-            throw new IllegalMoveException(move);
+            throw new IllegalMoveException();
         }
     }
 
@@ -349,8 +340,7 @@ public class OnlineGame extends Game {
      * @return true if it is the local player's turn, false otherwise.
      */
     private boolean isLocalPlayerTurn() {
-        return (localPlayerColor == PlayerColor.WHITE && getCurrentPlayer() == player0) ||
-                (localPlayerColor == PlayerColor.BLACK && getCurrentPlayer() == player1);
+        return (localPlayerColor == PlayerColor.WHITE && getCurrentPlayer() == player0) || (localPlayerColor == PlayerColor.BLACK && getCurrentPlayer() == player1);
     }
 
     /**
@@ -384,7 +374,7 @@ public class OnlineGame extends Game {
      */
     private void executeMoveFromRemote(Move move) throws IllegalMoveException {
         Square boardStart = toBoardSquare(move.getStart());
-        Square boardEnd   = toBoardSquare(move.getEnd());
+        Square boardEnd = toBoardSquare(move.getEnd());
         Move canonical;
         if (move instanceof CastleMove cm) {
             canonical = new CastleMove(boardStart, boardEnd, cm.getRookOriginFile(), cm.getKingDestFile());

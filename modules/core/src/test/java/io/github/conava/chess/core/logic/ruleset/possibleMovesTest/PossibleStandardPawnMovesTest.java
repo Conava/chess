@@ -110,8 +110,7 @@ public class PossibleStandardPawnMovesTest {
 
         // En passant target square: d6 (y=5, x=3)
         Square enPassantTarget = new Square(5, 3);
-        assertTrue(result.contains(enPassantTarget),
-                "En passant left should be available: d6 expected in possible moves");
+        assertTrue(result.contains(enPassantTarget), "En passant left should be available: d6 expected in possible moves");
     }
 
     /**
@@ -145,8 +144,7 @@ public class PossibleStandardPawnMovesTest {
 
         // En passant target square: f6 (y=5, x=5)
         Square enPassantTarget = new Square(5, 5);
-        assertTrue(result.contains(enPassantTarget),
-                "En passant right should be available: f6 expected in possible moves");
+        assertTrue(result.contains(enPassantTarget), "En passant right should be available: f6 expected in possible moves");
     }
 
     /**
@@ -181,8 +179,7 @@ public class PossibleStandardPawnMovesTest {
 
         // En passant target square: e3 (y=2, x=4)
         Square enPassantTarget = new Square(2, 4);
-        assertTrue(result.contains(enPassantTarget),
-                "En passant right should be available for black: e3 expected in possible moves");
+        assertTrue(result.contains(enPassantTarget), "En passant right should be available for black: e3 expected in possible moves");
     }
 
     /**
@@ -214,8 +211,7 @@ public class PossibleStandardPawnMovesTest {
 
         // En passant target d6 (y=5, x=3) must NOT be in result
         Square enPassantTarget = new Square(5, 3);
-        assertFalse(result.contains(enPassantTarget),
-                "En passant should NOT be available when last move was not a double pawn push");
+        assertFalse(result.contains(enPassantTarget), "En passant should NOT be available when last move was not a double pawn push");
     }
 
     /**
@@ -257,8 +253,7 @@ public class PossibleStandardPawnMovesTest {
 
         // En passant target d6 (y=5, x=3) must NOT be in result
         Square enPassantTarget = new Square(5, 3);
-        assertFalse(result.contains(enPassantTarget),
-                "En passant should NOT be available after an intervening move");
+        assertFalse(result.contains(enPassantTarget), "En passant should NOT be available after an intervening move");
     }
 
     /**
@@ -290,8 +285,7 @@ public class PossibleStandardPawnMovesTest {
 
         // En passant target d6 (y=5, x=3) must NOT be in result
         Square enPassantTarget = new Square(5, 3);
-        assertFalse(result.contains(enPassantTarget),
-                "En passant should NOT be available after a single-square pawn push");
+        assertFalse(result.contains(enPassantTarget), "En passant should NOT be available after a single-square pawn push");
     }
 
     // Helper to build an 8x8 empty board grid

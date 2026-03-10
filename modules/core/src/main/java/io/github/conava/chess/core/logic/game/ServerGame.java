@@ -22,11 +22,11 @@ public class ServerGame extends Game {
      * instance. Both player-name arguments are forwarded to the {@link Game}
      * superclass, which applies default names when the supplied strings are blank.
      *
-     * @param selectedRuleset  The ruleset to use for this game; must not be {@code null}.
-     * @param playerWhiteName  Display name for the white player; blank strings receive
-     *                         the default name defined by {@link Game}.
-     * @param playerBlackName  Display name for the black player; blank strings receive
-     *                         the default name defined by {@link Game}.
+     * @param selectedRuleset The ruleset to use for this game; must not be {@code null}.
+     * @param playerWhiteName Display name for the white player; blank strings receive
+     *                        the default name defined by {@link Game}.
+     * @param playerBlackName Display name for the black player; blank strings receive
+     *                        the default name defined by {@link Game}.
      */
     ServerGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
         super(selectedRuleset, playerWhiteName, playerBlackName);
@@ -42,9 +42,9 @@ public class ServerGame extends Game {
      * <p>This constructor has package-private visibility; external callers must use
      * {@link Game#createServerGame(Ruleset, String, String)} to obtain an instance.
      *
-     * @param ruleset          The pre-built ruleset; must not be {@code null}.
-     * @param playerWhiteName  Display name for the white player.
-     * @param playerBlackName  Display name for the black player.
+     * @param ruleset         The pre-built ruleset; must not be {@code null}.
+     * @param playerWhiteName Display name for the white player.
+     * @param playerBlackName Display name for the black player.
      */
     ServerGame(Ruleset ruleset, String playerWhiteName, String playerBlackName) {
         super(ruleset, playerWhiteName, playerBlackName);

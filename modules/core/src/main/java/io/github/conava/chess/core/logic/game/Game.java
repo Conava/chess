@@ -67,15 +67,14 @@ public abstract class Game extends Observable {
      * <p>This constructor is intended for online games where the authoritative ruleset
      * (including Chess960 position index) is only known after the first server response.
      *
-     * @param selectedRuleset  The ruleset option (used as a fallback hint; may be ignored
-     *                         when {@code deferBoardInit} is {@code true}).
-     * @param playerWhiteName  The name of the white player.
-     * @param playerBlackName  The name of the black player.
-     * @param deferBoardInit   {@code true} to skip board construction; {@code false}
-     *                         behaves identically to the two-argument constructor.
+     * @param selectedRuleset The ruleset option (used as a fallback hint; may be ignored
+     *                        when {@code deferBoardInit} is {@code true}).
+     * @param playerWhiteName The name of the white player.
+     * @param playerBlackName The name of the black player.
+     * @param deferBoardInit  {@code true} to skip board construction; {@code false}
+     *                        behaves identically to the two-argument constructor.
      */
-    protected Game(RulesetOptions selectedRuleset, String playerWhiteName,
-                   String playerBlackName, boolean deferBoardInit) {
+    protected Game(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, boolean deferBoardInit) {
         this.player0 = createPlayer(playerWhiteName, PlayerColor.WHITE);
         this.player1 = createPlayer(playerBlackName, PlayerColor.BLACK);
         this.turnCount = 0;
@@ -94,9 +93,9 @@ public abstract class Game extends Observable {
      * <p>Used by {@link ServerGame} when the server module provides a fully configured
      * ruleset (e.g. a {@code Chess960Ruleset} with a specific Scharnagl index).
      *
-     * @param ruleset          The pre-built ruleset to use for this game.
-     * @param playerWhiteName  The name of the white player.
-     * @param playerBlackName  The name of the black player.
+     * @param ruleset         The pre-built ruleset to use for this game.
+     * @param playerWhiteName The name of the white player.
+     * @param playerBlackName The name of the black player.
      */
     protected Game(Ruleset ruleset, String playerWhiteName, String playerBlackName) {
         this.player0 = createPlayer(playerWhiteName, PlayerColor.WHITE);
@@ -118,8 +117,7 @@ public abstract class Game extends Observable {
      */
     protected void initializeBoard(Ruleset ruleset) {
         if (this.board != null) {
-            throw new IllegalStateException(
-                    "initializeBoard() called on an already-initialized game");
+            throw new IllegalStateException("initializeBoard() called on an already-initialized game");
         }
         this.ruleset = ruleset;
         this.board = new Board(ruleset.getStartBoard(player0, player1));
@@ -155,26 +153,21 @@ public abstract class Game extends Observable {
      * {@link #connectToServerGame()} on the returned instance after registering a message
      * handler — see {@link OnlineGame#create} for the two-phase construction contract.
      *
-     * @param online               {@code true} to create an online game, {@code false} for offline.
-     * @param selectedRuleset      The ruleset to use for this game.
-     * @param playerWhiteName      The name of the white player.
-     * @param playerBlackName      The name of the black player.
-     * @param onlineGameSettings   Key-value settings for online games (e.g. join code).
-     *                             Ignored when {@code online} is {@code false}.
-     *                             Must not be {@code null} when {@code online} is {@code true}.
-     * @param connection           The {@link ServerConnection} for online communication.
-     *                             Ignored when {@code online} is {@code false}.
-     *                             Must not be {@code null} when {@code online} is {@code true}.
+     * @param online             {@code true} to create an online game, {@code false} for offline.
+     * @param selectedRuleset    The ruleset to use for this game.
+     * @param playerWhiteName    The name of the white player.
+     * @param playerBlackName    The name of the black player.
+     * @param onlineGameSettings Key-value settings for online games (e.g. join code).
+     *                           Ignored when {@code online} is {@code false}.
+     *                           Must not be {@code null} when {@code online} is {@code true}.
+     * @param connection         The {@link ServerConnection} for online communication.
+     *                           Ignored when {@code online} is {@code false}.
+     *                           Must not be {@code null} when {@code online} is {@code true}.
      * @return A new {@link Game} instance of the appropriate subtype.
      * @throws IllegalArgumentException if {@code online} is {@code true} and either
      *                                  {@code onlineGameSettings} or {@code connection} is {@code null}.
      */
-    public static Game createGame(boolean online,
-                                  RulesetOptions selectedRuleset,
-                                  String playerWhiteName,
-                                  String playerBlackName,
-                                  Map<String, String> onlineGameSettings,
-                                  ServerConnection connection) {
+    public static Game createGame(boolean online, RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName, Map<String, String> onlineGameSettings, ServerConnection connection) {
         if (online) {
             if (onlineGameSettings == null) {
                 throw new IllegalArgumentException("onlineGameSettings must not be null for an online game");
@@ -198,16 +191,14 @@ public abstract class Game extends Observable {
      * {@link #startGame()} to transition the game to {@link GameState#RUNNING} before
      * accepting moves.
      *
-     * @param selectedRuleset  The ruleset to use for this game; must not be {@code null}.
-     * @param playerWhiteName  Display name for the white player. A blank string causes the
-     *                         {@link Game} superclass to substitute a default name.
-     * @param playerBlackName  Display name for the black player. A blank string causes the
-     *                         {@link Game} superclass to substitute a default name.
+     * @param selectedRuleset The ruleset to use for this game; must not be {@code null}.
+     * @param playerWhiteName Display name for the white player. A blank string causes the
+     *                        {@link Game} superclass to substitute a default name.
+     * @param playerBlackName Display name for the black player. A blank string causes the
+     *                        {@link Game} superclass to substitute a default name.
      * @return A new {@link Game} instance backed by a {@link ServerGame}.
      */
-    public static Game createServerGame(RulesetOptions selectedRuleset,
-                                        String playerWhiteName,
-                                        String playerBlackName) {
+    public static Game createServerGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
         return new ServerGame(selectedRuleset, playerWhiteName, playerBlackName);
     }
 
@@ -221,14 +212,12 @@ public abstract class Game extends Observable {
      * <p>The returned game is in an uninitialised state. The caller must invoke
      * {@link #startGame()} before accepting moves.
      *
-     * @param ruleset          The pre-built ruleset; must not be {@code null}.
-     * @param playerWhiteName  Display name for the white player.
-     * @param playerBlackName  Display name for the black player.
+     * @param ruleset         The pre-built ruleset; must not be {@code null}.
+     * @param playerWhiteName Display name for the white player.
+     * @param playerBlackName Display name for the black player.
      * @return A new {@link Game} instance backed by a {@link ServerGame}.
      */
-    public static Game createServerGame(Ruleset ruleset,
-                                        String playerWhiteName,
-                                        String playerBlackName) {
+    public static Game createServerGame(Ruleset ruleset, String playerWhiteName, String playerBlackName) {
         return new ServerGame(ruleset, playerWhiteName, playerBlackName);
     }
 
@@ -436,7 +425,7 @@ public abstract class Game extends Observable {
      */
     protected void executeMove(Move move) throws IllegalMoveException {
         if (gameState != GameState.RUNNING) {
-            throw new IllegalMoveException(move);
+            throw new IllegalMoveException();
         }
         if (isMoveValid(move)) {
             updateHalfMoveClock(move);
@@ -446,7 +435,7 @@ public abstract class Game extends Observable {
             evaluateGameEnd();
             notifyObservers();
         } else {
-            throw new IllegalMoveException(move);
+            throw new IllegalMoveException();
         }
     }
 
@@ -462,10 +451,7 @@ public abstract class Game extends Observable {
         Player player = this.getCurrentPlayer();
         Player startSquarePlayer = squareStart.isOccupiedBy();
 
-        return ruleset.isValidSquare(squareStart) &&
-                startSquarePlayer != null &&
-                startSquarePlayer == player &&
-                this.getLegalSquares(squareStart).contains(squareEnd);
+        return ruleset.isValidSquare(squareStart) && startSquarePlayer != null && startSquarePlayer == player && this.getLegalSquares(squareStart).contains(squareEnd);
     }
 
     /**
@@ -494,12 +480,12 @@ public abstract class Game extends Observable {
      */
     private Piece getNewPiece(Pieces targetPiece, Player player) {
         return switch (targetPiece) {
-            case QUEEN  -> new Queen(player);
-            case ROOK   -> new Rook(player);
+            case QUEEN -> new Queen(player);
+            case ROOK -> new Rook(player);
             case BISHOP -> new Bishop(player);
             case KNIGHT -> new Knight(player);
-            default     -> throw new IllegalArgumentException(
-                    "Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
+            default ->
+                    throw new IllegalArgumentException("Cannot promote to " + targetPiece + "; only QUEEN, ROOK, BISHOP, KNIGHT are valid");
         };
     }
 
@@ -515,9 +501,7 @@ public abstract class Game extends Observable {
     private void updateHalfMoveClock(Move move) {
         Piece movingPiece = move.getStart().getPiece();
         boolean isPawnMove = movingPiece instanceof Pawn;
-        boolean isEnPassant = isPawnMove
-                && move.getStart().getX() != move.getEnd().getX()
-                && move.getEnd().getPiece() == null;
+        boolean isEnPassant = isPawnMove && move.getStart().getX() != move.getEnd().getX() && move.getEnd().getPiece() == null;
         boolean isCapture = move.getEnd().getPiece() != null || isEnPassant;
         halfMoveClock = (isPawnMove || isCapture) ? 0 : halfMoveClock + 1;
     }
@@ -544,9 +528,7 @@ public abstract class Game extends Observable {
         if (!nextHasLegalMove) {
             boolean nextInCheck = ruleset.isCheck(board, nextPlayer, moves);
             if (nextInCheck) {
-                gameState = previousPlayer == player0
-                        ? GameState.WHITE_WON_BY_CHECKMATE
-                        : GameState.BLACK_WON_BY_CHECKMATE;
+                gameState = previousPlayer == player0 ? GameState.WHITE_WON_BY_CHECKMATE : GameState.BLACK_WON_BY_CHECKMATE;
             } else {
                 gameState = GameState.DRAW_BY_STALEMATE;
             }
@@ -643,8 +625,7 @@ public abstract class Game extends Observable {
         if (!moves.isEmpty()) {
             Move lastMove = moves.get(moves.size() - 1);
             Piece lastPiece = lastMove.getEnd().getPiece();
-            if (lastPiece instanceof Pawn
-                    && Math.abs(lastMove.getEnd().getY() - lastMove.getStart().getY()) == 2) {
+            if (lastPiece instanceof Pawn && Math.abs(lastMove.getEnd().getY() - lastMove.getStart().getY()) == 2) {
                 epFile = lastMove.getEnd().getX();
             }
         }
@@ -697,7 +678,7 @@ public abstract class Game extends Observable {
 
         boolean kingUnmoved = king != null && !king.getHasMoved();
         sb.append(kingUnmoved && rightRook != null ? '1' : '0'); // kingside indicator
-        sb.append(kingUnmoved && leftRook  != null ? '1' : '0'); // queenside indicator
+        sb.append(kingUnmoved && leftRook != null ? '1' : '0'); // queenside indicator
     }
 
     /**
@@ -754,14 +735,10 @@ public abstract class Game extends Observable {
         }
 
         // K+B vs K+B same colour bishops
-        if (whiteNonKing.size() == 1 && blackNonKing.size() == 1
-                && whiteNonKing.get(0) instanceof Bishop
-                && blackNonKing.get(0) instanceof Bishop) {
+        if (whiteNonKing.size() == 1 && blackNonKing.size() == 1 && whiteNonKing.get(0) instanceof Bishop && blackNonKing.get(0) instanceof Bishop) {
             int whiteBishopColor = findBishopSquareColor(whitePieces);
             int blackBishopColor = findBishopSquareColor(blackPieces);
-            if (whiteBishopColor == blackBishopColor) {
-                return true;
-            }
+            return whiteBishopColor == blackBishopColor;
         }
 
         return false;

@@ -25,7 +25,7 @@ public class PossibleStandardPawnMoves {
      *
      * @param square The square the pawn is on
      * @param board  The board surrounding the pawn
-     * @param moves List of Past moves, used for en passant
+     * @param moves  List of Past moves, used for en passant
      */
     public PossibleStandardPawnMoves(Square square, Board board, List<Move> moves) {
         this.square = square;
@@ -104,9 +104,7 @@ public class PossibleStandardPawnMoves {
         int endX = lastMove.getEnd().getX();
 
         // Last move must be a pawn double push: piece type is PAWN, 2 squares straight (same file)
-        if (lastMove.getPieceType() != Pieces.PAWN
-                || Math.abs(endY - startY) != 2
-                || startX != endX) {
+        if (lastMove.getPieceType() != Pieces.PAWN || Math.abs(endY - startY) != 2 || startX != endX) {
             return result;
         }
 
@@ -181,7 +179,7 @@ public class PossibleStandardPawnMoves {
      * Checks if the given square would result in capture.
      *
      * @param possibleSquare Square to check on
-     * @param owner owner trying to capture a piece
+     * @param owner          owner trying to capture a piece
      * @return ?isCapture
      */
     private boolean isCapture(Square possibleSquare, Player owner) {

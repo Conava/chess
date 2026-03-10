@@ -40,7 +40,9 @@ import java.util.List;
  */
 public class Chess960Ruleset extends AbstractChessRuleset {
 
-    /** The Scharnagl index (0–959) identifying this Chess960 starting position. */
+    /**
+     * The Scharnagl index (0–959) identifying this Chess960 starting position.
+     */
     private final int scharnaglIndex;
 
     // -------------------------------------------------------------------------
@@ -70,8 +72,7 @@ public class Chess960Ruleset extends AbstractChessRuleset {
      */
     public Chess960Ruleset(int scharnaglIndex) {
         if (scharnaglIndex < 0 || scharnaglIndex > 959) {
-            throw new IllegalArgumentException(
-                    "Scharnagl index must be in [0, 959], got: " + scharnaglIndex);
+            throw new IllegalArgumentException("Scharnagl index must be in [0, 959], got: " + scharnaglIndex);
         }
         this.scharnaglIndex = scharnaglIndex;
     }
@@ -112,11 +113,11 @@ public class Chess960Ruleset extends AbstractChessRuleset {
      * Returns the game label for display in the UI.
      *
      * @return a string of the form {@code "Chess 960 — Position N"} where N is the
-     *         Scharnagl index
+     * Scharnagl index
      */
     @Override
     public String getGameLabel() {
-        return "Chess 960 \u2014 Position " + scharnaglIndex;
+        return "Chess 960 — Position " + scharnaglIndex;
     }
 
     /**
@@ -145,7 +146,7 @@ public class Chess960Ruleset extends AbstractChessRuleset {
      * @param source the king's current square
      * @param target the rook's current square (the king moves to the rook's file in Chess960)
      * @return a {@link CastleMove} with {@code rookOriginFile = target.getX()} and
-     *         {@code kingDestFile} set to 2 (queenside) or 6 (kingside)
+     * {@code kingDestFile} set to 2 (queenside) or 6 (kingside)
      */
     @Override
     public CastleMove buildCastleMove(Square source, Square target) {
@@ -165,15 +166,13 @@ public class Chess960Ruleset extends AbstractChessRuleset {
      * @param source the source square (must contain a non-null piece)
      * @param target the target square
      * @return {@code true} when the moving piece is a King and the target square contains
-     *         an unmoved friendly Rook
+     * an unmoved friendly Rook
      */
     @Override
     protected boolean isCastlingCandidate(Square source, Square target) {
         if (!(source.getPiece() instanceof King)) return false;
         Piece targetPiece = target.getPiece();
-        return targetPiece instanceof Rook
-                && ((Rook) targetPiece).getHasNotMoved()
-                && targetPiece.getPlayer().equals(source.getPiece().getPlayer());
+        return targetPiece instanceof Rook && ((Rook) targetPiece).getHasNotMoved() && targetPiece.getPlayer().equals(source.getPiece().getPlayer());
     }
 
     /**
@@ -200,8 +199,7 @@ public class Chess960Ruleset extends AbstractChessRuleset {
      * @return list of legal target squares
      */
     @Override
-    public List<Square> getLegalSquares(Square square, Board board, List<Move> moves,
-                                        Player player1, Player player2) {
+    public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
         if (square.getPiece() == null) return Collections.emptyList();
 
         List<Square> pseudoLegal = getPseudoLegalSquares(square, board, moves);
@@ -231,9 +229,8 @@ public class Chess960Ruleset extends AbstractChessRuleset {
                 // Simulate the final position: king on kingDestFile, rook relocated
                 Board finalBoardCopy = board.getCopy();
                 Square finalStart = finalBoardCopy.getSquare(square.getY(), square.getX());
-                Square finalEnd   = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
-                finalBoardCopy.executeMove(
-                        new CastleMove(finalStart, finalEnd, rookFile, kingDestFile));
+                Square finalEnd = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
+                finalBoardCopy.executeMove(new CastleMove(finalStart, finalEnd, rookFile, kingDestFile));
                 if (!isCheck(finalBoardCopy, movingPlayer, moves)) {
                     legal.add(targetSquare);
                 }
@@ -275,17 +272,13 @@ public class Chess960Ruleset extends AbstractChessRuleset {
             // Find the king's actual file on this rank
             int kingFile = findKingFile(board, rank, player);
             if (kingFile < 0) {
-                throw new IllegalStateException(
-                    "Chess960 castling deserialization failed: king or rook not found on rank "
-                        + rank + " for move " + wireString);
+                throw new IllegalStateException("Chess960 castling deserialization failed: king or rook not found on rank " + rank + " for move " + wireString);
             }
 
             // Find the rook's file (kingside: look right; queenside: look left)
             int rookFile = findRookFile(board, rank, player, kingFile, kingside);
             if (rookFile < 0) {
-                throw new IllegalStateException(
-                    "Chess960 castling deserialization failed: king or rook not found on rank "
-                        + rank + " for move " + wireString);
+                throw new IllegalStateException("Chess960 castling deserialization failed: king or rook not found on rank " + rank + " for move " + wireString);
             }
 
             int kingDestFile = kingside ? 6 : 2;
@@ -306,23 +299,22 @@ public class Chess960Ruleset extends AbstractChessRuleset {
      * Checks whether any transit square the king passes through (from its current file
      * to its actual destination file, exclusive of the king's start) is attacked.
      *
-     * @param board       the current board
-     * @param moves       move history
+     * @param board        the current board
+     * @param moves        move history
      * @param movingPlayer the player whose king is castling
-     * @param kingSquare  the king's current square
-     * @param kingFile    the king's current file
+     * @param kingSquare   the king's current square
+     * @param kingFile     the king's current file
      * @param kingDestFile the king's actual destination file (2 or 6)
      * @return {@code true} if any transit square is attacked (castling illegal)
      */
-    private boolean isKingTransitAttacked(Board board, List<Move> moves, Player movingPlayer,
-                                          Square kingSquare, int kingFile, int kingDestFile) {
+    private boolean isKingTransitAttacked(Board board, List<Move> moves, Player movingPlayer, Square kingSquare, int kingFile, int kingDestFile) {
         int direction = Integer.signum(kingDestFile - kingFile);
         int currentFile = kingFile + direction;
         while (currentFile != kingDestFile) {
             // Simulate the king stepping to this transit square
             Board transitCopy = board.getCopy();
             Square transitStart = transitCopy.getSquare(kingSquare.getY(), kingFile);
-            Square transitEnd   = transitCopy.getSquare(kingSquare.getY(), currentFile);
+            Square transitEnd = transitCopy.getSquare(kingSquare.getY(), currentFile);
             transitCopy.executeMove(new Move(transitStart, transitEnd));
             if (isCheck(transitCopy, movingPlayer, moves)) {
                 return true;

@@ -4,6 +4,7 @@ import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.pieces.Pieces;
 import org.junit.jupiter.api.Test;
+
 import static org.mockito.Mockito.*;
 
 class ExecuteMoveTest {
@@ -12,7 +13,7 @@ class ExecuteMoveTest {
     void callsMoveOnRegularMove() throws Exception {
         Chess chess = mock(Chess.class);
         Square from = new Square(6, 4);
-        Square to   = new Square(4, 4);
+        Square to = new Square(4, 4);
 
         new ExecuteMove(chess, from, to, null).call();
 
@@ -24,7 +25,7 @@ class ExecuteMoveTest {
     void callsPromoteMoveOnPromotion() throws Exception {
         Chess chess = mock(Chess.class);
         Square from = new Square(1, 4);
-        Square to   = new Square(0, 4);
+        Square to = new Square(0, 4);
 
         new ExecuteMove(chess, from, to, Pieces.QUEEN).call();
 

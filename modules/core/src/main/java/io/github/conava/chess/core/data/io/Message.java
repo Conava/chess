@@ -13,6 +13,7 @@ public record Message(MessageType type, String content) {
     /**
      * Returns the value of the specified parameter in the message content.
      * Contract: The content is a string of key-value pairs separated by spaces. Each key-value pair is separated by an equals sign. All parameters and values are lowercase.
+     *
      * @param parameter The parameter to get the value of
      * @return The value of the parameter, or null if the parameter is not found
      */
