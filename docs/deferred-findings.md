@@ -117,8 +117,9 @@ at review time and has not yet been addressed.
 - **Finding**: `getSudoLegalSquares` is a misspelling of "pseudo". This is now a protected method visible to all subclasses of `AbstractChessRuleset`.
 - **Location**: `modules/core/src/main/java/.../ruleset/AbstractChessRuleset.java:148`
 - **Severity**: Important
-- **Status**: OPEN
-- **Suggested fix**: Rename to `getPseudoLegalSquares` across the codebase.
+- **Status**: RESOLVED
+- **Resolution**: Renamed to `getPseudoLegalSquares` in the Stage 4 fixes.
+- **Suggested fix**: ~~Rename to `getPseudoLegalSquares` across the codebase.~~
 
 ---
 
@@ -137,8 +138,9 @@ at review time and has not yet been addressed.
 - **Finding**: When `findKingFile` or `findRookFile` returns -1, `deserializeMove` falls back to `Move.fromString` which creates a standard CastleMove with hardcoded king-on-e1 assumptions -- incorrect for Chess960.
 - **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java:289-299`
 - **Severity**: Important
-- **Status**: OPEN
-- **Suggested fix**: Throw `IllegalStateException` instead of falling back. A missing king on the expected rank during active play is a bug, not a recoverable condition.
+- **Status**: RESOLVED
+- **Resolution**: `deserializeMove` now throws `IllegalStateException` instead of silently falling back to `Move.fromString`. Fixed in the Stage 4 fixes.
+- **Suggested fix**: ~~Throw `IllegalStateException` instead of falling back.~~
 
 ---
 

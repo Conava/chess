@@ -34,10 +34,11 @@ io.github.conava.chess.core
     ├── moves               Move, CastleMove, PromotionMove
     ├── observer            GameObserver interface, Observable abstract class
     └── ruleset
-        ├── (root)          Ruleset interface, RulesetOptions enum
-        ├── possibleMoves   Six per-piece pseudo-legal move generators
+        ├── (root)          Ruleset interface, AbstractChessRuleset, RulesetOptions enum
+        ├── possibleMoves   Seven per-piece pseudo-legal move generators (6 standard + Chess960 king)
         ├── possibleStartPositions  PossibleStandardPosition
-        └── standardChessRuleset    StandardChessRuleset
+        ├── standardChessRuleset    StandardChessRuleset
+        └── chess960Ruleset         Chess960Ruleset, Chess960StartPosition, PossibleChess960KingMoves
 ```
 
 ---
@@ -71,7 +72,7 @@ io.github.conava.chess.core
 |---|---|---|
 | `Game` (abstract) | Owns board, players, ruleset, turn counter, and move history. Provides `movePiece`, `promoteMove`, `getLegalSquares`, `getCurrentPlayer`, `getBoard`, `getMoveList`. Validates moves via ruleset and detects king-capture game-end. Calls `notifyObservers()` after every successful `executeMove`. Extends `Observable`. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Board`, `Ruleset`, `Move`, `Observable`, `Player` |
 | `OfflineGame` | Concrete `Game` for local two-player play. `startGame()` sets state to `RUNNING`; `endGame()` is a no-op. | `Game`, `GameState` |
-| `OnlineGame` | Concrete `Game` for networked play. Uses a static factory method: `OnlineGame.create(...)` constructs the instance with a private constructor without sending any network messages. The application facade must then call `connectToServerGame()` after confirming the connection is live — this two-phase construction ensures the message handler is registered before the server's first reply can arrive. Overrides `executeMove` to enforce local-player-turn gating, backup/restore state on server rejection, and forward moves via `sendMessageToServer` (using `Move.toProtocolString()` for wire serialization). Handles incoming `Message` objects dispatched by the application layer via `handleMessage`. `handleMove` catches both `IllegalMoveException` and `RuntimeException` to prevent malformed server messages from crashing the handler thread. `handleGameStatus` calls `notifyObservers()` after updating state. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Game`, `ServerConnection`, `Message`, `MessageType`, `Board` |
+| `OnlineGame` | Concrete `Game` for networked play. Uses a static factory method: `OnlineGame.create(...)` constructs the instance with a private constructor without sending any network messages. The application facade must then call `connectToServerGame()` after confirming the connection is live — this two-phase construction ensures the message handler is registered before the server's first reply can arrive. Supports deferred board initialization (`deferBoardInit=true` in the `Game` constructor): the board is `null` until `initializeBoard(Ruleset)` is called with a server-provided ruleset (used by Chess960 to receive the position index from the server). Overrides `executeMove` to enforce local-player-turn gating, backup/restore state on server rejection, and forward moves via `sendMessageToServer` (using `Move.toProtocolString()` for wire serialization). Handles incoming `Message` objects dispatched by the application layer via `handleMessage`. `handleMove` catches both `IllegalMoveException` and `RuntimeException` to prevent malformed server messages from crashing the handler thread. `handleGameStatus` calls `notifyObservers()` after updating state. Promotion piece instantiation uses an enum switch on `Pieces` (no reflection). | `Game`, `ServerConnection`, `Message`, `MessageType`, `Board` |
 | `ServerGame` | Concrete `Game` intended for server-side use. Constructor is package-private: `ServerGame(RulesetOptions, String playerWhiteName, String playerBlackName)`. External callers must use `Game.createServerGame()`. `startGame()` sets state to `RUNNING`; `endGame()` body is empty. | `Game`, `GameState` |
 | `ServerConnection` | Interface that abstracts the networking transport. Methods: `sendMessage(String)`, `closeConnection()`, `isConnected()`. Allows `OnlineGame` to send/receive messages without importing any I/O classes. Implemented in the `application` module by `ServerCommunicationTask`. | — |
 | `GameState` | Enum of 14 game states (German-language display strings). Covers no-game, waiting, running, win-by-checkmate/resignation/timeout for each colour, and three draw variants. | — |
@@ -95,9 +96,11 @@ io.github.conava.chess.core
 
 | Class | Responsibility | Key collaborators |
 |---|---|---|
-| `Ruleset` (interface) | Strategy contract: `getWidth`, `getHeight`, `getStartBoard`, `getLegalMoves`, `getLegalSquares`, `isValidSquare`, `isCheck`. | `Square`, `Board`, `Move`, `Player` |
-| `RulesetOptions` | Enum with a single value: `STANDARD`. | — |
-| `StandardChessRuleset` | Implements `Ruleset`. Dispatches to per-piece move generators for pseudo-legal square lists. `getLegalSquares` filters pseudo-legal moves by deep-copying the board, simulating each candidate move, and calling `isCheck` to exclude any move that leaves the moving player's king in check. Castling is additionally filtered for moving out of or through check. `isCheck` uses a reverse-attack scan from the king's square. | `Ruleset`, `PossibleStandard*Moves`, `PossibleStandardPosition` |
+| `Ruleset` (interface) | Strategy contract: `getWidth`, `getHeight`, `getStartBoard`, `getLegalMoves`, `getLegalSquares`, `isValidSquare`, `isCheck`. Default methods: `getGameLabel()` (returns `""`), `deserializeMove()` (delegates to `Move.fromString`), `isCastlingMove()` (detects standard two-square king move), `buildCastleMove()` (constructs standard `CastleMove`). | `Square`, `Board`, `Move`, `Player` |
+| `RulesetOptions` | Enum with two values: `STANDARD` (display name `"Standard Chess"`) and `CHESS960` (display name `"Chess 960"`). `toString()` returns the display name. | — |
+| `AbstractChessRuleset` | Abstract base class implementing `Ruleset`. Owns shared chess logic: pseudo-legal move dispatch, check-legality filtering via deep-copy simulation, `isCheck`, and board validation. Protected template-method hooks: `getPseudoLegalKingSquares`, `isCastlingCandidate`, `buildCastleMove`. | `Ruleset`, `PossibleStandard*Moves` |
+| `StandardChessRuleset` | Extends `AbstractChessRuleset`. Overrides only `getStartBoard` to provide the standard starting position. | `AbstractChessRuleset`, `PossibleStandardPosition` |
+| `Chess960Ruleset` | Extends `AbstractChessRuleset`. Overrides `getStartBoard`, `getPseudoLegalKingSquares`, `getLegalSquares` (castling transit-square check), `getGameLabel`, and `deserializeMove`. | `AbstractChessRuleset`, `Chess960StartPosition`, `PossibleChess960KingMoves` |
 | `PossibleStandardBishopMoves` | Generates pseudo-legal diagonal ray squares for a bishop. Stops at occupied squares. | `Square`, `Board` |
 | `PossibleStandardKingMoves` | Generates pseudo-legal one-step squares plus castling squares when both king and applicable rook have not moved and intervening squares are clear. | `Square`, `Board`, `King`, `Rook` |
 | `PossibleStandardKnightMoves` | Generates pseudo-legal L-shape squares for a knight. | `Square`, `Board` |
@@ -120,8 +123,11 @@ io.github.conava.chess.core
 - Callers outside `core` implement `GameObserver` and register via `Observable.addObserver`.
 
 ### Strategy
-- `Ruleset` interface is the strategy contract.
-- `StandardChessRuleset` is the only concrete implementation.
+- `Ruleset` interface is the strategy contract with default methods for `getGameLabel()`,
+  `deserializeMove()`, `isCastlingMove()`, and `buildCastleMove()`.
+- `AbstractChessRuleset` is the shared abstract base class owning common chess logic.
+- `StandardChessRuleset` and `Chess960Ruleset` are the two concrete implementations,
+  both extending `AbstractChessRuleset`.
 - `Game` holds a `Ruleset` field; ruleset selection is done via the `RulesetOptions` enum
   switch in `Game.createRuleset`. Adding a new variant requires adding an enum value and a
   new implementation class.
@@ -160,6 +166,7 @@ GameState getState()
 List<String> getMoveList()
 Piece getPieceAt(Square position)
 Board getBoard()
+Ruleset getRuleset()                          // returns the active ruleset instance
 void setGameState(GameState gameState)
 String getJoinCode()                          // returns null for non-online games
 void connectToServerGame()                    // no-op for non-online games

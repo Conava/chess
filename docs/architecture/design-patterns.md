@@ -278,7 +278,7 @@ The `Ruleset` interface provides default methods that rulesets can override:
 
 | Method | Default | Purpose |
 |--------|---------|---------|
-| `getGameLabel()` | `""` | Display label for the game (e.g., "Chess 960 -- Position 518") |
+| `getGameLabel()` | `""` | Display label for the game (e.g., "Chess 960 — Position 518") |
 | `deserializeMove(String, Board, Player)` | `Move.fromString(...)` | Reconstruct a `Move` from its wire string; Chess960 overrides for castling |
 | `isCastlingMove(Square, Square)` | `abs(deltaX) == 2` | Detect whether a king move is a castling attempt |
 | `buildCastleMove(Square, Square)` | `new CastleMove(start, end)` | Construct the appropriate `CastleMove` subtype |

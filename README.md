@@ -396,6 +396,7 @@ Full technical documentation lives in the [`docs/`](docs/) folder:
 | [Adding a Ruleset](docs/guides/adding-a-ruleset.md) | Step-by-step guide to implementing a new ruleset |
 | [Swing → JavaFX Migration](docs/migration/swing-to-javafx.md) | Migration status and architecture decisions |
 | [Architecture Decisions (ADRs)](docs/decisions/) | Why key decisions were made |
+| [Deferred Findings](docs/deferred-findings.md) | Unresolved review findings tracked for future work |
 
 ## Contributing
 

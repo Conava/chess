@@ -245,8 +245,8 @@ public String getGameLabel()
 ```
 
 Returns a human-readable label for the active game's ruleset variant. For standard chess,
-returns `""` (empty string). For Chess960, returns `"Chess 960 -- Position N"` where N is
-the Scharnagl index (0--959). Returns `""` when no game is active.
+returns `""` (empty string). For Chess960, returns `"Chess 960 — Position N"` where N is
+the Scharnagl index (0-959). Returns `""` when no game is active.
 
 `GameController` uses this method after game start to show or hide a label in the game UI.
 When the returned string is empty, the label is hidden (`managed=false`, `visible=false`)

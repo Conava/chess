@@ -119,7 +119,7 @@ These apply to ALL tasks. Never violate without explicit human approval.
     server-provided parameters.
   - `Game.getRuleset()` accessor exposes the active ruleset.
   - `Chess.getGameLabel()` facade method delegates to `game.getRuleset().getGameLabel()`.
-  - `GameController` displays a position label (e.g., "Chess 960 -- Position 518") when present.
+  - `GameController` displays a position label (e.g., "Chess 960 — Position 518") when present.
 - `StandardChessRuleset` enforces check legality via deep-copy simulation (see ADR 0006).
 - En passant, castling, checkmate, stalemate, 50-move rule, threefold repetition, and
   insufficient material detection are all implemented in `core`.
@@ -176,6 +176,7 @@ docs/
 │   ├── getting-started.md       # Prerequisites, build, run, first steps
 │   ├── contributing.md          # Conventions, workflow, how to submit changes
 │   └── adding-a-ruleset.md     # How to extend via the Strategy pattern
+├── deferred-findings.md           # Unresolved review findings tracked for future work
 └── migration/
     └── swing-to-javafx.md       # Current migration status, what's done, what's left
 ```
