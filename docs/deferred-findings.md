@@ -1,7 +1,7 @@
 # Deferred Findings
 
 Unresolved findings from code reviews. Each entry was marked `[OPEN]` or `[DEFERRED]`
-at review time and has not yet been addressed.
+at review time. Items marked RESOLVED have been fixed and can be ignored.
 
 ---
 
@@ -10,9 +10,8 @@ at review time and has not yet been addressed.
 - **Finding**: `RulesetOptionsTest` is missing `assertEquals(2, RulesetOptions.values().length)` assertion, which was explicitly listed in the plan test requirements.
 - **Location**: `modules/core/src/test/java/.../logic/ruleset/RulesetOptionsTest.java`
 - **Severity**: Important
-- **Status**: DEFERRED
-- **Why deferred**: Test file only checks toString and valueOf. The exhaustive `switch` in `Game.createRuleset` provides compile-time safety against additions, but a values-count assertion would catch accidental removal or renaming.
-- **Suggested fix**: Add `assertEquals(2, RulesetOptions.values().length, "Exactly STANDARD and CHESS960 must exist")`.
+- **Status**: RESOLVED
+- **Resolution**: Added `values_containsExactlyTwoOptions` test asserting `assertEquals(2, RulesetOptions.values().length)`.
 
 ---
 
@@ -21,31 +20,28 @@ at review time and has not yet been addressed.
 - **Finding**: Plan test requirements specify `rookOriginFile=5, kingDestFile=6` as the kingside test scenario. No test uses `rookOriginFile=5`; all four added tests use `rookOriginFile=6`.
 - **Location**: `modules/core/src/test/java/.../data/BoardTest.java`
 - **Severity**: Important
-- **Status**: DEFERRED
-- **Why deferred**: The code path is generic and the covered scenarios (swap edge case, backward compat, queenside) give high confidence the implementation is correct. The missing specific scenario represents a test-coverage gap against plan requirements, not a latent bug.
-- **Suggested fix**: Add a test with `rookOriginFile=5, kingDestFile=6`.
+- **Status**: RESOLVED
+- **Resolution**: Added `chess960KingsideCastle_rookOriginFile5_kingDestFile6` test in `BoardTest`.
 
 ---
 
 ## 2026-03-10 -- T05: Unused variable in Chess960StartPosition.generate()
 
-- **Finding**: `int[] backRankFiles = new int[8]` is declared at line 71 and never read. Allocated on every call to `generate()` but serves no purpose.
-- **Location**: `modules/core/src/main/java/.../logic/ruleset/chess960Ruleset/Chess960StartPosition.java:71`
+- **Finding**: `int[] backRankFiles = new int[8]` was declared and never read.
+- **Location**: `modules/core/src/main/java/.../logic/ruleset/chess960Ruleset/Chess960StartPosition.java`
 - **Severity**: Important
-- **Status**: DEFERRED
-- **Why deferred**: No functional impact. Cosmetic dead code.
-- **Suggested fix**: Delete line 71 (`int[] backRankFiles = new int[8];`).
+- **Status**: RESOLVED
+- **Resolution**: Variable was already removed during Stage 4 deep review fixes.
 
 ---
 
 ## 2026-03-10 -- T07: getLegalSquares test only asserts board dimensions
 
-- **Finding**: `Chess960RulesetTest.getLegalSquares_includesRookSquare_forUnmovedRook` test body only asserts `ruleset.getWidth() == 8` and `ruleset.getHeight() == 8`, not that castling moves are included or check detection filters correctly.
-- **Location**: `modules/core/src/test/java/.../logic/ruleset/chess960Ruleset/Chess960RulesetTest.java:330-342`
+- **Finding**: `Chess960RulesetTest.getLegalSquares_includesRookSquare_forUnmovedRook` test body only asserts board dimensions, not castling behavior.
+- **Location**: `modules/core/src/test/java/.../logic/ruleset/chess960Ruleset/Chess960RulesetTest.java`
 - **Severity**: Important
-- **Status**: DEFERRED
-- **Why deferred**: T08 (`Chess960CastlingIntegrationTest`) covers this behavior comprehensively. The misleading test name provides false confidence. Rename to `dimensions_areStandard8x8` or replace body with a real assertion.
-- **Suggested fix**: Rename the test or replace its body with a `getLegalSquares` assertion.
+- **Status**: RESOLVED
+- **Resolution**: Test body was already updated during Stage 4 fixes to assert actual `getLegalSquares` castling behavior.
 
 ---
 
@@ -54,120 +50,116 @@ at review time and has not yet been addressed.
 - **Finding**: File is named `Chess960CastlingIntegrationTest` instead of `Chess960CastlingTest` as specified in the plan.
 - **Location**: `modules/core/src/test/java/.../logic/ruleset/chess960Ruleset/Chess960CastlingIntegrationTest.java`
 - **Severity**: Important
-- **Status**: DEFERRED
-- **Why deferred**: The name is arguably more descriptive. Cosmetic inconsistency with the plan.
-- **Suggested fix**: Rename to `Chess960CastlingTest` for plan consistency, or leave as-is.
+- **Status**: DEFERRED (cosmetic)
+- **Why deferred**: The name `Chess960CastlingIntegrationTest` is more descriptive and accurately reflects the test scope. Renaming provides no functional benefit.
 
 ---
 
 ## 2026-03-10 -- T09: initializeBoard double-call guard test is a no-op
 
-- **Finding**: `initializeBoard_doubleCallGuard_throwsIllegalStateException` test does not test the guard. The body creates a game and asserts `assertNotNull(game.getRuleset())`. The production guard (`if (board != null) throw IllegalStateException`) is never exercised.
-- **Location**: `modules/core/src/test/java/.../logic/game/GameDeferredInitTest.java:115-124`
+- **Finding**: `initializeBoard_doubleCallGuard_throwsIllegalStateException` test did not exercise the guard.
+- **Location**: `modules/core/src/test/java/.../logic/game/GameDeferredInitTest.java`
 - **Severity**: Important
-- **Status**: DEFERRED
-- **Why deferred**: The test name declares it tests specific exception-throwing behavior, but the body tests something else entirely. A regression removing the guard would pass this test.
-- **Suggested fix**: Call `initializeBoard(new StandardChessRuleset())` on an already-initialized game and assert `assertThrows(IllegalStateException.class, ...)`.
+- **Status**: RESOLVED
+- **Resolution**: Test was already corrected during Stage 4 deep review fixes to use `assertThrows(IllegalStateException.class, ...)` on a second `initializeBoard` call.
 
 ---
 
 ## 2026-03-10 -- T10: Game.movePiece lacks null guard during deferred-init window
 
-- **Finding**: `Game.movePiece` accesses `board` without null guard. Theoretical NPE during the deferred-init window before board is set. Unreachable via normal UI flow since `getLegalSquares` returns empty.
-- **Location**: `modules/core/src/main/java/.../logic/game/Game.java` (movePiece method)
+- **Finding**: `Game.movePiece` accesses `board` without null guard. Theoretical NPE during the deferred-init window before board is set.
+- **Location**: `modules/core/src/main/java/.../logic/game/OnlineGame.java` (executeMove)
 - **Severity**: Important
-- **Status**: DEFERRED
-- **Why deferred**: Unreachable through normal UI flow. Defensive coding improvement only.
-- **Suggested fix**: Add null guard at top of `OnlineGame.executeMove`.
+- **Status**: RESOLVED
+- **Resolution**: Added null guard at top of `OnlineGame.executeMove`; returns early if board is not yet initialized.
 
 ---
 
 ## 2026-03-10 -- Deep Review: DRY violation in king move generators
 
-- **Finding**: `PossibleChess960KingMoves` (249 lines) duplicates most of `PossibleStandardKingMoves` (145 lines). One-step adjacency moves, `canCastleKingside`/`canCastleQueenside` guards, `canCastleToward` walk logic, and `isInBounds` are all copy-pasted.
-- **Location**: `modules/core/src/main/java/.../possibleMoves/PossibleChess960KingMoves.java` and `PossibleStandardKingMoves.java`
+- **Finding**: `PossibleChess960KingMoves` duplicated most of `PossibleStandardKingMoves`. ~80 lines copy-pasted.
+- **Location**: `modules/core/src/main/java/.../possibleMoves/`
 - **Severity**: Important
-- **Status**: OPEN
-- **Suggested fix**: Extract a shared abstract base class `AbstractKingMoveGenerator` with hooks for corridor check and target-square selection. Eliminates approximately 80 lines of duplication.
+- **Status**: RESOLVED
+- **Resolution**: Extracted `AbstractKingMoveGenerator` base class with `onCastlingCandidateFound` and `getCastlingTargetFile` hooks. Both classes now extend it. Redundant `findRookSquare` walk in `PossibleChess960KingMoves` merged into the `canCastleToward` walk.
 
 ---
 
 ## 2026-03-10 -- Deep Review: DRY violation in getLegalSquares non-castling branch
 
-- **Finding**: `Chess960Ruleset.getLegalSquares` copies the non-castling deep-copy-simulate-check branch verbatim from `AbstractChessRuleset.getLegalSquares`. If the base class is updated, the Chess960 copy will silently diverge.
-- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java:249-258` and `AbstractChessRuleset.java:122-131`
+- **Finding**: `Chess960Ruleset.getLegalSquares` copied the non-castling deep-copy-simulate-check branch verbatim from `AbstractChessRuleset`.
+- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java` and `AbstractChessRuleset.java`
 - **Severity**: Important
-- **Status**: OPEN
-- **Suggested fix**: Extract the shared logic into a private helper method (e.g., `isLegalAfterSimulation`). Chess960 override then only provides its castling branch.
+- **Status**: RESOLVED
+- **Resolution**: Extracted `protected boolean isLegalAfterSimulation(Board, Square, Square, Player)` helper into `AbstractChessRuleset`. `Chess960Ruleset.getLegalSquares` now calls `super.isLegalAfterSimulation(...)` for the non-castling branch.
 
 ---
 
 ## 2026-03-10 -- Deep Review: Wasteful no-arg constructor in Chess960Ruleset
 
-- **Finding**: The no-arg constructor creates dummy `Player` objects and generates a full 8x8 board with 32 pieces just to extract the Scharnagl index, then discards the board.
-- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java:58-68`
+- **Finding**: No-arg constructor created dummy Players and a full board just to extract the Scharnagl index.
+- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java`
 - **Severity**: Important
-- **Status**: OPEN
-- **Suggested fix**: Add `Chess960StartPosition.generateIndex(Random)` that returns the index without constructing a full board.
+- **Status**: RESOLVED
+- **Resolution**: Added `Chess960StartPosition.generateIndex()` static method that runs the placement algorithm and returns only the integer index. No-arg constructor now calls `generateIndex()` directly.
 
 ---
 
 ## 2026-03-10 -- Deep Review: Misspelled method name getSudoLegalSquares
 
-- **Finding**: `getSudoLegalSquares` is a misspelling of "pseudo". This is now a protected method visible to all subclasses of `AbstractChessRuleset`.
-- **Location**: `modules/core/src/main/java/.../ruleset/AbstractChessRuleset.java:148`
+- **Finding**: `getSudoLegalSquares` was a misspelling of "pseudo".
+- **Location**: `modules/core/src/main/java/.../ruleset/AbstractChessRuleset.java`
 - **Severity**: Important
 - **Status**: RESOLVED
 - **Resolution**: Renamed to `getPseudoLegalSquares` in the Stage 4 fixes.
-- **Suggested fix**: ~~Rename to `getPseudoLegalSquares` across the codebase.~~
 
 ---
 
 ## 2026-03-10 -- Deep Review: Chess960 transit-square check performance
 
 - **Finding**: For each transit square during Chess960 castling, a full deep copy of the board is created and `isCheck` is run. Up to 6 deep copies per castling candidate per legal-move generation call.
-- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java:327-343`
+- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java` (isKingTransitAttacked)
 - **Severity**: Important
 - **Status**: OPEN
-- **Suggested fix**: Use reverse-attack scan on transit squares directly without full board copies. Or skip transit-square checks in `hasAnyLegalMove` (it only needs to find one legal move).
+- **Suggested fix**: Use reverse-attack scan on transit squares directly without full board copies. Or skip transit-square checks in `hasAnyLegalMove` since it only needs to find one legal move.
+- **Note**: Pre-existing performance debt documented in CLAUDE.md. Chess960 amplifies it but does not introduce a new problem class.
 
 ---
 
 ## 2026-03-10 -- Deep Review: deserializeMove silent fallback produces wrong CastleMove
 
-- **Finding**: When `findKingFile` or `findRookFile` returns -1, `deserializeMove` falls back to `Move.fromString` which creates a standard CastleMove with hardcoded king-on-e1 assumptions -- incorrect for Chess960.
-- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java:289-299`
+- **Finding**: When `findKingFile` or `findRookFile` returned -1, `deserializeMove` fell back to `Move.fromString` with hardcoded king-on-e1 assumptions.
+- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java`
 - **Severity**: Important
 - **Status**: RESOLVED
-- **Resolution**: `deserializeMove` now throws `IllegalStateException` instead of silently falling back to `Move.fromString`. Fixed in the Stage 4 fixes.
-- **Suggested fix**: ~~Throw `IllegalStateException` instead of falling back.~~
+- **Resolution**: `deserializeMove` now throws `IllegalStateException` instead of silently falling back.
 
 ---
 
 ## 2026-03-10 -- Deep Review: Javadoc references private method of another class
 
-- **Finding**: Javadoc on `buildCastleMove` references `Board.handleCastleMove960` (a private method). Fragile if the name changes.
-- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java:149-152`
+- **Finding**: Javadoc on `buildCastleMove` referenced `Board.handleCastleMove960` (a private method).
+- **Location**: `modules/core/src/main/java/.../chess960Ruleset/Chess960Ruleset.java`
 - **Severity**: Important
-- **Status**: OPEN
-- **Suggested fix**: Reference `Board.executeMove` (the public entry point) instead.
+- **Status**: RESOLVED
+- **Resolution**: Javadoc updated to reference `Board.executeMove` (the public entry point).
 
 ---
 
 ## 2026-03-10 -- Test Coverage: JOIN_CODE Chess960 params to game creator untested
 
-- **Finding**: `ClientHandler` injects `position=N` and `ruleset=CHESS960` into the JOIN_CODE message for the game creator. This code path has no test. If it regresses, both players would see different boards.
+- **Finding**: `ClientHandler` injects `position=N` and `ruleset=CHESS960` into the JOIN_CODE message for the game creator. This path had no test.
 - **Location**: `modules/server/src/main/java/.../management/ClientHandler.java`
 - **Severity**: Important
-- **Status**: OPEN
-- **Suggested fix**: Add `chess960GameInstance_whiteJoinCode_containsPositionAndRuleset` test in `GameInstanceTest`.
+- **Status**: RESOLVED
+- **Resolution**: Added `chess960GameInstance_whiteJoinCode_containsPositionAndRuleset` test in `GameInstanceTest` verifying white's SUCCESS message contains both `position=` and `ruleset=CHESS960`.
 
 ---
 
 ## 2026-03-10 -- Test Coverage: OnlineGame.buildRulesetFromServerParams swallows NumberFormatException
 
-- **Finding**: When `position=abc` (non-numeric), the method catches `NumberFormatException`, logs WARNING, and falls back to a random position. Both players end up with different boards.
-- **Location**: `modules/core/src/main/java/.../logic/game/OnlineGame.java:175-181`
+- **Finding**: When `position=abc` (non-numeric), the method logs WARNING and falls back to a random position. Both players end up with different boards. No test covered this path.
+- **Location**: `modules/core/src/main/java/.../logic/game/OnlineGame.java`
 - **Severity**: Important
-- **Status**: OPEN
-- **Suggested fix**: Add a test exercising the NumberFormatException path. Consider failing loudly rather than falling back silently.
+- **Status**: RESOLVED
+- **Resolution**: Added `handleJoinCode_invalidPositionParam_fallsBackGracefully` test in `OnlineGameServerConnectionTest` verifying the fallback completes without error.
