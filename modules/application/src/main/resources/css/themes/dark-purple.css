@@ -17,7 +17,7 @@
     app-gradient-start:  #0f1020;
     app-gradient-end:    #161728;
 
-    /* Board highlight tokens (override board CSS) */
+    /* Board highlight tokens */
     board-selected:      rgba(139, 92, 246, 0.52);
     board-highlight:     rgba(139, 92, 246, 0.28);
 
