@@ -275,6 +275,71 @@ public class PossibleChess960KingMovesTest {
         assertTrue(squares.contains(grid[1][4]), "King should be able to move to e2");
     }
 
+    // -----------------------------------------------------------------------
+    // Post-castle corridor check: destination squares must also be clear
+    // -----------------------------------------------------------------------
+
+    /**
+     * Chess960 position: king at b1 (x=1), rook at a1 (x=0), piece on c1 (x=2).
+     * After queenside castling the king lands on c1 and rook on d1.
+     * c1 is occupied by another piece, so queenside castling must be BLOCKED.
+     */
+    @Test
+    void queensideCastling_blockedByPieceOnKingDestination() {
+        Square[][] grid = emptyBoard();
+        King king = new King(playerW);      // unmoved, king on b1
+        grid[0][1].setPiece(king);
+        grid[0][0].setPiece(new Rook(playerW)); // unmoved rook on a1
+        grid[0][2].setPiece(new Knight(playerW)); // piece on c1 (king's destination)
+
+        Board board = new Board(grid);
+        PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][1], board);
+        List<Square> squares = moves.getPossibleSquares();
+
+        assertFalse(squares.contains(grid[0][0]),
+                "Queenside castling must be blocked when king's destination (c1) is occupied");
+    }
+
+    /**
+     * Chess960 position: king at b1 (x=1), rook at a1 (x=0), no obstructions.
+     * Queenside castling should be LEGAL — the rook's square should be returned.
+     */
+    @Test
+    void queensideCastling_legalWhenCorridorClear() {
+        Square[][] grid = emptyBoard();
+        King king = new King(playerW);      // unmoved, king on b1
+        grid[0][1].setPiece(king);
+        grid[0][0].setPiece(new Rook(playerW)); // unmoved rook on a1
+
+        Board board = new Board(grid);
+        PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][1], board);
+        List<Square> squares = moves.getPossibleSquares();
+
+        assertTrue(squares.contains(grid[0][0]),
+                "Queenside castling should be legal when corridor is clear (rook at a1)");
+    }
+
+    /**
+     * Chess960 position: king at g1 (x=6), rook at h1 (x=7), piece on f1 (x=5).
+     * After kingside castling the king lands on g1 and rook on f1.
+     * f1 is occupied by another piece, so kingside castling must be BLOCKED.
+     */
+    @Test
+    void kingsideCastling_blockedByPieceOnRookDestination() {
+        Square[][] grid = emptyBoard();
+        King king = new King(playerW);      // unmoved, king on g1
+        grid[0][6].setPiece(king);
+        grid[0][7].setPiece(new Rook(playerW)); // unmoved rook on h1
+        grid[0][5].setPiece(new Bishop(playerW)); // piece on f1 (rook's destination)
+
+        Board board = new Board(grid);
+        PossibleChess960KingMoves moves = new PossibleChess960KingMoves(grid[0][6], board);
+        List<Square> squares = moves.getPossibleSquares();
+
+        assertFalse(squares.contains(grid[0][7]),
+                "Kingside castling must be blocked when rook's destination (f1) is occupied");
+    }
+
     /**
      * The king may not move to a square occupied by a friendly piece.
      */

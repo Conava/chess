@@ -124,7 +124,8 @@ public class PossibleChess960KingMoves {
      * <ul>
      *   <li>Empty square: continue walking.</li>
      *   <li>Unmoved {@link Rook} owned by the same player as the king: castling
-     *       is possible — return {@code true}.</li>
+     *       is possible only if the post-castle destination corridor is also clear
+     *       — verified by {@link #isCorridorClear}.</li>
      *   <li>Any other piece (including a moved rook, an enemy rook, or any
      *       non-rook piece): the path is blocked — return {@code false}.</li>
      * </ul>
@@ -132,12 +133,13 @@ public class PossibleChess960KingMoves {
      *
      * @param direction {@code +1} for kingside (right) or {@code -1} for queenside (left)
      * @return {@code true} if an unmoved friendly rook is found with no pieces between
-     *         it and the king
+     *         it and the king and the post-castle destination corridor is also clear
      */
     private boolean canCastleToward(int direction) {
         Player owner = square.isOccupiedBy();
         int y = square.getY();
-        int x = square.getX() + direction;
+        int kingFile = square.getX();
+        int x = kingFile + direction;
 
         while (x >= 0 && x < rowCount) {
             Piece piece = board.getSquare(y, x).getPiece();
@@ -146,8 +148,9 @@ public class PossibleChess960KingMoves {
             } else if (piece instanceof Rook rook
                     && rook.getHasNotMoved()
                     && piece.getPlayer().equals(owner)) {
-                // found an unmoved friendly rook with a clear path
-                return true;
+                // found an unmoved friendly rook with a clear king-to-rook path;
+                // also verify the post-castle destination corridor is clear
+                return isCorridorClear(y, kingFile, x, direction > 0);
             } else {
                 // path is blocked
                 return false;
@@ -155,6 +158,53 @@ public class PossibleChess960KingMoves {
             x += direction;
         }
         return false;
+    }
+
+    /**
+     * Checks that every square the king or rook must pass through or land on
+     * (excluding their current positions) is empty.
+     *
+     * <p>Per FIDE Chess960 rules:
+     * <ul>
+     *   <li>Kingside: king moves to file 6, rook moves to file 5.
+     *       Range to check: {@code [min(kingFile, 5), max(rookFile, 6)]},
+     *       excluding {@code kingFile} and {@code rookFile} themselves.</li>
+     *   <li>Queenside: king moves to file 2, rook moves to file 3.
+     *       Range to check: {@code [min(rookFile, 2), max(kingFile, 3)]},
+     *       excluding {@code kingFile} and {@code rookFile} themselves.</li>
+     * </ul>
+     *
+     * @param rank     the rank (y-coordinate) of both king and rook
+     * @param kingFile the king's current file (x-coordinate)
+     * @param rookFile the rook's current file (x-coordinate)
+     * @param kingside {@code true} for kingside castling, {@code false} for queenside
+     * @return {@code true} if every square in the destination corridor is unoccupied
+     *         (ignoring the king's and rook's own squares)
+     */
+    private boolean isCorridorClear(int rank, int kingFile, int rookFile, boolean kingside) {
+        int lo, hi;
+        if (kingside) {
+            // king lands on file 6, rook lands on file 5
+            lo = Math.min(kingFile, 5);
+            hi = Math.max(rookFile, 6);
+        } else {
+            // king lands on file 2, rook lands on file 3
+            lo = Math.min(rookFile, 2);
+            hi = Math.max(kingFile, 3);
+        }
+
+        for (int f = lo; f <= hi; f++) {
+            if (f == kingFile || f == rookFile) {
+                continue; // ignore the pieces' own squares
+            }
+            if (f < 0 || f >= rowCount) {
+                continue; // out of bounds — no piece there
+            }
+            if (!board.getSquare(rank, f).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
