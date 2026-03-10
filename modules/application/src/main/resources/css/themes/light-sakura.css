@@ -1,28 +1,28 @@
-/* light-arctic.css — "Fjord" — Scandinavian precision */
-/* Crystal-clear cool blue-white. Sky-water teal primary. Barely-there shadows. */
-/* Professional, focused, unapologetically minimal. */
+/* light-sakura.css — "Sakura" — Japanese cherry blossom */
+/* Warm blush whites and petal pinks. Deep rose primary. Soft, refined, delicate. */
+/* Feels like playing chess beneath a flowering tree in early April. */
 
 .root {
-    app-bg:              #eef3f8;
+    app-bg:              #fdf6f8;
     app-surface:         #ffffff;
-    app-card:            #e2eaf2;
-    app-elevated:        #d0dcea;
-    app-border:          #b0c4d8;
-    app-primary:         #0284c7;
-    app-primary-hover:   #0369a1;
+    app-card:            #fce8ee;
+    app-elevated:        #f8d7e0;
+    app-border:          #e8b4c0;
+    app-primary:         #be185d;
+    app-primary-hover:   #9d174d;
     app-danger:          #dc2626;
     app-danger-dark:     #b91c1c;
-    app-text:            #0a1929;
-    app-subtext:         #3d6080;
-    app-dot:             #0ea5e9;
+    app-text:            #1c0714;
+    app-subtext:         #9f4e68;
+    app-dot:             #e11d90;
     app-gradient-start:  #ffffff;
-    app-gradient-end:    #e2eaf2;
+    app-gradient-end:    #fce8ee;
 
     /* Board highlight tokens */
-    board-selected:      rgba(2, 132, 199, 0.45);
-    board-highlight:     rgba(2, 132, 199, 0.22);
-    board-light:         #d4e0ec;
-    board-dark:          #4f7a96;
+    board-selected:      rgba(190, 24, 93, 0.45);
+    board-highlight:     rgba(190, 24, 93, 0.22);
+    board-light:         #f0d0d6;
+    board-dark:          #a0586e;
     app-badge-win:       #15803d;
     app-badge-draw:      #b45309;
 
@@ -38,12 +38,12 @@
 .btn-primary {
     -fx-background-color: app-primary;
     -fx-text-fill: white;
-    -fx-effect: dropshadow(gaussian, rgba(2, 100, 180, 0.30), 8, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.35), 10, 0, 0, 3);
 }
 
 .btn-primary:hover {
     -fx-background-color: app-primary-hover;
-    -fx-effect: dropshadow(gaussian, rgba(2, 100, 180, 0.45), 12, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.50), 14, 0, 0, 4);
 }
 
 .btn-ghost {
@@ -96,7 +96,7 @@
     -fx-border-color: app-border;
     -fx-border-width: 1;
     -fx-border-radius: 12;
-    -fx-effect: dropshadow(gaussian, rgba(10, 50, 100, 0.10), 8, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.10), 10, 0, 0, 3);
 }
 
 .overlay-card {
@@ -104,7 +104,7 @@
     -fx-border-color: app-border;
     -fx-border-width: 1;
     -fx-border-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(10, 50, 100, 0.20), 24, 0, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.18), 28, 0, 0, 8);
 }
 
 /* ── Brand panel ─────────────────────────────────────────────────────────── */
@@ -141,7 +141,7 @@
 
 .text-field:focused {
     -fx-border-color: app-primary;
-    -fx-effect: dropshadow(gaussian, rgba(2, 132, 199, 0.25), 8, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.22), 8, 0, 0, 0);
 }
 
 /* ── Move list ───────────────────────────────────────────────────────────── */
@@ -187,7 +187,7 @@
 .theme-swatch          { -fx-border-color: app-border; }
 .theme-swatch:selected {
     -fx-border-color: app-primary;
-    -fx-effect: dropshadow(gaussian, rgba(2, 132, 199, 0.40), 10, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.40), 10, 0, 0, 0);
 }
 
 /* ── Toggle buttons ──────────────────────────────────────────────────────── */

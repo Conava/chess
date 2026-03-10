@@ -1,34 +1,34 @@
-/* light-arctic.css — "Fjord" — Scandinavian precision */
-/* Crystal-clear cool blue-white. Sky-water teal primary. Barely-there shadows. */
-/* Professional, focused, unapologetically minimal. */
+/* dark-abyss.css — "Abyss" — bioluminescent deep ocean */
+/* Near-black blue surfaces. Electric cyan primary. Glowing shadows. */
+/* Feels like playing chess two miles beneath the surface. */
 
 .root {
-    app-bg:              #eef3f8;
-    app-surface:         #ffffff;
-    app-card:            #e2eaf2;
-    app-elevated:        #d0dcea;
-    app-border:          #b0c4d8;
-    app-primary:         #0284c7;
-    app-primary-hover:   #0369a1;
-    app-danger:          #dc2626;
-    app-danger-dark:     #b91c1c;
-    app-text:            #0a1929;
-    app-subtext:         #3d6080;
-    app-dot:             #0ea5e9;
-    app-gradient-start:  #ffffff;
-    app-gradient-end:    #e2eaf2;
+    app-bg:              #020810;
+    app-surface:         #060f1e;
+    app-card:            #0b1830;
+    app-elevated:        #102040;
+    app-border:          #1a3556;
+    app-primary:         #06b6d4;
+    app-primary-hover:   #0891b2;
+    app-danger:          #f43f5e;
+    app-danger-dark:     #e11d48;
+    app-text:            #e0f2fe;
+    app-subtext:         #4a90b8;
+    app-dot:             #22d3ee;
+    app-gradient-start:  #060f1e;
+    app-gradient-end:    #0b1830;
 
     /* Board highlight tokens */
-    board-selected:      rgba(2, 132, 199, 0.45);
-    board-highlight:     rgba(2, 132, 199, 0.22);
-    board-light:         #d4e0ec;
-    board-dark:          #4f7a96;
+    board-selected:      rgba(6, 182, 212, 0.52);
+    board-highlight:     rgba(6, 182, 212, 0.28);
+    board-light:         #9abcc8;
+    board-dark:          #2c5a6e;
     app-badge-win:       #15803d;
     app-badge-draw:      #b45309;
 
     -fx-background:                  app-bg;
     -fx-base:                        app-surface;
-    -fx-control-inner-background:    app-surface;
+    -fx-control-inner-background:    app-card;
     -fx-text-fill:                   app-text;
     -fx-accent:                      app-primary;
 }
@@ -37,13 +37,13 @@
 
 .btn-primary {
     -fx-background-color: app-primary;
-    -fx-text-fill: white;
-    -fx-effect: dropshadow(gaussian, rgba(2, 100, 180, 0.30), 8, 0, 0, 2);
+    -fx-text-fill: #020810;
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.55), 14, 0.3, 0, 3);
 }
 
 .btn-primary:hover {
     -fx-background-color: app-primary-hover;
-    -fx-effect: dropshadow(gaussian, rgba(2, 100, 180, 0.45), 12, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.75), 20, 0.4, 0, 4);
 }
 
 .btn-ghost {
@@ -80,6 +80,7 @@
     -fx-background-color: app-primary, app-elevated;
     -fx-background-insets: 0 0 0 0, 0 0 0 3;
     -fx-background-radius: 8, 8;
+    -fx-text-fill: #020810;
     -fx-translate-y: -1;
 }
 
@@ -92,11 +93,11 @@
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 
 .card {
-    -fx-background-color: app-surface;
+    -fx-background-color: app-card;
     -fx-border-color: app-border;
     -fx-border-width: 1;
     -fx-border-radius: 12;
-    -fx-effect: dropshadow(gaussian, rgba(10, 50, 100, 0.10), 8, 0, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(0, 20, 50, 0.70), 14, 0, 0, 4);
 }
 
 .overlay-card {
@@ -104,7 +105,7 @@
     -fx-border-color: app-border;
     -fx-border-width: 1;
     -fx-border-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(10, 50, 100, 0.20), 24, 0, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(0, 20, 60, 0.85), 36, 0, 0, 10);
 }
 
 /* ── Brand panel ─────────────────────────────────────────────────────────── */
@@ -124,7 +125,7 @@
 .auth-section-label       { -fx-text-fill: app-subtext; }
 .auth-screen-subtitle     { -fx-text-fill: app-subtext; }
 .form-error               { -fx-text-fill: app-danger; }
-.auth-brand-strip         { -fx-background-color: app-card; }
+.auth-brand-strip         { -fx-background-color: app-bg; }
 .menu-exit-link           { -fx-text-fill: app-subtext; }
 .menu-exit-link:hover     { -fx-text-fill: app-danger; }
 
@@ -141,13 +142,13 @@
 
 .text-field:focused {
     -fx-border-color: app-primary;
-    -fx-effect: dropshadow(gaussian, rgba(2, 132, 199, 0.25), 8, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.40), 10, 0.2, 0, 0);
 }
 
 /* ── Move list ───────────────────────────────────────────────────────────── */
 
 .move-list-view {
-    -fx-background-color: app-card;
+    -fx-background-color: app-surface;
     -fx-border-color: app-border;
     -fx-border-width: 1;
     -fx-border-radius: 8;
@@ -159,12 +160,12 @@
 }
 
 .move-list-view .list-cell:odd {
-    -fx-background-color: app-elevated;
+    -fx-background-color: app-card;
 }
 
 .move-list-view .list-cell:selected {
-    -fx-background-color: app-primary;
-    -fx-text-fill: white;
+    -fx-background-color: app-elevated;
+    -fx-text-fill: app-primary;
 }
 
 /* ── Board ───────────────────────────────────────────────────────────────── */
@@ -187,7 +188,7 @@
 .theme-swatch          { -fx-border-color: app-border; }
 .theme-swatch:selected {
     -fx-border-color: app-primary;
-    -fx-effect: dropshadow(gaussian, rgba(2, 132, 199, 0.40), 10, 0, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.60), 12, 0.3, 0, 0);
 }
 
 /* ── Toggle buttons ──────────────────────────────────────────────────────── */
@@ -204,7 +205,7 @@
 
 .toggle-button:selected {
     -fx-background-color: app-primary;
-    -fx-text-fill: white;
+    -fx-text-fill: #020810;
     -fx-border-color: app-primary;
 }
 
@@ -216,7 +217,7 @@
 /* ── Combo box ───────────────────────────────────────────────────────────── */
 
 .combo-box {
-    -fx-background-color: app-surface;
+    -fx-background-color: app-card;
     -fx-border-color: app-border;
     -fx-border-width: 1;
     -fx-border-radius: 7;
@@ -224,13 +225,13 @@
 }
 
 .combo-box-popup .list-view {
-    -fx-background-color: app-surface;
+    -fx-background-color: app-card;
     -fx-border-color: app-border;
     -fx-border-width: 1;
 }
 
 .combo-box-popup .list-cell {
-    -fx-background-color: app-surface;
+    -fx-background-color: app-card;
     -fx-text-fill: app-text;
 }
 
@@ -248,5 +249,5 @@
 .promotion-piece-btn:hover {
     -fx-background-color: app-elevated;
     -fx-border-color:     app-primary;
-    -fx-effect: dropshadow(gaussian, derive(app-primary, 0%), 12, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, derive(app-primary, 0%), 14, 0.3, 0, 3);
 }
