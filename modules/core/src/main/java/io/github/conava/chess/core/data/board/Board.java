@@ -4,6 +4,7 @@ import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.data.pieces.King;
+import io.github.conava.chess.core.data.pieces.Pawn;
 import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
@@ -89,10 +90,24 @@ public class Board {
             piece = promotionMove.getTargetPiece();
         }
 
+        // En passant: pawn moves diagonally to an empty square — capture the opponent pawn
+        // that sits on the same rank as the start square, same file as the destination.
+        // This check must happen before endSquare.setPiece() so the empty-destination
+        // condition is evaluated against the board state prior to this move.
+        boolean isEnPassant = piece instanceof Pawn
+                && startSquare.getX() != endSquare.getX()
+                && endSquare.getPiece() == null;
+
         endSquare.setPiece(piece);
         removePiece(startSquare);
         startSquare.setPiece(null);
         updatePieceLists(startSquare, endSquare, piece);
+
+        if (isEnPassant) {
+            Square capturedPawnSquare = getSquare(startSquare.getY(), endSquare.getX());
+            removePiece(capturedPawnSquare);
+            capturedPawnSquare.setPiece(null);
+        }
     }
 
     /**
