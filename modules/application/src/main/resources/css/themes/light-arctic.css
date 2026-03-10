@@ -225,3 +225,16 @@
 .combo-box-popup .list-cell:hover {
     -fx-background-color: app-elevated;
 }
+
+/* -- Promotion picker --------------------------------------------------- */
+
+.promotion-piece-btn {
+    -fx-background-color: app-card;
+    -fx-border-color:     app-border;
+}
+
+.promotion-piece-btn:hover {
+    -fx-background-color: app-elevated;
+    -fx-border-color:     app-primary;
+    -fx-effect: dropshadow(gaussian, derive(app-primary, 0%), 12, 0, 0, 3);
+}

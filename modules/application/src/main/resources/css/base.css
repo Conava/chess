@@ -54,6 +54,29 @@
     -fx-alignment: CENTER_LEFT;
 }
 
+/* -- Promotion picker --------------------------------------------------- */
+
+.promotion-piece-btn {
+    -fx-background-radius: 10;
+    -fx-border-radius:     10;
+    -fx-border-width:      1.5;
+    -fx-padding:           0;
+    -fx-cursor:            hand;
+    -fx-min-width:         0;
+    -fx-min-height:        0;
+    -fx-alignment:         CENTER;
+}
+
+.promotion-piece-btn:hover {
+    -fx-translate-y: -2;
+}
+
+.promotion-piece-btn:pressed {
+    -fx-scale-x:     0.94;
+    -fx-scale-y:     0.94;
+    -fx-translate-y: 0;
+}
+
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 
 .card {

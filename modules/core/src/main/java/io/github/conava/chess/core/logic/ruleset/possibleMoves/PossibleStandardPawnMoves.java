@@ -2,6 +2,7 @@ package io.github.conava.chess.core.logic.ruleset.possibleMoves;
 
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
+import io.github.conava.chess.core.data.pieces.Pieces;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.logic.moves.Move;
@@ -62,8 +63,72 @@ public class PossibleStandardPawnMoves {
         }
 
         possibleMoves.addAll(possibleCaptureMoves());
+        possibleMoves.addAll(enPassantMoves());
 
         return possibleMoves;
+    }
+
+    /**
+     * Returns en passant target squares when conditions are met.
+     * <p>
+     * En passant is available when:
+     * <ol>
+     *   <li>This pawn is on the en passant rank (y=4 for white, y=3 for black).</li>
+     *   <li>The last move in the history was a double pawn push (2 squares straight, same file).</li>
+     *   <li>That pawn landed on the same rank as this pawn.</li>
+     *   <li>That pawn's file is adjacent (x-1 or x+1) to this pawn.</li>
+     * </ol>
+     * The target square is the diagonal-forward square toward the enemy pawn's file.
+     * Actual pawn capture (removing the enemy pawn) is handled at execution time in
+     * {@code Board.executeMove} when a pawn moves diagonally to an empty square.
+     *
+     * @return list of en passant target squares (empty if en passant is not available)
+     */
+    private List<Square> enPassantMoves() {
+        List<Square> result = new ArrayList<>();
+
+        if (moves == null || moves.isEmpty()) {
+            return result;
+        }
+
+        // En passant rank: y=4 for white (direction=+1), y=3 for black (direction=-1)
+        int enPassantRank = (direction == 1) ? 4 : 3;
+        if (square.getY() != enPassantRank) {
+            return result;
+        }
+
+        Move lastMove = moves.get(moves.size() - 1);
+        int startY = lastMove.getStart().getY();
+        int endY = lastMove.getEnd().getY();
+        int startX = lastMove.getStart().getX();
+        int endX = lastMove.getEnd().getX();
+
+        // Last move must be a pawn double push: piece type is PAWN, 2 squares straight (same file)
+        if (lastMove.getPieceType() != Pieces.PAWN
+                || Math.abs(endY - startY) != 2
+                || startX != endX) {
+            return result;
+        }
+
+        // That pawn must have landed on the same rank as this pawn
+        if (endY != square.getY()) {
+            return result;
+        }
+
+        // That pawn's file must be adjacent to this pawn
+        int fileDiff = endX - square.getX();
+        if (Math.abs(fileDiff) != 1) {
+            return result;
+        }
+
+        // En passant target: one square forward, toward the enemy pawn's file
+        int targetY = square.getY() + direction;
+        int targetX = endX;
+        if (isInBounds(targetY, targetX)) {
+            result.add(board.getSquare(targetY, targetX));
+        }
+
+        return result;
     }
 
     public List<Square> possibleCaptureMoves() {
@@ -109,7 +174,7 @@ public class PossibleStandardPawnMoves {
     private boolean isOnHomeSquare(PlayerColor color) {
         if (color.equals(PlayerColor.WHITE) && square.getY() == 1) {
             return true;
-        } else return color.equals(PlayerColor.BLACK) && square.getY() == 6;
+        } else return color.equals(PlayerColor.BLACK) && square.getY() == colCount - 2;
     }
 
     /**

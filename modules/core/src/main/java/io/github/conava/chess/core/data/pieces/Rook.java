@@ -16,4 +16,13 @@ public class Rook extends Piece {
     public boolean getHasNotMoved() {
         return !this.hasMoved;
     }
+
+    @Override
+    public Rook copy() {
+        Rook copy = new Rook(this.player);
+        if (this.hasMoved) {
+            copy.setHasMoved();
+        }
+        return copy;
+    }
 }

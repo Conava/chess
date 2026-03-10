@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Project Overview
-Modularized chess game. Java 17, Maven multi-module. Migrating UI from Swing to JavaFX.
+Modularized chess game. Java 17, Maven multi-module. JavaFX 21 UI.
 All packages under `io.github.conava.chess`.
 
 ## Build & Run Commands
@@ -97,11 +97,15 @@ These apply to ALL tasks. Never violate without explicit human approval.
 - Strategy: `Ruleset` interface — rule variants
 - Façade: `Chess.java` — single entry point for all game interaction
 
-## Current Migration Context
-- Replacing `modules/application/` Swing UI with JavaFX
-- `core` and `server` must not change during UI migration
-- JavaFX target: 21. Use FXML + Controller pattern. Entry point extends `Application`.
+## Current State
+- Swing-to-JavaFX migration is complete. The `application` module uses JavaFX 21 exclusively.
+- JavaFX target: 21. FXML + Controller pattern. Entry point extends `Application`.
 - All JavaFX UI updates via `Platform.runLater()`. No direct UI mutation from observer callbacks.
+- `StandardChessRuleset` enforces check legality via deep-copy simulation (see ADR 0006).
+- En passant, castling, checkmate, stalemate, 50-move rule, threefold repetition, and
+  insufficient material detection are all implemented in `core`.
+- `Piece.copy()` and `Board.getCopy()` provide deep-copy support used by the check-legality filter.
+- Known performance debt: `hasAnyLegalMove` is O(moves x pieces) per turn due to deep-copy simulation.
 
 ## Conventions
 - No test code in `src/main`. No production logic in `src/test`.

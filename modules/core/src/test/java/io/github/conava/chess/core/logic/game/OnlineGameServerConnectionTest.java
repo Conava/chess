@@ -63,6 +63,8 @@ class OnlineGameServerConnectionTest {
         // No joinCode → creating a new game; local player is WHITE
         game = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), connection);
         game.connectToServerGame();
+        // Simulate a second player joining so the game transitions to RUNNING
+        game.setGameState(GameState.RUNNING);
     }
 
     // ---- sendMessage() is called on connectToServerGame() ----
@@ -197,6 +199,86 @@ class OnlineGameServerConnectionTest {
         OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new java.util.HashMap<>(), freshConn);
         assertEquals(0, freshConn.sentMessages.size(),
                 "OnlineGame.create() must not send any messages before connectToServerGame() is called");
+    }
+
+    // ---- backupGameState / restoreGameState cover halfMoveClock and positionHistory ----
+
+    /** Reads a protected field from Game via reflection. */
+    @SuppressWarnings("unchecked")
+    private static <T> T readGameField(OnlineGame g, String fieldName) throws Exception {
+        java.lang.reflect.Field f = Game.class.getDeclaredField(fieldName);
+        f.setAccessible(true);
+        return (T) f.get(g);
+    }
+
+    /** Writes a protected field on Game via reflection. */
+    private static void writeGameField(OnlineGame g, String fieldName, Object value) throws Exception {
+        java.lang.reflect.Field f = Game.class.getDeclaredField(fieldName);
+        f.setAccessible(true);
+        f.set(g, value);
+    }
+
+    private static OnlineGame freshOnlineGame() {
+        RecordingConnection conn = new RecordingConnection();
+        return OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
+    }
+
+    @Test
+    void backupAndRestore_preserves_halfMoveClock() throws Exception {
+        OnlineGame g = freshOnlineGame();
+
+        writeGameField(g, "halfMoveClock", 7);
+        g.backupGameState();
+
+        // Mutate the field after backup.
+        writeGameField(g, "halfMoveClock", 42);
+
+        g.restoreGameState();
+
+        int restored = readGameField(g, "halfMoveClock");
+        assertEquals(7, restored,
+                "restoreGameState() must restore halfMoveClock to the backed-up value");
+    }
+
+    @Test
+    void backupAndRestore_preserves_positionHistory() throws Exception {
+        OnlineGame g = freshOnlineGame();
+
+        Map<String, Integer> history = readGameField(g, "positionHistory");
+        history.put("KEY_A", 2);
+        g.backupGameState();
+
+        // Mutate the map after backup.
+        history.put("KEY_B", 5);
+        history.remove("KEY_A");
+
+        g.restoreGameState();
+
+        Map<String, Integer> restored = readGameField(g, "positionHistory");
+        assertTrue(restored.containsKey("KEY_A"),
+                "restoreGameState() must restore all backed-up position history entries");
+        assertFalse(restored.containsKey("KEY_B"),
+                "restoreGameState() must not include entries added after the backup");
+        assertEquals(2, restored.get("KEY_A"),
+                "restoreGameState() must restore the correct count for each position history entry");
+    }
+
+    @Test
+    void backup_positionHistory_isDeepCopy() throws Exception {
+        OnlineGame g = freshOnlineGame();
+
+        Map<String, Integer> history = readGameField(g, "positionHistory");
+        history.put("KEY_A", 1);
+        g.backupGameState();
+
+        // Mutating the live map after backup must NOT affect the backup.
+        history.put("KEY_A", 99);
+
+        g.restoreGameState();
+
+        Map<String, Integer> restored = readGameField(g, "positionHistory");
+        assertEquals(1, restored.get("KEY_A"),
+                "The backed-up positionHistory must be a deep copy; mutating the live map after backup must not affect the restored value");
     }
 
     // ---- simple capturing observer ----

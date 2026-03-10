@@ -5,15 +5,15 @@ import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.logic.ruleset.possibleMoves.*;
+import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import io.github.conava.chess.core.logic.ruleset.possibleStartPositions.PossibleStandardPosition;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
-
-// todo: refactor the ruleset.
-//        - Operations should update the game state, it does not need to be calculated
+import java.util.stream.Collectors;
 
 /**
  * Standard chess ruleset.
@@ -66,31 +66,83 @@ public class StandardChessRuleset implements Ruleset {
      */
     @Override
     public List<Move> getLegalMoves(Square square, Board board, List<Move> moves, Player player1, Player player2) {
-        List<Square> sudoLegalSquares;
-        List<Move> legalMoves = new ArrayList<>();
-
-        sudoLegalSquares = getSudoLegalSquares(square, board, moves);
-
-        for (Square squareTemp : sudoLegalSquares) {
-            legalMoves.add(new Move(square, squareTemp));
-        }
-
-        return legalMoves;
+        List<Square> legalSquares = getLegalSquares(square, board, moves, player1, player2);
+        return legalSquares.stream()
+                .map(target -> new Move(square, target))
+                .collect(Collectors.toList());
     }
 
     /**
-     * Provides a list of legal squares.
+     * Provides a list of legal squares, filtered to exclude any move that would leave
+     * the moving player's king (derived from the piece on {@code square}) in check.
+     *
+     * <p>For each pseudo-legal target square, a deep copy of the board is created, the move is
+     * simulated on the copy, and {@link #isCheck} is called on the resulting position. Only
+     * target squares where the moving player's king is not in check after the move are returned.
+     *
+     * <p>Special castling handling:
+     * <ul>
+     *   <li>Castling is illegal when the king is currently in check.</li>
+     *   <li>Castling is illegal when the king would pass through an attacked transit square.</li>
+     * </ul>
      *
      * @param square  Only moves from this square are shown
      * @param board   Current board
      * @param moves   List of moves already played in-game
-     * @param player1 Player to move
+     * @param player1 Player to move (used for pseudo-legal generation; the check filter derives
+     *                the moving player from {@code square.getPiece().getPlayer()})
      * @param player2 Player opponent
-     * @return List of LEGAL squares.
+     * @return List of LEGAL squares — moves that do not leave the moving player's king
+     *         (derived from the piece on {@code square}) in check.
      */
     @Override
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
-        return getSudoLegalSquares(square, board, moves);
+        if (square.getPiece() == null) return Collections.emptyList();
+
+        List<Square> pseudoLegal = getSudoLegalSquares(square, board, moves);
+        List<Square> legal = new ArrayList<>();
+
+        // Derive the moving player from the piece on the source square so that
+        // the check filter works correctly for both colours regardless of which
+        // Player references are passed in as player1/player2.
+        Player movingPlayer = square.getPiece().getPlayer();
+
+        boolean currentlyInCheck = isCheck(board, movingPlayer, moves);
+
+        for (Square targetSquare : pseudoLegal) {
+            // Castling candidate: king moves exactly 2 squares horizontally
+            if (square.getPiece() instanceof King
+                    && Math.abs(targetSquare.getX() - square.getX()) == 2) {
+                // Cannot castle while in check
+                if (currentlyInCheck) {
+                    continue;
+                }
+                // Cannot castle through an attacked transit square
+                int transitX = square.getX() + Integer.signum(targetSquare.getX() - square.getX());
+                Board transitBoardCopy = board.getCopy();
+                Square transitStart = transitBoardCopy.getSquare(square.getY(), square.getX());
+                Square transitEnd = transitBoardCopy.getSquare(square.getY(), transitX);
+                transitBoardCopy.executeMove(new Move(transitStart, transitEnd));
+                if (isCheck(transitBoardCopy, movingPlayer, moves)) {
+                    continue;
+                }
+            }
+
+            // Check final square: simulate the move and verify the king is not in check
+            Board finalBoardCopy = board.getCopy();
+            Square finalStart = finalBoardCopy.getSquare(square.getY(), square.getX());
+            Square finalEnd = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
+            boolean isCastling = square.getPiece() instanceof King
+                    && Math.abs(targetSquare.getX() - square.getX()) == 2;
+            finalBoardCopy.executeMove(isCastling
+                    ? new CastleMove(finalStart, finalEnd)
+                    : new Move(finalStart, finalEnd));
+            if (!isCheck(finalBoardCopy, movingPlayer, moves)) {
+                legal.add(targetSquare);
+            }
+        }
+
+        return legal;
     }
 
     private List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) {
@@ -186,14 +238,26 @@ public class StandardChessRuleset implements Ruleset {
             }
         }
 
+        // Check king adjacency: opposing king cannot stand adjacent
+        int ky = square.getY(), kx = square.getX();
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dy == 0 && dx == 0) continue;
+                if (isInBoundsY(ky + dy) && isInBoundsX(kx + dx)) {
+                    Piece p = board.getSquare(ky + dy, kx + dx).getPiece();
+                    if (p instanceof King && !p.getPlayer().equals(square.getPiece().getPlayer())) return true;
+                }
+            }
+        }
+
         return false;
     }
 
     private boolean isInBoundsX(int x) {
-        return x >= 0 && x < 8;
+        return x >= 0 && x < getWidth();
     }
 
     private boolean isInBoundsY(int y) {
-        return y >= 0 && y < 8;
+        return y >= 0 && y < getHeight();
     }
 }

@@ -4,6 +4,7 @@ import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.data.pieces.King;
+import io.github.conava.chess.core.data.pieces.Pawn;
 import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
@@ -89,18 +90,56 @@ public class Board {
             piece = promotionMove.getTargetPiece();
         }
 
+        // En passant: pawn moves diagonally to an empty square — capture the opponent pawn
+        // that sits on the same rank as the start square, same file as the destination.
+        // This check must happen before endSquare.setPiece() so the empty-destination
+        // condition is evaluated against the board state prior to this move.
+        boolean isEnPassant = piece instanceof Pawn
+                && startSquare.getX() != endSquare.getX()
+                && endSquare.getPiece() == null;
+
+        // Remove captured piece from the opponent's piece list before overwriting
+        if (endSquare.getPiece() != null) {
+            removePiece(endSquare);
+        }
+
         endSquare.setPiece(piece);
         removePiece(startSquare);
         startSquare.setPiece(null);
         updatePieceLists(startSquare, endSquare, piece);
+
+        if (isEnPassant) {
+            Square capturedPawnSquare = getSquare(startSquare.getY(), endSquare.getX());
+            removePiece(capturedPawnSquare);
+            capturedPawnSquare.setPiece(null);
+        }
     }
 
     /**
-     * Returns a copy of the board.
-     * @return A new Board object that is a copy of the current board.
+     * Returns a deep copy of the board.
+     * <p>
+     * Every {@link io.github.conava.chess.core.data.Square} in the copy is a fresh
+     * instance; every {@link io.github.conava.chess.core.data.pieces.Piece} is
+     * produced by {@link io.github.conava.chess.core.data.pieces.Piece#copy()}, so
+     * stateful fields such as {@code King.hasMoved} and {@code Rook.hasMoved} are
+     * faithfully preserved. Mutating the copy's squares has no effect on the original.
+     *
+     * @return A new {@code Board} that is a structural deep copy of the current board.
      */
     public Board getCopy() {
-        return new Board(board);
+        int height = board.length;
+        int width = board[0].length;
+        Square[][] newSquares = new Square[height][width];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                newSquares[y][x] = new Square(y, x);
+                Piece piece = board[y][x].getPiece();
+                if (piece != null) {
+                    newSquares[y][x].setPiece(piece.copy());
+                }
+            }
+        }
+        return new Board(newSquares);
     }
 
     /**
@@ -143,14 +182,21 @@ public class Board {
      */
     private void handleCastleMove(Square startSquare, Square endSquare) {
         Piece rook;
+        Square rookOldSquare;
+        Square rookNewSquare;
         if (endSquare.getX() == 2) { // castle long (queenside): king ends on c-file
-            rook = getSquare(startSquare.getY(), 0).getPiece(); // rook on a-file
-            getSquare(startSquare.getY(), 3).setPiece(rook);    // rook moves to d-file
-            getSquare(startSquare.getY(), 0).setPiece(null);    // clear a-file
+            rookOldSquare = getSquare(startSquare.getY(), 0); // rook on a-file
+            rookNewSquare = getSquare(startSquare.getY(), 3); // rook moves to d-file
         } else { // castle short (kingside): king ends on g-file
-            rook = getSquare(startSquare.getY(), 7).getPiece(); // rook on h-file
-            getSquare(startSquare.getY(), 5).setPiece(rook);    // rook moves to f-file
-            getSquare(startSquare.getY(), 7).setPiece(null);    // clear h-file
+            rookOldSquare = getSquare(startSquare.getY(), 7); // rook on h-file
+            rookNewSquare = getSquare(startSquare.getY(), 5); // rook moves to f-file
+        }
+        rook = rookOldSquare.getPiece();
+        rookNewSquare.setPiece(rook);
+        rookOldSquare.setPiece(null);
+        updatePieceLists(rookOldSquare, rookNewSquare, rook);
+        if (rook instanceof Rook r) {
+            r.setHasMoved();
         }
     }
 

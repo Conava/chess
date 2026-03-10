@@ -2,6 +2,7 @@ package io.github.conava.chess.core.logic.game;
 
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
+import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.io.Message;
 import io.github.conava.chess.core.data.io.MessageParser;
 import io.github.conava.chess.core.data.player.PlayerColor;
@@ -13,6 +14,7 @@ import io.github.conava.chess.core.logic.moves.PromotionMove;
 import io.github.conava.chess.core.data.io.MessageType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +42,8 @@ public class OnlineGame extends Game {
     private Board backupBoard;
     private List<Move> backupMoves;
     private GameState backupGameState;
+    private int backupHalfMoveClock;
+    private Map<String, Integer> backupPositionHistory;
 
     /**
      * Private constructor — use {@link #create} to obtain an instance.
@@ -328,7 +332,8 @@ public class OnlineGame extends Game {
      * @return true if the piece belongs to the local player, false otherwise.
      */
     private boolean isLocalPlayerPiece(Square position) {
-        return board.getSquare(position.getY(), position.getX()).getPiece().getPlayer().color() == localPlayerColor;
+        Piece p = board.getSquare(position.getY(), position.getX()).getPiece();
+        return p != null && p.getPlayer().color() == localPlayerColor;
     }
 
     /**
@@ -341,20 +346,31 @@ public class OnlineGame extends Game {
 
     /**
      * Backs up the current game state.
+     *
+     * <p>Saves the board, move list, game state, halfmove clock, and position history.
+     * The position history map is deep-copied so that subsequent mutations to the live map
+     * cannot corrupt the backup.
      */
     public void backupGameState() {
         this.backupBoard = this.getBoard().getCopy();
         this.backupMoves = new ArrayList<>(this.moves);
         this.backupGameState = this.getState();
+        this.backupHalfMoveClock = this.halfMoveClock;
+        this.backupPositionHistory = new HashMap<>(this.positionHistory);
     }
 
     /**
      * Restores the game state from the backup.
+     *
+     * <p>Restores the board, move list, game state, halfmove clock, and position history
+     * to the values captured by the most recent call to {@link #backupGameState()}.
      */
     public void restoreGameState() {
         this.board = this.backupBoard.getCopy();
         this.moves = new ArrayList<>(this.backupMoves);
         this.setGameState(this.backupGameState);
+        this.halfMoveClock = this.backupHalfMoveClock;
+        this.positionHistory = new HashMap<>(this.backupPositionHistory);
     }
 
     /**

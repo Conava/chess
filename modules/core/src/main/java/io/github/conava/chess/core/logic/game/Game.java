@@ -4,6 +4,7 @@ import io.github.conava.chess.core.data.io.Message;
 import io.github.conava.chess.core.data.pieces.Bishop;
 import io.github.conava.chess.core.data.pieces.King;
 import io.github.conava.chess.core.data.pieces.Knight;
+import io.github.conava.chess.core.data.pieces.Pawn;
 import io.github.conava.chess.core.data.pieces.Queen;
 import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.data.player.Player;
@@ -13,6 +14,7 @@ import io.github.conava.chess.core.data.pieces.Pieces;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.data.board.Board;
+import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.moves.PromotionMove;
 import io.github.conava.chess.core.logic.observer.Observable;
@@ -21,6 +23,7 @@ import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.core.logic.ruleset.standardChessRuleset.StandardChessRuleset;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -37,6 +40,8 @@ public abstract class Game extends Observable {
     protected Board board;
     protected int turnCount;
     protected List<Move> moves;
+    protected int halfMoveClock = 0;
+    protected Map<String, Integer> positionHistory = new HashMap<>();
 
     /**
      * Constructor for the Game class.
@@ -52,6 +57,8 @@ public abstract class Game extends Observable {
         this.board = new Board(ruleset.getStartBoard(player0, player1));
         this.turnCount = 0;
         this.moves = new ArrayList<>();
+        // Record the initial position for threefold repetition tracking.
+        positionHistory.put(computePositionKey(), 1);
     }
 
     private Player createPlayer(String playerName, PlayerColor color) {
@@ -59,7 +66,7 @@ public abstract class Game extends Observable {
     }
 
     private String getDefaultPlayerName(PlayerColor color) {
-        return color == PlayerColor.WHITE ? "Spieler 0 (Weiß)" : "Spieler 1 (Schwarz)";
+        return color == PlayerColor.WHITE ? "Player 1 (White)" : "Player 2 (Black)";
     }
 
     private Ruleset createRuleset(RulesetOptions selectedRuleset) {
@@ -186,7 +193,14 @@ public abstract class Game extends Observable {
      * @throws IllegalMoveException If the move is illegal.
      */
     public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
-        Move move = new Move(toBoardSquare(squareStart), toBoardSquare(squareEnd));
+        Square start = toBoardSquare(squareStart);
+        Square end = toBoardSquare(squareEnd);
+        Move move;
+        if (start.getPiece() instanceof King && Math.abs(end.getX() - start.getX()) == 2) {
+            move = new CastleMove(start, end);
+        } else {
+            move = new Move(start, end);
+        }
         executeMove(move);
     }
 
@@ -311,15 +325,24 @@ public abstract class Game extends Observable {
     /**
      * Executes a move.
      *
+     * <p>The halfmove clock is updated before the board executes the move (so that
+     * capture detection can inspect the destination square's current occupant).
+     * After the board executes the move, {@link #evaluateGameEnd()} checks for
+     * checkmate, stalemate, and all draw conditions.
+     *
      * @param move The move to execute.
      * @throws IllegalMoveException If the move is illegal.
      */
     protected void executeMove(Move move) throws IllegalMoveException {
+        if (gameState != GameState.RUNNING) {
+            throw new IllegalMoveException(move);
+        }
         if (isMoveValid(move)) {
-            checkForGameEnd(move);
+            updateHalfMoveClock(move);
             board.executeMove(move);
             moves.add(move);
             turnCount++;
+            evaluateGameEnd();
             notifyObservers();
         } else {
             throw new IllegalMoveException(move);
@@ -380,15 +403,257 @@ public abstract class Game extends Observable {
     }
 
     /**
-     * Checks if the game will be ending after the execution of move and sets the game state accordingly.
+     * Updates the halfmove clock before a move is executed on the board.
      *
-     * @param move The move to check.
+     * <p>The clock resets to zero on any pawn move or capture (including en passant).
+     * Otherwise it increments by one. Must be called before {@code board.executeMove}
+     * so that the destination square still reflects the pre-move board state.
+     *
+     * @param move The move about to be executed.
      */
-    private void checkForGameEnd(Move move) {
-        Piece piece = toBoardSquare(move.getEnd()).getPiece();
-        if (piece instanceof King king) {
-            LOGGER.info("King captured, changing gameState");
-            gameState = king.getPlayer().color() == PlayerColor.WHITE ? GameState.BLACK_WON_BY_CHECKMATE : GameState.WHITE_WON_BY_CHECKMATE;
+    private void updateHalfMoveClock(Move move) {
+        Piece movingPiece = move.getStart().getPiece();
+        boolean isPawnMove = movingPiece instanceof Pawn;
+        boolean isEnPassant = isPawnMove
+                && move.getStart().getX() != move.getEnd().getX()
+                && move.getEnd().getPiece() == null;
+        boolean isCapture = move.getEnd().getPiece() != null || isEnPassant;
+        halfMoveClock = (isPawnMove || isCapture) ? 0 : halfMoveClock + 1;
+    }
+
+    /**
+     * Evaluates whether the game has ended after a move has been executed.
+     *
+     * <p>Checks, in order:
+     * <ol>
+     *   <li>Whether the next player has any legal move. If not:
+     *       checkmate (if in check) or stalemate (if not in check).</li>
+     *   <li>50-move rule: halfmove clock at or above 100.</li>
+     *   <li>Threefold repetition: same position key appearing three times.</li>
+     *   <li>Insufficient material: only kings, or king+minor vs king
+     *       (including same-colour bishop pairs).</li>
+     * </ol>
+     */
+    private void evaluateGameEnd() {
+        Player nextPlayer = getCurrentPlayer();
+        Player previousPlayer = (nextPlayer == player0) ? player1 : player0;
+
+        boolean nextHasLegalMove = hasAnyLegalMove(nextPlayer);
+
+        if (!nextHasLegalMove) {
+            boolean nextInCheck = ruleset.isCheck(board, nextPlayer, moves);
+            if (nextInCheck) {
+                gameState = previousPlayer == player0
+                        ? GameState.WHITE_WON_BY_CHECKMATE
+                        : GameState.BLACK_WON_BY_CHECKMATE;
+            } else {
+                gameState = GameState.DRAW_BY_STALEMATE;
+            }
+            return;
         }
+
+        if (halfMoveClock >= 100) {
+            gameState = GameState.DRAW_BY_FIFTY_MOVE_RULE;
+            return;
+        }
+
+        String positionKey = computePositionKey();
+        positionHistory.merge(positionKey, 1, Integer::sum);
+        if (positionHistory.get(positionKey) >= 3) {
+            gameState = GameState.DRAW_BY_THREEFOLD_REPETITION;
+            return;
+        }
+
+        if (isInsufficientMaterial()) {
+            gameState = GameState.DRAW_BY_INSUFFICIENT_MATERIAL;
+        }
+    }
+
+    /**
+     * Returns {@code true} if the given player has at least one legal move available.
+     * Short-circuits on the first non-empty result from the ruleset.
+     *
+     * @param player The player to check.
+     * @return {@code true} if the player can make at least one legal move.
+     */
+    private boolean hasAnyLegalMove(Player player) {
+        Player opponent = (player == player0) ? player1 : player0;
+        for (Square square : board.getPieces(player)) {
+            if (square.getPiece() == null) {
+                continue;
+            }
+            if (!ruleset.getLegalSquares(square, board, moves, player, opponent).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Computes a string key that uniquely identifies the current board position
+     * for the purpose of threefold repetition detection.
+     *
+     * <p>The key encodes:
+     * <ul>
+     *   <li>Active colour (whose turn it is after the move)</li>
+     *   <li>Piece placement on all 64 squares</li>
+     *   <li>Castling rights (based on king/rook {@code hasMoved} state)</li>
+     *   <li>En passant target file (if the last move was a double pawn push)</li>
+     * </ul>
+     *
+     * @return A string fingerprint of the current position.
+     */
+    private String computePositionKey() {
+        StringBuilder sb = new StringBuilder();
+
+        // Active colour
+        sb.append(getCurrentPlayer() == player0 ? 'W' : 'B');
+
+        // Piece placement
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                Piece piece = board.getSquare(y, x).getPiece();
+                if (piece == null) {
+                    sb.append('.');
+                } else {
+                    char c = switch (piece.getType()) {
+                        case PAWN -> 'P';
+                        case ROOK -> 'R';
+                        case KNIGHT -> 'N';
+                        case BISHOP -> 'B';
+                        case QUEEN -> 'Q';
+                        case KING -> 'K';
+                    };
+                    if (piece.getPlayer().color() == PlayerColor.BLACK) {
+                        c = Character.toLowerCase(c);
+                    }
+                    sb.append(c);
+                }
+            }
+        }
+
+        // Castling rights
+        sb.append(castlingChar(0, 4, 7)); // white kingside
+        sb.append(castlingChar(0, 4, 0)); // white queenside
+        sb.append(castlingChar(7, 4, 7)); // black kingside
+        sb.append(castlingChar(7, 4, 0)); // black queenside
+
+        // En passant target file
+        int epFile = -1;
+        if (!moves.isEmpty()) {
+            Move lastMove = moves.get(moves.size() - 1);
+            Piece lastPiece = lastMove.getEnd().getPiece();
+            if (lastPiece instanceof Pawn
+                    && Math.abs(lastMove.getEnd().getY() - lastMove.getStart().getY()) == 2) {
+                epFile = lastMove.getEnd().getX();
+            }
+        }
+        sb.append(epFile);
+
+        return sb.toString();
+    }
+
+    /**
+     * Returns a character indicating whether a specific castling right is available.
+     * A castling right is available when neither the king on {@code kingX} nor the
+     * rook on {@code rookX} at rank {@code rank} has moved.
+     *
+     * @param rank  The rank (y-coordinate) of the king and rook.
+     * @param kingX The file (x-coordinate) of the king.
+     * @param rookX The file (x-coordinate) of the rook.
+     * @return {@code '1'} if castling is still available, {@code '0'} otherwise.
+     */
+    private char castlingChar(int rank, int kingX, int rookX) {
+        Piece kingPiece = board.getSquare(rank, kingX).getPiece();
+        Piece rookPiece = board.getSquare(rank, rookX).getPiece();
+        if (kingPiece instanceof King king && !king.getHasMoved()
+                && rookPiece instanceof Rook rook && rook.getHasNotMoved()
+                && rook.getPlayer().equals(king.getPlayer())) {
+            return '1';
+        }
+        return '0';
+    }
+
+    /**
+     * Determines whether the remaining material on the board is insufficient for
+     * either side to deliver checkmate.
+     *
+     * <p>FIDE draw conditions handled:
+     * <ul>
+     *   <li>King vs. King</li>
+     *   <li>King + Bishop vs. King</li>
+     *   <li>King + Knight vs. King</li>
+     *   <li>King + Bishop vs. King + Bishop (same colour square bishops)</li>
+     * </ul>
+     *
+     * @return {@code true} if the material is insufficient for checkmate.
+     */
+    private boolean isInsufficientMaterial() {
+        List<Square> whitePieces = board.getPieces(player0);
+        List<Square> blackPieces = board.getPieces(player1);
+
+        List<Piece> whiteNonKing = new ArrayList<>();
+        List<Piece> blackNonKing = new ArrayList<>();
+
+        for (Square s : whitePieces) {
+            Piece p = s.getPiece();
+            if (p != null && !(p instanceof King)) {
+                whiteNonKing.add(p);
+            }
+        }
+        for (Square s : blackPieces) {
+            Piece p = s.getPiece();
+            if (p != null && !(p instanceof King)) {
+                blackNonKing.add(p);
+            }
+        }
+
+        // K vs K
+        if (whiteNonKing.isEmpty() && blackNonKing.isEmpty()) {
+            return true;
+        }
+
+        // K+minor vs K
+        if (whiteNonKing.isEmpty() && blackNonKing.size() == 1) {
+            Piece p = blackNonKing.get(0);
+            if (p instanceof Bishop || p instanceof Knight) {
+                return true;
+            }
+        }
+        if (blackNonKing.isEmpty() && whiteNonKing.size() == 1) {
+            Piece p = whiteNonKing.get(0);
+            if (p instanceof Bishop || p instanceof Knight) {
+                return true;
+            }
+        }
+
+        // K+B vs K+B same colour bishops
+        if (whiteNonKing.size() == 1 && blackNonKing.size() == 1
+                && whiteNonKing.get(0) instanceof Bishop
+                && blackNonKing.get(0) instanceof Bishop) {
+            int whiteBishopColor = findBishopSquareColor(whitePieces);
+            int blackBishopColor = findBishopSquareColor(blackPieces);
+            if (whiteBishopColor == blackBishopColor) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Finds the square colour of the bishop in the given piece list.
+     * Returns 0 for a dark square, 1 for a light square.
+     *
+     * @param pieces The list of occupied squares for a player.
+     * @return The square colour of the bishop (0 or 1), or -1 if no bishop found.
+     */
+    private int findBishopSquareColor(List<Square> pieces) {
+        for (Square s : pieces) {
+            if (s.getPiece() instanceof Bishop) {
+                return (s.getX() + s.getY()) % 2;
+            }
+        }
+        return -1;
     }
 }

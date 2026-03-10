@@ -6,4 +6,9 @@ public class Knight extends Piece {
     public Knight(Player player) {
         super(player);
     }
+
+    @Override
+    public Knight copy() {
+        return new Knight(this.player);
+    }
 }

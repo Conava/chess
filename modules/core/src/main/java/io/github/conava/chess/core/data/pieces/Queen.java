@@ -6,4 +6,9 @@ public class Queen extends Piece {
     public Queen(Player player) {
         super(player);
     }
+
+    @Override
+    public Queen copy() {
+        return new Queen(this.player);
+    }
 }
