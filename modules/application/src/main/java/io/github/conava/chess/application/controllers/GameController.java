@@ -296,7 +296,7 @@ public class GameController implements GameObserver {
                     && (clicked.getY() == 0 || clicked.getY() == 7)) {
                 PromotionController promoCtrl =
                         new PromotionController(movingPiece.getPlayer().color(),
-                                sceneManager::dismissOverlay);
+                                sceneManager::dismissOverlay, squareSize);
                 sceneManager.showOverlay("/fxml/promotion.fxml", promoCtrl);
                 submitMove(selectedSquare, clicked, promoCtrl.getSelectedPiece());
             } else {
