@@ -79,18 +79,63 @@ public class StandardChessRuleset implements Ruleset {
     }
 
     /**
-     * Provides a list of legal squares.
+     * Provides a list of legal squares, filtered to exclude any move that would leave
+     * {@code player1}'s king in check.
+     *
+     * <p>For each pseudo-legal target square, a deep copy of the board is created, the move is
+     * simulated on the copy, and {@link #isCheck} is called on the resulting position. Only
+     * target squares where the moving player's king is not in check after the move are returned.
+     *
+     * <p>Special castling handling:
+     * <ul>
+     *   <li>Castling is illegal when the king is currently in check.</li>
+     *   <li>Castling is illegal when the king would pass through an attacked transit square.</li>
+     * </ul>
      *
      * @param square  Only moves from this square are shown
      * @param board   Current board
      * @param moves   List of moves already played in-game
-     * @param player1 Player to move
+     * @param player1 Player to move (whose king must not be left in check)
      * @param player2 Player opponent
-     * @return List of LEGAL squares.
+     * @return List of LEGAL squares — moves that do not leave {@code player1}'s king in check.
      */
     @Override
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
-        return getSudoLegalSquares(square, board, moves);
+        List<Square> pseudoLegal = getSudoLegalSquares(square, board, moves);
+        List<Square> legal = new ArrayList<>();
+
+        boolean currentlyInCheck = isCheck(board, player1, moves);
+
+        for (Square targetSquare : pseudoLegal) {
+            // Castling candidate: king moves exactly 2 squares horizontally
+            if (square.getPiece() instanceof King
+                    && Math.abs(targetSquare.getX() - square.getX()) == 2) {
+                // Cannot castle while in check
+                if (currentlyInCheck) {
+                    continue;
+                }
+                // Cannot castle through an attacked transit square
+                int transitX = square.getX() + Integer.signum(targetSquare.getX() - square.getX());
+                Board transitBoardCopy = board.getCopy();
+                Square transitStart = transitBoardCopy.getSquare(square.getY(), square.getX());
+                Square transitEnd = transitBoardCopy.getSquare(square.getY(), transitX);
+                transitBoardCopy.executeMove(new Move(transitStart, transitEnd));
+                if (isCheck(transitBoardCopy, player1, moves)) {
+                    continue;
+                }
+            }
+
+            // Check final square: simulate the move and verify the king is not in check
+            Board finalBoardCopy = board.getCopy();
+            Square finalStart = finalBoardCopy.getSquare(square.getY(), square.getX());
+            Square finalEnd = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
+            finalBoardCopy.executeMove(new Move(finalStart, finalEnd));
+            if (!isCheck(finalBoardCopy, player1, moves)) {
+                legal.add(targetSquare);
+            }
+        }
+
+        return legal;
     }
 
     private List<Square> getSudoLegalSquares(Square square, Board board, List<Move> moves) {
