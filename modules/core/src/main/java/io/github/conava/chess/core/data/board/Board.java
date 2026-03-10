@@ -195,6 +195,9 @@ public class Board {
         rookNewSquare.setPiece(rook);
         rookOldSquare.setPiece(null);
         updatePieceLists(rookOldSquare, rookNewSquare, rook);
+        if (rook instanceof Rook r) {
+            r.setHasMoved();
+        }
     }
 
     /**

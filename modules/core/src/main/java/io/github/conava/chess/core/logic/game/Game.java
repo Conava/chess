@@ -567,7 +567,8 @@ public abstract class Game extends Observable {
         Piece kingPiece = board.getSquare(rank, kingX).getPiece();
         Piece rookPiece = board.getSquare(rank, rookX).getPiece();
         if (kingPiece instanceof King king && !king.getHasMoved()
-                && rookPiece instanceof Rook rook && rook.getHasNotMoved()) {
+                && rookPiece instanceof Rook rook && rook.getHasNotMoved()
+                && rook.getPlayer().equals(king.getPlayer())) {
             return '1';
         }
         return '0';

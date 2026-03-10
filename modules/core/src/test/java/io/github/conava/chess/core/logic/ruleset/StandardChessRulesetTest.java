@@ -304,21 +304,9 @@ class StandardChessRulesetTest {
         List<Square> squares;
 
         squares = rs.getLegalSquares(board.getSquare(0, 0), board, new ArrayList<>(), playerW, playerB);
-        if (!squares.isEmpty()) {
-            for (Square square : squares) {
-                System.out.println("X=" + square.getX() + " Y=" + square.getY());
-            }
-        } else {
-            System.out.println("Piece has no moves");
-        }
+        assertNotNull(squares);
 
         squares = rs.getLegalSquares(board.getSquare(1, 0), board, new ArrayList<>(), playerW, playerB);
-        if (!squares.isEmpty()) {
-            for (Square square : squares) {
-                System.out.println("X=" + square.getX() + " Y=" + square.getY());
-            }
-        } else {
-            System.out.println("Piece has no moves");
-        }
+        assertNotNull(squares);
     }
 }

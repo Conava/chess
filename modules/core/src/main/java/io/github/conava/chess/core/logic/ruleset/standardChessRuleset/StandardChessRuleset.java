@@ -74,7 +74,7 @@ public class StandardChessRuleset implements Ruleset {
 
     /**
      * Provides a list of legal squares, filtered to exclude any move that would leave
-     * {@code player1}'s king in check.
+     * the moving player's king (derived from the piece on {@code square}) in check.
      *
      * <p>For each pseudo-legal target square, a deep copy of the board is created, the move is
      * simulated on the copy, and {@link #isCheck} is called on the resulting position. Only
@@ -89,9 +89,11 @@ public class StandardChessRuleset implements Ruleset {
      * @param square  Only moves from this square are shown
      * @param board   Current board
      * @param moves   List of moves already played in-game
-     * @param player1 Player to move (whose king must not be left in check)
+     * @param player1 Player to move (used for pseudo-legal generation; the check filter derives
+     *                the moving player from {@code square.getPiece().getPlayer()})
      * @param player2 Player opponent
-     * @return List of LEGAL squares — moves that do not leave {@code player1}'s king in check.
+     * @return List of LEGAL squares — moves that do not leave the moving player's king
+     *         (derived from the piece on {@code square}) in check.
      */
     @Override
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
