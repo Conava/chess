@@ -5,15 +5,15 @@ import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.logic.ruleset.possibleMoves.*;
+import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import io.github.conava.chess.core.logic.ruleset.possibleStartPositions.PossibleStandardPosition;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
-
-// todo: refactor the ruleset.
-//        - Operations should update the game state, it does not need to be calculated
+import java.util.stream.Collectors;
 
 /**
  * Standard chess ruleset.
@@ -66,16 +66,10 @@ public class StandardChessRuleset implements Ruleset {
      */
     @Override
     public List<Move> getLegalMoves(Square square, Board board, List<Move> moves, Player player1, Player player2) {
-        List<Square> sudoLegalSquares;
-        List<Move> legalMoves = new ArrayList<>();
-
-        sudoLegalSquares = getSudoLegalSquares(square, board, moves);
-
-        for (Square squareTemp : sudoLegalSquares) {
-            legalMoves.add(new Move(square, squareTemp));
-        }
-
-        return legalMoves;
+        List<Square> legalSquares = getLegalSquares(square, board, moves, player1, player2);
+        return legalSquares.stream()
+                .map(target -> new Move(square, target))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -101,6 +95,8 @@ public class StandardChessRuleset implements Ruleset {
      */
     @Override
     public List<Square> getLegalSquares(Square square, Board board, List<Move> moves, Player player1, Player player2) {
+        if (square.getPiece() == null) return Collections.emptyList();
+
         List<Square> pseudoLegal = getSudoLegalSquares(square, board, moves);
         List<Square> legal = new ArrayList<>();
 
@@ -134,7 +130,11 @@ public class StandardChessRuleset implements Ruleset {
             Board finalBoardCopy = board.getCopy();
             Square finalStart = finalBoardCopy.getSquare(square.getY(), square.getX());
             Square finalEnd = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
-            finalBoardCopy.executeMove(new Move(finalStart, finalEnd));
+            boolean isCastling = square.getPiece() instanceof King
+                    && Math.abs(targetSquare.getX() - square.getX()) == 2;
+            finalBoardCopy.executeMove(isCastling
+                    ? new CastleMove(finalStart, finalEnd)
+                    : new Move(finalStart, finalEnd));
             if (!isCheck(finalBoardCopy, movingPlayer, moves)) {
                 legal.add(targetSquare);
             }
@@ -233,6 +233,18 @@ public class StandardChessRuleset implements Ruleset {
         for (Square squareToCheck : squaresToCheck) {
             if (squareToCheck.getPiece() instanceof Pawn) {
                 return true;
+            }
+        }
+
+        // Check king adjacency: opposing king cannot stand adjacent
+        int ky = square.getY(), kx = square.getX();
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dy == 0 && dx == 0) continue;
+                if (isInBoundsY(ky + dy) && isInBoundsX(kx + dx)) {
+                    Piece p = board.getSquare(ky + dy, kx + dx).getPiece();
+                    if (p instanceof King && !p.getPlayer().equals(square.getPiece().getPlayer())) return true;
+                }
             }
         }
 

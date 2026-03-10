@@ -326,6 +326,9 @@ public abstract class Game extends Observable {
      * @throws IllegalMoveException If the move is illegal.
      */
     protected void executeMove(Move move) throws IllegalMoveException {
+        if (gameState != GameState.RUNNING) {
+            throw new IllegalMoveException(move);
+        }
         if (isMoveValid(move)) {
             updateHalfMoveClock(move);
             board.executeMove(move);

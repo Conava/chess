@@ -2,6 +2,7 @@ package io.github.conava.chess.core.logic.game;
 
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
+import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.io.Message;
 import io.github.conava.chess.core.data.io.MessageParser;
 import io.github.conava.chess.core.data.player.PlayerColor;
@@ -331,7 +332,8 @@ public class OnlineGame extends Game {
      * @return true if the piece belongs to the local player, false otherwise.
      */
     private boolean isLocalPlayerPiece(Square position) {
-        return board.getSquare(position.getY(), position.getX()).getPiece().getPlayer().color() == localPlayerColor;
+        Piece p = board.getSquare(position.getY(), position.getX()).getPiece();
+        return p != null && p.getPlayer().color() == localPlayerColor;
     }
 
     /**
