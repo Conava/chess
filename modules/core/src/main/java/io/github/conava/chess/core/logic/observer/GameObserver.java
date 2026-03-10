@@ -19,4 +19,15 @@ public interface GameObserver {
      * being rolled back in {@code OnlineGame}.
      */
     void onGameStateChanged();
+
+    /**
+     * Called when a chat message is received from the server during an online game.
+     *
+     * <p>The default implementation is a no-op so that existing implementations of this
+     * interface do not need to be updated.
+     *
+     * @param sender  the display name of the player who sent the message
+     * @param content the message text
+     */
+    default void onChatMessage(String sender, String content) {}
 }
