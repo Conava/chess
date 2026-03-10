@@ -39,8 +39,15 @@ public class ServerConfig {
         this.sessionExpiryDays       = parseInt(props, "session_expiry_days",      30);
     }
 
-    /** Package-private constructor for tests — inject properties directly. */
-    ServerConfig(Properties props) {
+    /**
+     * Constructs a {@code ServerConfig} by injecting properties directly.
+     *
+     * <p>Intended for tests and other programmatic construction where loading from a
+     * classpath resource is not desired. All standard keys and defaults apply.</p>
+     *
+     * @param props the properties to read; unrecognised keys are ignored
+     */
+    public ServerConfig(Properties props) {
         this.port                     = parseInt(props, "port",                     54321);
         this.maxGames                 = parseInt(props, "max_games",                40);
         this.disconnectTimeoutSeconds = parseInt(props, "disconnect_timeout_seconds", 300);

@@ -156,7 +156,7 @@ public class ClientHandler implements Runnable {
      * @param message the {@code CREATE_GAME} message; must not be {@code null}
      */
     private void createGame(Message message) {
-        if (!server.getGameSemaphore().tryAcquire()) {
+        if (!server.getGameManager().tryAcquireGameSlot()) {
             sendMessage(new Message(MessageType.ERROR, "Failed to create game: server is full"));
             return;
         }
@@ -164,7 +164,7 @@ public class ClientHandler implements Runnable {
         try {
             ruleset = RulesetOptions.valueOf(message.getParameterValue("ruleset"));
         } catch (IllegalArgumentException | NullPointerException e) {
-            server.getGameSemaphore().release();
+            server.getGameManager().releaseGameSlot();
             LOGGER.log(Level.WARNING, "Invalid or missing ruleset in CREATE_GAME: " + message.content(), e);
             sendMessage(new Message(MessageType.ERROR, "Invalid or missing ruleset"));
             return;
@@ -173,7 +173,7 @@ public class ClientHandler implements Runnable {
         if (playerName == null || playerName.isBlank()) {
             playerName = "Player 1";
         }
-        int gameId = server.getGameIdCounter().incrementAndGet();
+        int gameId = server.getGameManager().nextGameId();
         gameInstance = new GameInstance(gameId, ruleset);
         gameInstance.connectPlayer(this, playerName);
         server.addGame(gameId, gameInstance);
@@ -247,6 +247,6 @@ public class ClientHandler implements Runnable {
         instance.disconnectPlayer(this);
         Integer gameId = instance.getGameId();
         server.removeGame(gameId);
-        server.getGameSemaphore().release();
+        server.getGameManager().releaseGameSlot();
     }
 }

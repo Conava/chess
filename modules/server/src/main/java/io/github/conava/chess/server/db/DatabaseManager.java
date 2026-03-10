@@ -63,6 +63,7 @@ public class DatabaseManager {
                     id            INTEGER PRIMARY KEY AUTOINCREMENT,
                     username      TEXT    NOT NULL UNIQUE COLLATE NOCASE,
                     password_hash TEXT    NOT NULL,
+                    password_salt TEXT    NOT NULL DEFAULT '',
                     created_at    INTEGER NOT NULL DEFAULT (strftime('%s','now'))
                 )
                 """);
@@ -78,19 +79,35 @@ public class DatabaseManager {
                 """);
 
             // Games — persisted game records
-            // state values: WAITING, RUNNING, PAUSED, SAVED, <terminal GameState name>
+            // state values: RUNNING, PAUSED, SAVED, <terminal GameState name>
             st.execute("""
                 CREATE TABLE IF NOT EXISTS games (
-                    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ruleset         TEXT    NOT NULL,
-                    ruleset_param   TEXT,
-                    white_user_id   INTEGER REFERENCES users(id),
-                    black_user_id   INTEGER REFERENCES users(id),
-                    state           TEXT    NOT NULL DEFAULT 'WAITING',
-                    move_history    TEXT    NOT NULL DEFAULT '',
-                    created_at      INTEGER NOT NULL DEFAULT (strftime('%s','now')),
-                    updated_at      INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+                    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ruleset             TEXT    NOT NULL,
+                    position_index      INTEGER NOT NULL DEFAULT -1,
+                    white_user_id       INTEGER REFERENCES users(id),
+                    black_user_id       INTEGER REFERENCES users(id),
+                    state               TEXT    NOT NULL DEFAULT 'RUNNING',
+                    created_at          INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+                    updated_at          INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+                    disconnect_user_id  INTEGER REFERENCES users(id),
+                    disconnect_at       INTEGER
                 )
+                """);
+
+            // Moves — one row per half-move (ply)
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS moves (
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    game_id    INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+                    move_no    INTEGER NOT NULL,
+                    notation   TEXT    NOT NULL,
+                    played_at  INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+                )
+                """);
+
+            st.execute("""
+                CREATE INDEX IF NOT EXISTS idx_moves_game ON moves(game_id, move_no)
                 """);
 
             // Index for fast lookup of games by player
