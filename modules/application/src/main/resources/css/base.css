@@ -7,6 +7,10 @@
     -fx-font-size: 14px;
 }
 
+Label {
+    -fx-text-fill: app-text;
+}
+
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 
 .btn-primary {
@@ -211,7 +215,7 @@
 }
 
 .outcome-badge-win {
-    -fx-background-color: #16a34a;
+    -fx-background-color: app-badge-win;
     -fx-text-fill: white;
     -fx-padding: 4 16 4 16;
     -fx-background-radius: 20;
@@ -220,7 +224,7 @@
 }
 
 .outcome-badge-draw {
-    -fx-background-color: #d97706;
+    -fx-background-color: app-badge-draw;
     -fx-text-fill: white;
     -fx-padding: 4 16 4 16;
     -fx-background-radius: 20;
