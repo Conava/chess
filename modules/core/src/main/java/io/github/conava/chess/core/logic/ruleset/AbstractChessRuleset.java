@@ -202,6 +202,20 @@ public abstract class AbstractChessRuleset implements Ruleset {
     }
 
     /**
+     * Delegates the public {@link Ruleset#isCastlingMove} contract to the protected
+     * {@link #isCastlingCandidate} template method, so subclasses need only override
+     * {@code isCastlingCandidate} to change castling detection everywhere.
+     *
+     * @param source the source square
+     * @param target the target square
+     * @return {@code true} if this is a castling candidate according to this ruleset
+     */
+    @Override
+    public boolean isCastlingMove(Square source, Square target) {
+        return isCastlingCandidate(source, target);
+    }
+
+    /**
      * Returns a valid square.
      *
      * @param square Square to check

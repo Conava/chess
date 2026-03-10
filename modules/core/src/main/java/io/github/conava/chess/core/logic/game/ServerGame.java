@@ -1,5 +1,6 @@
 package io.github.conava.chess.core.logic.game;
 
+import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 
 /**
@@ -29,6 +30,24 @@ public class ServerGame extends Game {
      */
     ServerGame(RulesetOptions selectedRuleset, String playerWhiteName, String playerBlackName) {
         super(selectedRuleset, playerWhiteName, playerBlackName);
+    }
+
+    /**
+     * Constructs a {@code ServerGame} with a pre-built {@link Ruleset} instance.
+     *
+     * <p>Used when the server module already holds a fully configured ruleset (e.g. a
+     * {@code Chess960Ruleset} for a known Scharnagl index). The supplied ruleset is used
+     * directly without any {@code createRuleset} lookup.
+     *
+     * <p>This constructor has package-private visibility; external callers must use
+     * {@link Game#createServerGame(Ruleset, String, String)} to obtain an instance.
+     *
+     * @param ruleset          The pre-built ruleset; must not be {@code null}.
+     * @param playerWhiteName  Display name for the white player.
+     * @param playerBlackName  Display name for the black player.
+     */
+    ServerGame(Ruleset ruleset, String playerWhiteName, String playerBlackName) {
+        super(ruleset, playerWhiteName, playerBlackName);
     }
 
     /**
