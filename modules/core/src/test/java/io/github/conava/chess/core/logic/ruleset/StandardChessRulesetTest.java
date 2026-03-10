@@ -224,6 +224,50 @@ class StandardChessRulesetTest {
                 .anyMatch(s -> s.getY() == 0 && s.getX() == 6);
         assertFalse(castlingKingsidePresent,
                 "Castling kingside must not be legal when the transit square f1 is under attack");
+
+        // The filter must be selective: a normal king step (e.g., to d1) must still be legal
+        boolean d1Present = legal.stream()
+                .anyMatch(s -> s.getY() == 0 && s.getX() == 3);
+        assertTrue(d1Present,
+                "Non-castling king move to d1 must remain legal (filter must not over-prune)");
+    }
+
+    // ---------------------------------------------------------------------------
+    // 6. Check filter works for BLACK — pinned black piece has only file moves legal
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Verifies that the check-legality filter correctly protects the BLACK king,
+     * not just the white king.
+     *
+     * <p>Setup: Black King on e8 (y=7,x=4). Black Rook on e7 (y=6,x=4). White Rook on e1 (y=0,x=4).
+     * The black rook on e7 is pinned along the e-file. Moving it off the e-file would expose the
+     * black king to the white rook. Therefore no lateral (rank) moves are legal for the black rook,
+     * and every legal move must remain on the e-file (x=4).
+     *
+     * <p>This test deliberately passes {@code white} as {@code player1} to simulate the bug in
+     * {@code Game.getLegalSquares} — the fix must derive the moving player from the piece itself.
+     */
+    @Test
+    void checkFilterWorksForBlackPinnedRook() {
+        Square[][] squares = emptyBoard();
+        squares[7][4].setPiece(new King(black));   // black king e8
+        squares[6][4].setPiece(new Rook(black));   // black rook e7 (pinned on e-file)
+        squares[0][4].setPiece(new Rook(white));   // white rook e1 (the pin source)
+        Board board = new Board(squares);
+
+        // Deliberately pass white as player1 to reproduce the bug in Game.getLegalSquares.
+        // The fix derives movingPlayer from the piece, so it must still filter for black.
+        List<Square> legal = ruleset.getLegalSquares(
+                board.getSquare(6, 4), board, new ArrayList<>(), white, black);
+
+        // The black rook may only move along the e-file (x=4) — no lateral moves are legal
+        assertFalse(legal.isEmpty(),
+                "Pinned black rook should still have moves along the pin file");
+        for (Square s : legal) {
+            assertEquals(4, s.getX(),
+                    "Pinned black rook must only move along the pin file (x=4), but got x=" + s.getX());
+        }
     }
 
     // ---------------------------------------------------------------------------

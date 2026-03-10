@@ -104,7 +104,12 @@ public class StandardChessRuleset implements Ruleset {
         List<Square> pseudoLegal = getSudoLegalSquares(square, board, moves);
         List<Square> legal = new ArrayList<>();
 
-        boolean currentlyInCheck = isCheck(board, player1, moves);
+        // Derive the moving player from the piece on the source square so that
+        // the check filter works correctly for both colours regardless of which
+        // Player references are passed in as player1/player2.
+        Player movingPlayer = square.getPiece().getPlayer();
+
+        boolean currentlyInCheck = isCheck(board, movingPlayer, moves);
 
         for (Square targetSquare : pseudoLegal) {
             // Castling candidate: king moves exactly 2 squares horizontally
@@ -120,7 +125,7 @@ public class StandardChessRuleset implements Ruleset {
                 Square transitStart = transitBoardCopy.getSquare(square.getY(), square.getX());
                 Square transitEnd = transitBoardCopy.getSquare(square.getY(), transitX);
                 transitBoardCopy.executeMove(new Move(transitStart, transitEnd));
-                if (isCheck(transitBoardCopy, player1, moves)) {
+                if (isCheck(transitBoardCopy, movingPlayer, moves)) {
                     continue;
                 }
             }
@@ -130,7 +135,7 @@ public class StandardChessRuleset implements Ruleset {
             Square finalStart = finalBoardCopy.getSquare(square.getY(), square.getX());
             Square finalEnd = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
             finalBoardCopy.executeMove(new Move(finalStart, finalEnd));
-            if (!isCheck(finalBoardCopy, player1, moves)) {
+            if (!isCheck(finalBoardCopy, movingPlayer, moves)) {
                 legal.add(targetSquare);
             }
         }
