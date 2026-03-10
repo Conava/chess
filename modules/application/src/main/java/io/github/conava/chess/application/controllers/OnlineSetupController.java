@@ -21,6 +21,7 @@ public class OnlineSetupController {
     @FXML private TextField    joinCodeField;
     @FXML private Label        joinCodeLabel;
     @FXML private ComboBox<RulesetOptions> rulesetBox;
+    @FXML private Label        rulesetLabel;
     @FXML private Label        errorLabel;
 
     private boolean confirmed = false;
@@ -46,6 +47,10 @@ public class OnlineSetupController {
         joinCodeField.setManaged(joining);
         joinCodeLabel.setVisible(joining);
         joinCodeLabel.setManaged(joining);
+        rulesetBox.setVisible(!joining);
+        rulesetBox.setManaged(!joining);
+        rulesetLabel.setVisible(!joining);
+        rulesetLabel.setManaged(!joining);
     }
 
     @FXML
