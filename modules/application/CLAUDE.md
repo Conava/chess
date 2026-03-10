@@ -30,7 +30,7 @@ networking protocol logic -- those belong to `core` and `server` respectively.
   - `OfflineSetupController` -- overlay for offline game setup (player names, ruleset).
   - `OnlineSetupController` -- overlay for online game setup (IP, port, join code, ruleset).
   - `PromotionController` -- overlay for pawn promotion piece selection.
-  - `SettingsController` -- settings screen (theme, board theme, language, player name defaults).
+  - `SettingsController` -- settings screen (theme, language, player name defaults).
   - `WaitingController` -- overlay shown while waiting for an online opponent.
 
 - `io.github.conava.chess.application.navigation` -- Screen and overlay lifecycle management:
