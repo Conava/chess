@@ -26,6 +26,8 @@ class ThemeManagerTest {
         assertEquals("/css/themes/dark-charcoal.css", Theme.DARK_CHARCOAL.cssFile());
         assertEquals("/css/themes/light-paper.css", Theme.LIGHT_PAPER.cssFile());
         assertEquals("/css/themes/light-arctic.css", Theme.LIGHT_ARCTIC.cssFile());
+        assertEquals("/css/themes/dark-abyss.css", Theme.DARK_ABYSS.cssFile());
+        assertEquals("/css/themes/light-sakura.css", Theme.LIGHT_SAKURA.cssFile());
     }
 
     @Test
