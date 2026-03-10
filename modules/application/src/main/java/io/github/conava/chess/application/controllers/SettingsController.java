@@ -3,7 +3,6 @@ package io.github.conava.chess.application.controllers;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.navigation.SceneManager;
 import io.github.conava.chess.application.settings.SettingsService;
-import io.github.conava.chess.application.theme.BoardTheme;
 import io.github.conava.chess.application.theme.Theme;
 import io.github.conava.chess.application.theme.ThemeManager;
 import javafx.fxml.FXML;
@@ -28,14 +27,6 @@ public class SettingsController {
     private ToggleButton fjordSwatch;
     @FXML
     private ToggleGroup themeGroup;
-    @FXML
-    private ToggleButton classicSwatch;
-    @FXML
-    private ToggleButton oceanSwatch;
-    @FXML
-    private ToggleButton walnutSwatch;
-    @FXML
-    private ToggleGroup boardGroup;
     @FXML
     private ToggleButton enToggle;
     @FXML
@@ -63,12 +54,6 @@ public class SettingsController {
             case LIGHT_ARCTIC -> fjordSwatch.setSelected(true);
         }
 
-        switch (themeManager.getBoardTheme()) {
-            case CLASSIC -> classicSwatch.setSelected(true);
-            case OCEAN -> oceanSwatch.setSelected(true);
-            case WALNUT -> walnutSwatch.setSelected(true);
-        }
-
         if (i18n.getLanguage() == I18n.Language.EN) enToggle.setSelected(true);
         else deToggle.setSelected(true);
 
@@ -82,12 +67,6 @@ public class SettingsController {
             else if (sel == fjordSwatch) themeManager.setTheme(Theme.LIGHT_ARCTIC);
         });
 
-        boardGroup.selectedToggleProperty().addListener((o, old, sel) -> {
-            if (sel == classicSwatch) themeManager.setBoardTheme(BoardTheme.CLASSIC);
-            else if (sel == oceanSwatch) themeManager.setBoardTheme(BoardTheme.OCEAN);
-            else if (sel == walnutSwatch) themeManager.setBoardTheme(BoardTheme.WALNUT);
-        });
-
         langGroup.selectedToggleProperty().addListener((o, old, sel) -> {
             if (sel == enToggle) i18n.setLanguage(I18n.Language.EN);
             else if (sel == deToggle) i18n.setLanguage(I18n.Language.DE);
@@ -97,7 +76,6 @@ public class SettingsController {
     @FXML
     private void onSave() {
         settingsService.saveTheme(themeManager.getTheme());
-        settingsService.saveBoardTheme(themeManager.getBoardTheme());
         settingsService.saveLanguage(i18n.getLanguage());
         settingsService.savePlayerWhite(whiteNameField.getText().trim());
         settingsService.savePlayerBlack(blackNameField.getText().trim());
@@ -107,7 +85,6 @@ public class SettingsController {
     @FXML
     private void onCancel() {
         themeManager.setTheme(settingsService.loadTheme());
-        themeManager.setBoardTheme(settingsService.loadBoardTheme());
         i18n.setLanguage(settingsService.loadLanguage());
         sceneManager.showMainMenu();
     }

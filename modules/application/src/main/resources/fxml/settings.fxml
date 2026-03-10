@@ -8,7 +8,6 @@
       spacing="0" minWidth="500" maxWidth="700" alignment="CENTER">
     <fx:define>
         <ToggleGroup fx:id="themeGroup"/>
-        <ToggleGroup fx:id="boardGroup"/>
         <ToggleGroup fx:id="langGroup"/>
     </fx:define>
     <padding><Insets top="40" right="60" bottom="40" left="60"/></padding>
@@ -53,22 +52,6 @@
                           GridPane.columnIndex="1" GridPane.rowIndex="1"/>
         </GridPane>
 
-        <!-- Board colour picker -->
-        <Label text="%settings.board" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 8 0 0 0;"/>
-        <HBox alignment="CENTER_LEFT" spacing="12">
-            <ToggleButton fx:id="classicSwatch" text="Classic" styleClass="theme-swatch"
-                          toggleGroup="$boardGroup"
-                          style="-fx-background-color: linear-gradient(to right, #f0d9b5 50%, #b58863 50%); -fx-text-fill: #2c1e10;"
-                          minWidth="90" minHeight="44"/>
-            <ToggleButton fx:id="oceanSwatch"   text="Ocean"   styleClass="theme-swatch"
-                          toggleGroup="$boardGroup"
-                          style="-fx-background-color: linear-gradient(to right, #dee3e6 50%, #4a90a4 50%); -fx-text-fill: #0a2030;"
-                          minWidth="90" minHeight="44"/>
-            <ToggleButton fx:id="walnutSwatch"  text="Walnut"  styleClass="theme-swatch"
-                          toggleGroup="$boardGroup"
-                          style="-fx-background-color: linear-gradient(to right, #d4b896 50%, #7a4f2c 50%); -fx-text-fill: #1a0c04;"
-                          minWidth="90" minHeight="44"/>
-        </HBox>
     </VBox>
 
     <!-- Language -->

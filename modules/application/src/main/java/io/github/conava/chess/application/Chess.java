@@ -108,7 +108,6 @@ public class Chess extends Application {
         I18n i18n = new I18n(settingsService.loadLanguage());
 
         themeManager.setTheme(settingsService.loadTheme());
-        themeManager.setBoardTheme(settingsService.loadBoardTheme());
 
         // Restore persisted auth state
         String storedToken = settingsService.loadAuthToken();
