@@ -39,6 +39,14 @@ public void setUp() {
 
     @Test
     void testBoard() {
+        // Board must expose the knight placed in setUp at (y=4, x=1)
+        assertNotNull(board.getSquare(4, 1).getPiece(),
+                "Square (4,1) must contain the Knight placed during setUp");
+        assertInstanceOf(Knight.class, board.getSquare(4, 1).getPiece(),
+                "Piece at (4,1) must be a Knight");
+        // All other squares in this row must be empty
+        assertNull(board.getSquare(4, 0).getPiece(),
+                "Square (4,0) must be empty");
     }
 
     // ---- Deep copy tests ----
