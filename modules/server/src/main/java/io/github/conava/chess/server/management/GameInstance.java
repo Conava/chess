@@ -8,8 +8,10 @@ import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.observer.GameObserver;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
+import io.github.conava.chess.core.logic.ruleset.chess960Ruleset.Chess960Ruleset;
 
 import java.util.Objects;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,6 +42,9 @@ public class GameInstance implements GameObserver {
     private final int gameId;
     private final RulesetOptions ruleset;
 
+    /** Scharnagl index for Chess960 games; {@code -1} for standard chess. */
+    private final int positionIndex;
+
     private Game game;
     private GameState previousState;
 
@@ -62,6 +67,9 @@ public class GameInstance implements GameObserver {
     public GameInstance(int gameId, RulesetOptions ruleset) {
         this.gameId = gameId;
         this.ruleset = ruleset;
+        this.positionIndex = (ruleset == RulesetOptions.CHESS960)
+                ? new Random().nextInt(960)
+                : -1;
         this.game = null;
         this.previousState = null;
     }
@@ -89,7 +97,10 @@ public class GameInstance implements GameObserver {
         } else if (blackPlayerHandler == null) {
             blackPlayerHandler = clientHandler;
             blackPlayerName = (playerName != null && !playerName.isBlank()) ? playerName : "Player 2";
-            clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=black"));
+            String successContent = (positionIndex >= 0)
+                    ? "player=black position=" + positionIndex + " ruleset=CHESS960"
+                    : "player=black";
+            clientHandler.sendMessage(new Message(MessageType.SUCCESS, successContent));
             startGame();
         }
     }
@@ -104,7 +115,12 @@ public class GameInstance implements GameObserver {
      * from the observer path.</p>
      */
     private void startGame() {
-        this.game = Game.createServerGame(ruleset, whitePlayerName, blackPlayerName);
+        if (positionIndex >= 0) {
+            this.game = Game.createServerGame(
+                    new Chess960Ruleset(positionIndex), whitePlayerName, blackPlayerName);
+        } else {
+            this.game = Game.createServerGame(ruleset, whitePlayerName, blackPlayerName);
+        }
         this.game.addObserver(this);
         this.game.startGame();
         this.previousState = this.game.getState();
@@ -227,10 +243,13 @@ public class GameInstance implements GameObserver {
             return;
         }
         try {
-            Move move = Move.fromString(Objects.requireNonNull(message.getParameterValue("move")),
-                    Objects.equals(message.getParameterValue("playerColor"), "WHITE")
-                            ? game.getPlayerWhite()
-                            : game.getPlayerBlack());
+            var player = Objects.equals(message.getParameterValue("playerColor"), "WHITE")
+                    ? game.getPlayerWhite()
+                    : game.getPlayerBlack();
+            Move move = game.getRuleset().deserializeMove(
+                    Objects.requireNonNull(message.getParameterValue("move")),
+                    game.getBoard(),
+                    player);
             game.movePiece(move.getStart(), move.getEnd());
             LOGGER.log(Level.INFO, "Move executed: {0}", message.content());
             sendMessageToPlayers(new Message(MessageType.MOVE, message.content()));
@@ -369,6 +388,15 @@ public class GameInstance implements GameObserver {
      */
     public int getGameId() {
         return gameId;
+    }
+
+    /**
+     * Returns the Scharnagl position index for Chess960 games, or {@code -1} for standard chess.
+     *
+     * @return The position index in [0, 959] for Chess960 games, or {@code -1} for standard chess.
+     */
+    public int getPositionIndex() {
+        return positionIndex;
     }
 
     /**

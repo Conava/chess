@@ -554,4 +554,80 @@ class GameInstanceTest {
         assertDoesNotThrow(() -> gameInstance.disconnectPlayer(whiteHandler),
                 "disconnectPlayer() when game is null must not throw");
     }
+
+    // ========================================================================
+    // T11 smoke tests: Chess960 position generation and wire protocol
+    // ========================================================================
+
+    @Test
+    void chess960GameInstance_positionIndex_isInValidRange() {
+        GameInstance chess960Instance = new GameInstance(2, RulesetOptions.CHESS960);
+        int index = chess960Instance.getPositionIndex();
+        assertTrue(index >= 0 && index <= 959,
+                "Chess960 GameInstance must have a positionIndex in [0, 959], got: " + index);
+    }
+
+    @Test
+    void standardGameInstance_positionIndex_isNegativeOne() {
+        GameInstance standardInstance = new GameInstance(3, RulesetOptions.STANDARD);
+        assertEquals(-1, standardInstance.getPositionIndex(),
+                "Standard GameInstance must have positionIndex == -1");
+    }
+
+    @Test
+    void chess960GameInstance_blackSuccessMessage_containsPositionAndRuleset() {
+        GameInstance chess960Instance = new GameInstance(4, RulesetOptions.CHESS960);
+        TrackingClientHandler chess960White = new TrackingClientHandler(server);
+        TrackingClientHandler chess960Black = new TrackingClientHandler(server);
+
+        chess960Instance.connectPlayer(chess960White, "Alice");
+        chess960Instance.connectPlayer(chess960Black, "Bob");
+
+        // Black's SUCCESS message must contain position=N and ruleset=CHESS960
+        String successContent = chess960Black.getSentMessages().stream()
+                .filter(m -> m.type() == MessageType.SUCCESS)
+                .map(m -> m.content())
+                .findFirst()
+                .orElse("");
+        assertTrue(successContent.contains("player=black"),
+                "Chess960 black SUCCESS must contain player=black");
+        assertTrue(successContent.contains("ruleset=CHESS960"),
+                "Chess960 black SUCCESS must contain ruleset=CHESS960");
+        assertTrue(successContent.contains("position="),
+                "Chess960 black SUCCESS must contain position=<index>");
+    }
+
+    @Test
+    void standardGameInstance_blackSuccessMessage_isJustPlayerBlack() {
+        GameInstance standardInstance = new GameInstance(5, RulesetOptions.STANDARD);
+        TrackingClientHandler stdWhite = new TrackingClientHandler(server);
+        TrackingClientHandler stdBlack = new TrackingClientHandler(server);
+
+        standardInstance.connectPlayer(stdWhite, "Alice");
+        standardInstance.connectPlayer(stdBlack, "Bob");
+
+        String successContent = stdBlack.getSentMessages().stream()
+                .filter(m -> m.type() == MessageType.SUCCESS)
+                .map(m -> m.content())
+                .findFirst()
+                .orElse("");
+        assertEquals("player=black", successContent,
+                "Standard black SUCCESS must be exactly 'player=black' without Chess960 extras");
+    }
+
+    @Test
+    void chess960GameInstance_startGame_createsGameWithCorrectRuleset() throws Exception {
+        GameInstance chess960Instance = new GameInstance(6, RulesetOptions.CHESS960);
+        TrackingClientHandler chess960White = new TrackingClientHandler(server);
+        TrackingClientHandler chess960Black = new TrackingClientHandler(server);
+
+        chess960Instance.connectPlayer(chess960White, "Alice");
+        chess960Instance.connectPlayer(chess960Black, "Bob");
+
+        Game game = getPrivateGame(chess960Instance);
+        assertNotNull(game, "Game must be created after both players connect");
+        assertNotNull(game.getRuleset(), "Game ruleset must not be null");
+        assertEquals(GameState.RUNNING, game.getState(),
+                "Game must be RUNNING after both players connect");
+    }
 }
