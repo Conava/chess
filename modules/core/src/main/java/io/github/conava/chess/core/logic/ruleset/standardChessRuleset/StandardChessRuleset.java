@@ -190,10 +190,10 @@ public class StandardChessRuleset implements Ruleset {
     }
 
     private boolean isInBoundsX(int x) {
-        return x >= 0 && x < 8;
+        return x >= 0 && x < getWidth();
     }
 
     private boolean isInBoundsY(int y) {
-        return y >= 0 && y < 8;
+        return y >= 0 && y < getHeight();
     }
 }
