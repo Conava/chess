@@ -213,12 +213,12 @@ public class Board {
      * carries explicit {@code rookOriginFile} and {@code kingDestFile} values that
      * override the hardcoded standard-chess files.
      * <p>
-     * Queenside/kingside is determined by {@code kingDestFile} relative to the king's
+     * Queenside/kingside is determined by {@code rookOriginFile} relative to the king's
      * starting file ({@code startSquare.getX()}):
      * <ul>
-     *   <li>Queenside: {@code kingDestFile < kingStartFile} — king lands on c-file (x=2),
+     *   <li>Queenside: {@code rookOriginFile < kingStartFile} — king lands on c-file (x=2),
      *       rook lands on d-file (x=3).</li>
-     *   <li>Kingside: {@code kingDestFile >= kingStartFile} — king lands on g-file (x=6),
+     *   <li>Kingside: {@code rookOriginFile >= kingStartFile} — king lands on g-file (x=6),
      *       rook lands on f-file (x=5).</li>
      * </ul>
      * <p>
@@ -245,7 +245,7 @@ public class Board {
         Piece king = startSquare.getPiece();
         Piece rook = rookOriginSquare.getPiece();
 
-        boolean queenside = kingDestFile < kingStartFile;
+        boolean queenside = rookOriginFile < kingStartFile;
         Square kingDestSquare = getSquare(rank, kingDestFile);
         Square rookDestSquare = getSquare(rank, queenside ? 3 : 5);
 
