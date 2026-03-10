@@ -147,6 +147,24 @@ public class Chess960Ruleset extends AbstractChessRuleset {
     }
 
     /**
+     * Constructs a Chess960-aware {@link CastleMove} with explicit rook-origin and king-dest
+     * file values so that {@code Board.handleCastleMove960} places pieces on the correct
+     * squares.
+     *
+     * @param source the king's current square
+     * @param target the rook's current square (the king moves to the rook's file in Chess960)
+     * @return a {@link CastleMove} with {@code rookOriginFile = target.getX()} and
+     *         {@code kingDestFile} set to 2 (queenside) or 6 (kingside)
+     */
+    @Override
+    public CastleMove buildCastleMove(Square source, Square target) {
+        int rookOriginFile = target.getX();
+        boolean kingside = target.getX() > source.getX();
+        int kingDestFile = kingside ? 6 : 2;
+        return new CastleMove(source, target, rookOriginFile, kingDestFile);
+    }
+
+    /**
      * Returns {@code true} if the move from {@code source} to {@code target} is a Chess960
      * castling candidate.
      *
