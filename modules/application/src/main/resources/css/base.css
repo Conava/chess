@@ -77,6 +77,16 @@
     -fx-translate-y: 0;
 }
 
+/* ── Toggle buttons ──────────────────────────────────────────────────────── */
+
+.toggle-button {
+    -fx-font-size: 14px;
+    -fx-padding: 10 16 10 16;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-cursor: hand;
+}
+
 /* ── Cards ───────────────────────────────────────────────────────────────── */
 
 .card {
