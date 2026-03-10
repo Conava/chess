@@ -97,11 +97,11 @@ io.github.conava.chess.core
 |---|---|---|
 | `Ruleset` (interface) | Strategy contract: `getWidth`, `getHeight`, `getStartBoard`, `getLegalMoves`, `getLegalSquares`, `isValidSquare`, `isCheck`. | `Square`, `Board`, `Move`, `Player` |
 | `RulesetOptions` | Enum with a single value: `STANDARD`. | — |
-| `StandardChessRuleset` | Implements `Ruleset`. Dispatches to per-piece move generators for pseudo-legal square lists. `getLegalSquares` is a direct pass-through to `getSudoLegalSquares` — no check-legality filtering. `isCheck` uses a reverse-attack scan from the king's square. | `Ruleset`, `PossibleStandard*Moves`, `PossibleStandardPosition` |
+| `StandardChessRuleset` | Implements `Ruleset`. Dispatches to per-piece move generators for pseudo-legal square lists. `getLegalSquares` filters pseudo-legal moves by deep-copying the board, simulating each candidate move, and calling `isCheck` to exclude any move that leaves the moving player's king in check. Castling is additionally filtered for moving out of or through check. `isCheck` uses a reverse-attack scan from the king's square. | `Ruleset`, `PossibleStandard*Moves`, `PossibleStandardPosition` |
 | `PossibleStandardBishopMoves` | Generates pseudo-legal diagonal ray squares for a bishop. Stops at occupied squares. | `Square`, `Board` |
 | `PossibleStandardKingMoves` | Generates pseudo-legal one-step squares plus castling squares when both king and applicable rook have not moved and intervening squares are clear. | `Square`, `Board`, `King`, `Rook` |
 | `PossibleStandardKnightMoves` | Generates pseudo-legal L-shape squares for a knight. | `Square`, `Board` |
-| `PossibleStandardPawnMoves` | Generates pseudo-legal forward and capture squares for a pawn, including two-square initial advance. En passant is not implemented despite `moves` being accepted as a parameter. | `Square`, `Board`, `Move`, `PlayerColor` |
+| `PossibleStandardPawnMoves` | Generates pseudo-legal forward and capture squares for a pawn, including two-square initial advance and en passant. En passant is detected by inspecting the last move in the history for a double pawn push to an adjacent file. | `Square`, `Board`, `Move`, `PlayerColor` |
 | `PossibleStandardQueenMoves` | Delegates entirely to `PossibleStandardRookMoves` + `PossibleStandardBishopMoves`. | `PossibleStandardRookMoves`, `PossibleStandardBishopMoves` |
 | `PossibleStandardRookMoves` | Generates pseudo-legal horizontal/vertical ray squares for a rook. | `Square`, `Board` |
 | `PossibleStandardPosition` | Builds the standard 8×8 starting `Square[][]`. | `Square`, all piece classes, `Player` |
@@ -271,33 +271,26 @@ after updating state from a `GAME_STATUS` message.
 
 ## Known Debt / Gotchas
 
-1. **`getLegalSquares` does not filter moves that leave the king in check.**
-   `StandardChessRuleset.getLegalSquares` delegates directly to `getSudoLegalSquares`, which
-   generates pseudo-legal moves only. The `isCheck` method exists and works, but it is never
-   called as part of move generation or validation. Players can make moves that leave their
-   own king in check.
+1. ~~`getLegalSquares` does not filter moves that leave the king in check.~~
+   **RESOLVED.** `StandardChessRuleset.getLegalSquares` now deep-copies the board for each
+   candidate square, simulates the move, and calls `isCheck` to exclude moves that leave
+   the moving player's king in check. Castling through or out of check is also filtered.
 
-2. **`Board.getCopy()` is a shallow copy.**
-   `getCopy()` constructs a new `Board` from the same `Square[][]` reference, not a deep
-   copy. Because `Square` is mutable (it has `setPiece`), the "copy" and the original share
-   the same `Square` objects. Any mutation to the copy's squares will affect the original.
-   This is only safe by accident because `executeMove` swaps piece references on squares
-   but does not replace square instances. It is fragile and will break if any code path
-   creates new squares during a move.
+2. ~~`Board.getCopy()` is a shallow copy.~~
+   **RESOLVED.** `getCopy()` now creates fresh `Square` instances and uses `Piece.copy()`
+   (abstract, overridden by all six piece classes) to faithfully reproduce stateful fields
+   such as `King.hasMoved` and `Rook.hasMoved`.
 
-3. **En passant is not implemented.**
-   `PossibleStandardPawnMoves` accepts the move history list and has a comment placeholder,
-   but the en passant logic is entirely absent. `Pawn.hasMoveJustMovedTwoSquares` exists
-   but is never called.
+3. ~~En passant is not implemented.~~
+   **RESOLVED.** `PossibleStandardPawnMoves.enPassantMoves()` checks the last move for a
+   double pawn push and adds the diagonal target square when conditions are met.
+   `Board.executeMove` handles the captured-pawn removal when a pawn moves diagonally
+   to an empty square.
 
-4. **`getLeftEmpty` / `getRightEmpty` logic in `PossibleStandardKingMoves` appears incorrect.**
-   `getLeftEmpty` returns `false` unless every square from column 0 to `rowCount/2` either
-   has an unmoved rook or is empty, but the condition uses `||` with `!board.getSquare(...).isEmpty()`,
-   meaning any non-rook, non-empty square causes an immediate false return. In practice the
-   first square (column 0) always has the rook at game start, so the loop returns false
-   immediately for any non-rook piece. The result is that `canCastleLong` and `canCastleShort`
-   will return false even when castling should be legal. Castling is likely broken in
-   practice.
+4. ~~Castling logic in `PossibleStandardKingMoves` is broken.~~
+   **RESOLVED.** `canCastleToward(int direction)` walks from the king toward the board edge,
+   checking for an unmoved friendly rook with no pieces between them. Both kingside and
+   queenside castling work correctly.
 
 5. **`OnlineGame.isLocalPlayerPiece` will throw `NullPointerException` on an empty square.**
    The method calls `board.getSquare(...).getPiece().getPlayer().color()` without a null

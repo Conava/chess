@@ -14,6 +14,7 @@ import io.github.conava.chess.core.data.pieces.Pieces;
 import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.data.board.Board;
+import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
 import io.github.conava.chess.core.logic.moves.PromotionMove;
 import io.github.conava.chess.core.logic.observer.Observable;
@@ -192,7 +193,14 @@ public abstract class Game extends Observable {
      * @throws IllegalMoveException If the move is illegal.
      */
     public void movePiece(Square squareStart, Square squareEnd) throws IllegalMoveException {
-        Move move = new Move(toBoardSquare(squareStart), toBoardSquare(squareEnd));
+        Square start = toBoardSquare(squareStart);
+        Square end = toBoardSquare(squareEnd);
+        Move move;
+        if (start.getPiece() instanceof King && Math.abs(end.getX() - start.getX()) == 2) {
+            move = new CastleMove(start, end);
+        } else {
+            move = new Move(start, end);
+        }
         executeMove(move);
     }
 
