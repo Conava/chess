@@ -6,6 +6,7 @@ import io.github.conava.chess.core.data.io.MessageType;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.server.Server;
 import io.github.conava.chess.server.auth.AuthService;
+import io.github.conava.chess.server.matchmaking.MatchmakingService;
 import io.github.conava.chess.server.persistence.GameRepository;
 
 import java.io.BufferedReader;
@@ -48,10 +49,10 @@ public class ClientHandler implements Runnable {
     private final GameRepository gameRepository;
 
     /**
-     * Matchmaking service reference, wired in by T14 via {@link #setMatchmakingService}.
+     * Matchmaking service reference, wired in via {@link #setMatchmakingService}.
      * Guarded by null-checks at all usage sites.
      */
-    private Object matchmakingService; // typed as Object until MatchmakingService is defined in T14
+    private MatchmakingService matchmakingService;
 
     /**
      * The authenticated session for the connected client. {@code null} means the client
@@ -90,16 +91,17 @@ public class ClientHandler implements Runnable {
     }
 
     /**
-     * Wires in the matchmaking service once it is available (T14).
+     * Wires in the {@link MatchmakingService} used to queue this client for automatic
+     * game pairing.
      *
-     * <p>This setter is intentionally untyped ({@code Object}) until the
-     * {@code MatchmakingService} class is introduced in a later task. Callers in T14
-     * should cast back to the concrete type after the class is defined.</p>
+     * <p>Must be called before the client sends any {@code QUEUE} or {@code DEQUEUE}
+     * messages. If not called (or called with {@code null}), those message types result
+     * in an {@code ERROR:Matchmaking not available} response.</p>
      *
      * @param matchmakingService the matchmaking service instance; may be {@code null}
-     *                           to disable matchmaking
+     *                           to disable matchmaking for this connection
      */
-    public void setMatchmakingService(Object matchmakingService) {
+    public void setMatchmakingService(MatchmakingService matchmakingService) {
         this.matchmakingService = matchmakingService;
     }
 
@@ -203,16 +205,21 @@ public class ClientHandler implements Runnable {
             case RESUME_GAME  -> handleResumeGame(message);
             case QUEUE        -> {
                 if (matchmakingService != null) {
-                    // delegate to matchmakingService once T14 defines the type
-                    LOGGER.log(Level.INFO, "QUEUE delegated to matchmaking service");
+                    RulesetOptions ruleset;
+                    try {
+                        ruleset = RulesetOptions.valueOf(message.getParameterValue("ruleset"));
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        sendMessage(new Message(MessageType.ERROR, "Invalid or missing ruleset"));
+                        return;
+                    }
+                    matchmakingService.enqueue(this, playerSession, ruleset);
                 } else {
                     sendMessage(new Message(MessageType.ERROR, "Matchmaking not available"));
                 }
             }
             case DEQUEUE      -> {
                 if (matchmakingService != null) {
-                    // delegate to matchmakingService once T14 defines the type
-                    LOGGER.log(Level.INFO, "DEQUEUE delegated to matchmaking service");
+                    matchmakingService.dequeue(this);
                 } else {
                     sendMessage(new Message(MessageType.ERROR, "Matchmaking not available"));
                 }
@@ -448,7 +455,8 @@ public class ClientHandler implements Runnable {
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     /**
-     * Releases the game slot and cleans up resources on client disconnect.
+     * Releases the game slot, removes this client from any matchmaking queue, and cleans
+     * up resources on client disconnect.
      *
      * <p>Always called from the {@code finally} block in {@link #run()} so that
      * connection registration and game resources are reclaimed even on error paths.</p>
@@ -456,6 +464,9 @@ public class ClientHandler implements Runnable {
     private void cleanup() {
         LOGGER.log(Level.INFO, "Client disconnected: " + clientSocket.getInetAddress());
         server.removeClientHandler(this);
+        if (matchmakingService != null) {
+            matchmakingService.dequeue(this);
+        }
         releaseGameSlot();
     }
 

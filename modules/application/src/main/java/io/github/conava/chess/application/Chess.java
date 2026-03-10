@@ -281,6 +281,64 @@ public class Chess extends Application {
     }
 
     /**
+     * Opens a persistent TCP connection to the chess server for matchmaking or other
+     * pre-game communication and stores the resulting task as the active server task.
+     *
+     * <p>The connection is established synchronously on a background daemon thread.
+     * This method blocks until the connection is confirmed or fails. After this call
+     * {@link #getActiveServerTask()} returns the live task (or {@code null} if the
+     * connection failed).</p>
+     *
+     * <p>If an active server task already exists it is closed and replaced.</p>
+     *
+     * @param serverIp   IP address of the chess server.
+     * @param serverPort TCP port of the chess server.
+     * @return {@code true} if the connection was established successfully, {@code false} otherwise.
+     */
+    public boolean connectToServer(String serverIp, int serverPort) {
+        if (activeServerTask != null && activeServerTask.isConnected()) {
+            activeServerTask.closeConnection();
+        }
+        CountDownLatch latch = new CountDownLatch(1);
+        ServerCommunicationTask task = new ServerCommunicationTask(
+                serverIp, serverPort, latch, msg -> { /* matchmaking messages handled via setMatchHandler */ });
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        if (task.isConnected()) {
+            activeServerTask = task;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Joins a matched online game identified by a server-provided join code.
+     *
+     * <p>This convenience method is used by the matchmaking waiting screen after the server
+     * responds with a {@code MATCHED} message. It calls
+     * {@link #startGame(boolean, RulesetOptions, String, String, Map)} with the join-code
+     * connection details and the {@code "You"} / {@code "Opponent"} player names.</p>
+     *
+     * @param serverIp   IP address of the chess server.
+     * @param serverPort TCP port of the chess server.
+     * @param joinCode   the join code provided by the server in the {@code MATCHED} message.
+     * @param ruleset    the ruleset agreed upon during matchmaking.
+     */
+    public void joinOnlineGame(String serverIp, int serverPort, String joinCode, RulesetOptions ruleset) {
+        Map<String, String> opts = Map.of(
+                "ip", serverIp,
+                "port", String.valueOf(serverPort),
+                "joinCode", joinCode);
+        startGame(true, ruleset, "You", "Opponent", opts);
+    }
+
+    /**
      * Sends a {@code QUEUE} message to the server via the active server connection,
      * requesting to join the matchmaking queue for the given ruleset.
      *

@@ -6,6 +6,7 @@ import io.github.conava.chess.application.controllers.LoginController;
 import io.github.conava.chess.application.controllers.MainMenuController;
 import io.github.conava.chess.application.controllers.RegisterController;
 import io.github.conava.chess.application.controllers.SettingsController;
+import io.github.conava.chess.application.controllers.WaitingForMatchController;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.settings.SettingsService;
 import io.github.conava.chess.application.theme.ThemeManager;
@@ -25,6 +26,7 @@ public class SceneManager {
     private static final String FXML_SETTINGS = "/fxml/settings.fxml";
     private static final String FXML_LOGIN = "/fxml/login.fxml";
     private static final String FXML_REGISTER = "/fxml/register.fxml";
+    private static final String FXML_WAITING_FOR_MATCH = "/fxml/waiting-for-match.fxml";
 
     private final Stage primaryStage;
     private final Chess chess;
@@ -84,14 +86,25 @@ public class SceneManager {
      * Navigates to the matchmaking waiting screen where the client searches for an
      * available opponent with the given ruleset on the specified server.
      *
-     * <p>This method is a stub — the full implementation will be added in T24.
+     * <p>A persistent TCP connection to the server is opened before the waiting screen is
+     * shown. If the connection cannot be established the method returns without navigating
+     * (the current screen remains visible). Once connected, the {@link WaitingForMatchController}
+     * is constructed — which registers the {@code MATCHED} handler — and then
+     * {@link io.github.conava.chess.application.Chess#joinMatchmakingQueue(RulesetOptions)}
+     * is called from {@link WaitingForMatchController#initialize()} to avoid a race condition
+     * where the server's response could arrive before the handler is set.</p>
      *
      * @param ruleset the ruleset the player wants to use for the matched game
      * @param ip      the server IP address or hostname
      * @param port    the server port number
      */
     public void showWaitingForMatch(RulesetOptions ruleset, String ip, int port) {
-        // TODO: T24
+        if (!chess.connectToServer(ip, port)) {
+            return;
+        }
+        var controller = new WaitingForMatchController(this, chess, i18n, ruleset, ip, port);
+        swapScene(FXML_WAITING_FOR_MATCH, controller, 900, 650);
+        primaryStage.setMaximized(false);
     }
 
     /**
