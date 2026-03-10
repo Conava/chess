@@ -10,6 +10,7 @@ import io.github.conava.chess.core.data.pieces.Knight;
 import io.github.conava.chess.core.data.pieces.Pawn;
 import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.data.player.Player;
+import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -217,6 +218,147 @@ public void setUp() {
         // e5 must be empty
         assertNull(enPassantBoard.getSquare(4, 4).getPiece(),
                 "e5 should be empty after white pawn moved away");
+    }
+
+    // ---- Chess960 castling tests (T03) ----
+
+    private static Square[][] emptyBoardStatic() {
+        Square[][] squares = new Square[8][8];
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                squares[y][x] = new Square(y, x);
+            }
+        }
+        return squares;
+    }
+
+    /**
+     * Chess960 kingside castle: king on b1 (x=1), rook on g1 (x=6).
+     * After castling, king must be on g-file (x=6) and rook on f-file (x=5).
+     * rookOriginFile=6, kingDestFile=6 → kingside path.
+     */
+    @Test
+    void chess960KingsideCastle_placesKingOnGFileAndRookOnFFile() {
+        Player white = new Player("White", PlayerColor.WHITE);
+        Square[][] squares = emptyBoardStatic();
+
+        King king = new King(white);
+        Rook rook = new Rook(white);
+        squares[0][1].setPiece(king);   // king on b1 (x=1)
+        squares[0][6].setPiece(rook);   // rook on g1 (x=6)
+
+        Board board = new Board(squares);
+
+        // Chess960 castle: king "moves to" the rook's square (g1), rookOriginFile=6, kingDestFile=6
+        CastleMove castleMove = new CastleMove(squares[0][1], squares[0][6], 6, 6);
+        board.executeMove(castleMove);
+
+        // King must be on g1 (x=6)
+        assertNotNull(board.getSquare(0, 6).getPiece(), "King must be on g-file (x=6) after kingside castle");
+        assertInstanceOf(King.class, board.getSquare(0, 6).getPiece(), "Piece on g-file must be the King");
+
+        // Rook must be on f1 (x=5)
+        assertNotNull(board.getSquare(0, 5).getPiece(), "Rook must be on f-file (x=5) after kingside castle");
+        assertInstanceOf(Rook.class, board.getSquare(0, 5).getPiece(), "Piece on f-file must be the Rook");
+
+        // Original king square (b1) must be empty
+        assertNull(board.getSquare(0, 1).getPiece(), "b1 must be empty after king castled away");
+    }
+
+    /**
+     * Chess960 queenside castle: king on e1 (x=4), rook on b1 (x=1).
+     * After castling, king must be on c-file (x=2) and rook on d-file (x=3).
+     * rookOriginFile=1, kingDestFile=2 → queenside path (kingDestFile < kingStartFile).
+     */
+    @Test
+    void chess960QueensideCastle_placesKingOnCFileAndRookOnDFile() {
+        Player white = new Player("White", PlayerColor.WHITE);
+        Square[][] squares = emptyBoardStatic();
+
+        King king = new King(white);
+        Rook rook = new Rook(white);
+        squares[0][4].setPiece(king);   // king on e1 (x=4)
+        squares[0][1].setPiece(rook);   // rook on b1 (x=1)
+
+        Board board = new Board(squares);
+
+        // Chess960 castle: king "moves to" the rook's square (b1), rookOriginFile=1, kingDestFile=2
+        CastleMove castleMove = new CastleMove(squares[0][4], squares[0][1], 1, 2);
+        board.executeMove(castleMove);
+
+        // King must be on c1 (x=2)
+        assertNotNull(board.getSquare(0, 2).getPiece(), "King must be on c-file (x=2) after queenside castle");
+        assertInstanceOf(King.class, board.getSquare(0, 2).getPiece(), "Piece on c-file must be the King");
+
+        // Rook must be on d1 (x=3)
+        assertNotNull(board.getSquare(0, 3).getPiece(), "Rook must be on d-file (x=3) after queenside castle");
+        assertInstanceOf(Rook.class, board.getSquare(0, 3).getPiece(), "Piece on d-file must be the Rook");
+
+        // Original king square (e1) must be empty
+        assertNull(board.getSquare(0, 4).getPiece(), "e1 must be empty after king castled away");
+    }
+
+    /**
+     * Chess960 castle where king and rook destination squares overlap with their origins.
+     * King on c1 (x=2), rook on d1 (x=3). Queenside castle: king moves to c1, rook to d1.
+     * This is a "no-op" position but the board must remain consistent.
+     * kingDestFile=2, rookOriginFile=3 → queenside (kingDestFile < kingStart? No, king IS on x=2).
+     * Actually test the case where rookOriginFile > kingStartFile (kingside) with
+     * king on f1 (x=5), rook on g1 (x=6), resulting in king on g1 (x=6) and rook on f1 (x=5) — a swap.
+     */
+    @Test
+    void chess960KingsideCastle_kingAndRookSwap_correctResult() {
+        Player white = new Player("White", PlayerColor.WHITE);
+        Square[][] squares = emptyBoardStatic();
+
+        King king = new King(white);
+        Rook rook = new Rook(white);
+        squares[0][5].setPiece(king);   // king on f1 (x=5)
+        squares[0][6].setPiece(rook);   // rook on g1 (x=6)
+
+        Board board = new Board(squares);
+
+        // Chess960 kingside castle: rookOriginFile=6, kingDestFile=6
+        CastleMove castleMove = new CastleMove(squares[0][5], squares[0][6], 6, 6);
+        board.executeMove(castleMove);
+
+        // King must be on g1 (x=6)
+        assertNotNull(board.getSquare(0, 6).getPiece(), "King must be on g-file after kingside castle");
+        assertInstanceOf(King.class, board.getSquare(0, 6).getPiece());
+
+        // Rook must be on f1 (x=5)
+        assertNotNull(board.getSquare(0, 5).getPiece(), "Rook must be on f-file after kingside castle");
+        assertInstanceOf(Rook.class, board.getSquare(0, 5).getPiece());
+    }
+
+    /**
+     * Standard castle move (rookOriginFile == -1) must still work correctly via the
+     * existing hardcoded path — backward compatibility check.
+     * King on e1 (x=4) castles kingside: king moves to g1 (x=6), rook from h1 (x=7) to f1 (x=5).
+     */
+    @Test
+    void standardCastle_backwardCompatible_kingsideStillWorks() {
+        Player white = new Player("White", PlayerColor.WHITE);
+        Square[][] squares = emptyBoardStatic();
+
+        King king = new King(white);
+        Rook rook = new Rook(white);
+        squares[0][4].setPiece(king);   // king on e1 (x=4)
+        squares[0][7].setPiece(rook);   // rook on h1 (x=7)
+
+        Board board = new Board(squares);
+
+        // Standard castle move — rookOriginFile defaults to -1
+        CastleMove castleMove = new CastleMove(squares[0][4], squares[0][6]);
+        board.executeMove(castleMove);
+
+        // King on g1 (x=6)
+        assertNotNull(board.getSquare(0, 6).getPiece(), "King must be on g-file after standard kingside castle");
+        assertInstanceOf(King.class, board.getSquare(0, 6).getPiece());
+
+        // Rook on f1 (x=5)
+        assertNotNull(board.getSquare(0, 5).getPiece(), "Rook must be on f-file after standard kingside castle");
+        assertInstanceOf(Rook.class, board.getSquare(0, 5).getPiece());
     }
 
 }

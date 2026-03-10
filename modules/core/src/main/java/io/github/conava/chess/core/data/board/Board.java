@@ -84,6 +84,12 @@ public class Board {
             king.setHasMoved();
         }
 
+        if (move instanceof CastleMove castleMove && castleMove.getRookOriginFile() >= 0) {
+            // Chess960 castle: delegate entirely — king and rook are both placed by this method.
+            handleCastleMove960(startSquare, endSquare, castleMove);
+            return;
+        }
+
         if (move instanceof CastleMove) {
             handleCastleMove(startSquare, endSquare);
         } else if (move instanceof PromotionMove promotionMove) {
@@ -195,6 +201,70 @@ public class Board {
         rookNewSquare.setPiece(rook);
         rookOldSquare.setPiece(null);
         updatePieceLists(rookOldSquare, rookNewSquare, rook);
+        if (rook instanceof Rook r) {
+            r.setHasMoved();
+        }
+    }
+
+    /**
+     * Handles the Chess960 variant of a castle move.
+     * <p>
+     * In Chess960 the king and rook may start on any file. The {@link CastleMove}
+     * carries explicit {@code rookOriginFile} and {@code kingDestFile} values that
+     * override the hardcoded standard-chess files.
+     * <p>
+     * Queenside/kingside is determined by {@code kingDestFile} relative to the king's
+     * starting file ({@code startSquare.getX()}):
+     * <ul>
+     *   <li>Queenside: {@code kingDestFile < kingStartFile} — king lands on c-file (x=2),
+     *       rook lands on d-file (x=3).</li>
+     *   <li>Kingside: {@code kingDestFile >= kingStartFile} — king lands on g-file (x=6),
+     *       rook lands on f-file (x=5).</li>
+     * </ul>
+     * <p>
+     * Piece-clearing order avoids overwriting when king/rook squares overlap with destinations:
+     * <ol>
+     *   <li>Clear king's current square.</li>
+     *   <li>Clear rook's current square.</li>
+     *   <li>Place king at {@code kingDestFile}.</li>
+     *   <li>Place rook at its destination (f-file or d-file).</li>
+     * </ol>
+     *
+     * @param startSquare The king's starting square.
+     * @param endSquare   The square the king "moved to" in Chess960 notation (the rook's square).
+     * @param castleMove  The {@link CastleMove} carrying {@code rookOriginFile} and
+     *                    {@code kingDestFile}.
+     */
+    private void handleCastleMove960(Square startSquare, Square endSquare, CastleMove castleMove) {
+        int rank = startSquare.getY();
+        int kingStartFile = startSquare.getX();
+        int rookOriginFile = castleMove.getRookOriginFile();
+        int kingDestFile = castleMove.getKingDestFile();
+
+        Square rookOriginSquare = getSquare(rank, rookOriginFile);
+        Piece king = startSquare.getPiece();
+        Piece rook = rookOriginSquare.getPiece();
+
+        boolean queenside = kingDestFile < kingStartFile;
+        Square kingDestSquare = getSquare(rank, kingDestFile);
+        Square rookDestSquare = getSquare(rank, queenside ? 3 : 5);
+
+        // Step 1: clear king's current square
+        removePiece(startSquare);
+        startSquare.setPiece(null);
+
+        // Step 2: clear rook's current square
+        removePiece(rookOriginSquare);
+        rookOriginSquare.setPiece(null);
+
+        // Step 3: place king at kingDestFile
+        kingDestSquare.setPiece(king);
+        updatePieceLists(startSquare, kingDestSquare, king);
+
+        // Step 4: place rook at its destination
+        rookDestSquare.setPiece(rook);
+        updatePieceLists(rookOriginSquare, rookDestSquare, rook);
+
         if (rook instanceof Rook r) {
             r.setHasMoved();
         }
