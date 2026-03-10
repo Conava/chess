@@ -44,15 +44,13 @@ networking protocol logic -- those belong to `core` and `server` respectively.
   observable `Language` property. Supports EN and DE.
 
 - `io.github.conava.chess.application.theme` -- Theme system:
-  - `ThemeManager` -- holds the active `Theme` and `BoardTheme`, applies CSS to all registered
-    `Scene` objects.
+  - `ThemeManager` -- holds the active `Theme` as an observable property, applies CSS to all
+    registered `Scene` objects.
   - `Theme` -- enum of available UI colour themes (e.g. `DARK_PURPLE`). Each value carries a
-    CSS file path.
-  - `BoardTheme` -- enum of available board colour themes (e.g. `CLASSIC`). Each value carries
-    a CSS file path.
+    CSS file path. Board colours are baked directly into each theme's CSS file.
 
 - `io.github.conava.chess.application.settings` -- `SettingsService` -- persists and retrieves
-  user preferences (theme, board theme, language, default player names) via `java.util.prefs.Preferences`.
+  user preferences (theme, language, default player names) via `java.util.prefs.Preferences`.
 
 - `io.github.conava.chess.application.network` -- `ServerCommunicationTask` -- implements
   `core`'s `ServerConnection` interface and `Runnable`. Manages the TCP socket to the chess
@@ -136,9 +134,9 @@ networking protocol logic -- those belong to `core` and `server` respectively.
 - **Collaborators:** `I18n`.
 
 ### `io.github.conava.chess.application.controllers.SettingsController`
-- **Responsibility:** Settings screen. Allows the user to change UI theme, board theme,
-  language, and default player names. Persists changes via `SettingsService` and applies them
-  immediately via `ThemeManager` and `I18n`.
+- **Responsibility:** Settings screen. Allows the user to change UI theme, language, and
+  default player names. Persists changes via `SettingsService` and applies them immediately
+  via `ThemeManager` and `I18n`.
 - **Collaborators:** `SceneManager`, `ThemeManager`, `I18n`, `SettingsService`.
 
 ### `io.github.conava.chess.application.controllers.WaitingController`
@@ -147,9 +145,10 @@ networking protocol logic -- those belong to `core` and `server` respectively.
 - **Collaborators:** `I18n`.
 
 ### `io.github.conava.chess.application.theme.ThemeManager`
-- **Responsibility:** Tracks active `Theme` and `BoardTheme` as observable properties. Applies
-  three CSS stylesheets (`base.css`, theme CSS, board theme CSS) to every registered `Scene`.
-- **Collaborators:** `Theme`, `BoardTheme`.
+- **Responsibility:** Tracks the active `Theme` as an observable property. Applies two CSS
+  stylesheets (`base.css`, theme CSS) to every registered `Scene`. Board colours are defined
+  inside each theme's CSS file and require no separate stylesheet.
+- **Collaborators:** `Theme`.
 
 ### `io.github.conava.chess.application.i18n.I18n`
 - **Responsibility:** Wraps `ResourceBundle` with an observable `Language` property. Provides
@@ -160,7 +159,7 @@ networking protocol logic -- those belong to `core` and `server` respectively.
 ### `io.github.conava.chess.application.settings.SettingsService`
 - **Responsibility:** Persists and retrieves user preferences via `java.util.prefs.Preferences`.
   Accepts an injected `Preferences` node in its single-arg constructor for testability.
-- **Collaborators:** `Theme`, `BoardTheme`, `I18n.Language`.
+- **Collaborators:** `Theme`, `I18n.Language`.
 
 ### `io.github.conava.chess.application.network.ServerCommunicationTask`
 - **Responsibility:** Implements `core`'s `ServerConnection` interface and `Runnable`. Opens a
@@ -209,7 +208,7 @@ these methods:
 Chess (Application subclass, facade, entry point)
   |
   +--> SettingsService (Preferences persistence)
-  +--> ThemeManager --> Theme, BoardTheme
+  +--> ThemeManager --> Theme
   +--> I18n (ResourceBundle wrapper)
   +--> SceneManager
   |      |
