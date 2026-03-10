@@ -23,6 +23,13 @@ import java.util.logging.Logger;
  * messages can arrive before the handler is registered. The provided {@link CountDownLatch}
  * is counted down once the socket connection is established (or fails). All resources
  * (socket, reader, writer) are closed in a {@code finally} block on every exit path.</p>
+ *
+ * <p>Additional optional callbacks may be registered after construction via setter methods:
+ * {@link #setChatHandler}, {@link #setMatchHandler}, {@link #setSaveAcceptedHandler},
+ * {@link #setGameHistoryHandler}, and {@link #setSaveGameHandler}. All callback fields
+ * are {@code volatile} so that assignments made after the task thread has started are
+ * visible immediately. If no specific handler is registered for a message type, the message
+ * falls through to the default {@code messageHandler}.</p>
  */
 public class ServerCommunicationTask implements Runnable, ServerConnection {
     private static final Logger LOGGER = Logger.getLogger(ServerCommunicationTask.class.getName());
@@ -31,6 +38,12 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
     private final int serverPort;
     private final CountDownLatch connectionLatch;
     private final Consumer<Message> messageHandler;
+
+    private volatile Consumer<Message> chatHandler;
+    private volatile Consumer<Message> matchHandler;
+    private volatile Runnable saveAcceptedHandler;
+    private volatile Consumer<Message> gameHistoryHandler;
+    private volatile Consumer<Message> saveGameHandler;
 
     private Socket socket;
     private PrintWriter out;
@@ -57,6 +70,61 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
     }
 
     /**
+     * Sets the handler called when a {@code CHAT} message is received.
+     * If {@code null} or unset, {@code CHAT} messages fall through to the default message handler.
+     *
+     * @param chatHandler a {@link Consumer} that accepts the incoming {@link Message}, or {@code null}
+     *                    to clear a previously registered handler.
+     */
+    public void setChatHandler(Consumer<Message> chatHandler) {
+        this.chatHandler = chatHandler;
+    }
+
+    /**
+     * Sets the handler called when a {@code MATCHED} message is received.
+     * If {@code null} or unset, {@code MATCHED} messages fall through to the default message handler.
+     *
+     * @param matchHandler a {@link Consumer} that accepts the incoming {@link Message}, or {@code null}
+     *                     to clear a previously registered handler.
+     */
+    public void setMatchHandler(Consumer<Message> matchHandler) {
+        this.matchHandler = matchHandler;
+    }
+
+    /**
+     * Sets the handler called when a {@code SAVE_ACCEPTED} message is received.
+     * If {@code null} or unset, {@code SAVE_ACCEPTED} messages fall through to the default message handler.
+     *
+     * @param saveAcceptedHandler a {@link Runnable} that is invoked upon receipt of the message,
+     *                            or {@code null} to clear a previously registered handler.
+     */
+    public void setSaveAcceptedHandler(Runnable saveAcceptedHandler) {
+        this.saveAcceptedHandler = saveAcceptedHandler;
+    }
+
+    /**
+     * Sets the handler called when a {@code GAME_HISTORY} message is received.
+     * If {@code null} or unset, {@code GAME_HISTORY} messages fall through to the default message handler.
+     *
+     * @param gameHistoryHandler a {@link Consumer} that accepts the incoming {@link Message}, or {@code null}
+     *                           to clear a previously registered handler.
+     */
+    public void setGameHistoryHandler(Consumer<Message> gameHistoryHandler) {
+        this.gameHistoryHandler = gameHistoryHandler;
+    }
+
+    /**
+     * Sets the handler called when a {@code SAVE_GAME} message is received.
+     * If {@code null} or unset, {@code SAVE_GAME} messages fall through to the default message handler.
+     *
+     * @param saveGameHandler a {@link Consumer} that accepts the incoming {@link Message}, or {@code null}
+     *                        to clear a previously registered handler.
+     */
+    public void setSaveGameHandler(Consumer<Message> saveGameHandler) {
+        this.saveGameHandler = saveGameHandler;
+    }
+
+    /**
      * Opens the socket connection, then loops reading lines from the server.
      * Each line is parsed into a {@link Message} and forwarded to the registered message handler.
      * All resources are closed in a {@code finally} block on every exit path.
@@ -65,6 +133,11 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
      * or by the message handler are caught, logged at {@link Level#SEVERE}, and skipped so that
      * a single malformed message does not kill the listener thread. The loop continues reading
      * the next line after any such exception.
+     * <p>
+     * Messages are dispatched based on their type: {@code CHAT}, {@code MATCHED},
+     * {@code SAVE_ACCEPTED}, {@code GAME_HISTORY}, and {@code SAVE_GAME} are forwarded to their
+     * respective optional callbacks when set, otherwise they fall through to the default
+     * {@code messageHandler}. All other message types go directly to the default handler.
      */
     @Override
     public void run() {
@@ -79,7 +152,7 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
             while (running && rawMessage != null) {
                 try {
                     Message decoded = MessageParser.parse(rawMessage);
-                    messageHandler.accept(decoded);
+                    dispatch(decoded);
                 } catch (RuntimeException e) {
                     LOGGER.log(Level.SEVERE, "Failed to process server message: " + rawMessage, e);
                 }
@@ -111,6 +184,39 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
                     // silently ignored
                 }
             }
+        }
+    }
+
+    /**
+     * Routes a decoded {@link Message} to the appropriate registered callback.
+     * Falls through to the default {@code messageHandler} when no specific handler is set
+     * for the message type, ensuring no message is silently dropped.
+     *
+     * @param decoded the parsed {@link Message} to dispatch.
+     */
+    private void dispatch(Message decoded) {
+        switch (decoded.type()) {
+            case CHAT -> {
+                if (chatHandler != null) chatHandler.accept(decoded);
+                else messageHandler.accept(decoded);
+            }
+            case MATCHED -> {
+                if (matchHandler != null) matchHandler.accept(decoded);
+                else messageHandler.accept(decoded);
+            }
+            case SAVE_ACCEPTED -> {
+                if (saveAcceptedHandler != null) saveAcceptedHandler.run();
+                else messageHandler.accept(decoded);
+            }
+            case GAME_HISTORY -> {
+                if (gameHistoryHandler != null) gameHistoryHandler.accept(decoded);
+                else messageHandler.accept(decoded);
+            }
+            case SAVE_GAME -> {
+                if (saveGameHandler != null) saveGameHandler.accept(decoded);
+                else messageHandler.accept(decoded);
+            }
+            default -> messageHandler.accept(decoded);
         }
     }
 

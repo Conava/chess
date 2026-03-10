@@ -2,7 +2,9 @@ package io.github.conava.chess.application.navigation;
 
 import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.application.controllers.GameController;
+import io.github.conava.chess.application.controllers.LoginController;
 import io.github.conava.chess.application.controllers.MainMenuController;
+import io.github.conava.chess.application.controllers.RegisterController;
 import io.github.conava.chess.application.controllers.SettingsController;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.settings.SettingsService;
@@ -21,6 +23,8 @@ public class SceneManager {
     private static final String FXML_MAIN_MENU = "/fxml/main-menu.fxml";
     private static final String FXML_GAME = "/fxml/game.fxml";
     private static final String FXML_SETTINGS = "/fxml/settings.fxml";
+    private static final String FXML_LOGIN = "/fxml/login.fxml";
+    private static final String FXML_REGISTER = "/fxml/register.fxml";
 
     private final Stage primaryStage;
     private final Chess chess;
@@ -56,6 +60,24 @@ public class SceneManager {
         var controller = new SettingsController(this, themeManager, i18n, settingsService);
         primaryStage.setMaximized(false);
         swapScene(FXML_SETTINGS, controller, 760, 920);
+    }
+
+    /**
+     * Shows the login screen, replacing the current scene.
+     */
+    public void showLogin() {
+        var controller = new LoginController(this, chess, i18n);
+        swapScene(FXML_LOGIN, controller, 900, 650);
+        primaryStage.setMaximized(false);
+    }
+
+    /**
+     * Shows the account registration screen, replacing the current scene.
+     */
+    public void showRegister() {
+        var controller = new RegisterController(this, chess, i18n);
+        swapScene(FXML_REGISTER, controller, 900, 650);
+        primaryStage.setMaximized(false);
     }
 
     /**

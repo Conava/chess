@@ -6,11 +6,14 @@ import io.github.conava.chess.core.logic.game.Game;
 import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.server.Server;
+import io.github.conava.chess.server.db.DatabaseManager;
+import io.github.conava.chess.server.persistence.GameRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -30,6 +33,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * is used in tests that need to inspect or manipulate the private {@code game} field
  * to set up terminal state conditions.</p>
  *
+ * <p>An in-memory SQLite database is used for tests that exercise persistence
+ * behaviour so that no files are created on disk.</p>
+ *
  * <p>Covered behaviours:
  * <ul>
  *   <li>Deferred game creation: game is null until both players connect</li>
@@ -44,8 +50,12 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>Illegal moves send ERROR back to the sender</li>
  *   <li>Malformed moves do not propagate exceptions out of processMessage()</li>
  *   <li>processMessage() is synchronized (concurrent calls are serialized)</li>
- *   <li>disconnectPlayer notifies the remaining opponent with a GAME_STATUS message</li>
+ *   <li>disconnectPlayer pauses the game instead of awarding resignation</li>
  *   <li>disconnectPlayer removes the observer from the game to prevent memory leaks</li>
+ *   <li>reconnectPlayer resumes a paused game</li>
+ *   <li>mutual save-for-later: both SAVE_GAME requests result in SAVE_ACCEPTED</li>
+ *   <li>chat messages are relayed to both players with from= prefix</li>
+ *   <li>promotion moves execute and promote the pawn correctly</li>
  * </ul>
  * </p>
  */
@@ -85,6 +95,29 @@ class GameInstanceTest {
         boolean hasGameStatusWithState(String stateName) {
             return sentMessages.stream().filter(m -> m.type() == MessageType.GAME_STATUS).anyMatch(m -> m.content().contains("gameState=" + stateName));
         }
+    }
+
+    /**
+     * Builds an in-memory {@link GameRepository} backed by a SQLite {@code :memory:} database.
+     * Inserts two seed users (id 1 and 2) so that foreign key references succeed.
+     * Each call creates a fresh, isolated database.
+     */
+    private static GameRepository buildInMemoryRepo() throws SQLException {
+        DatabaseManager db = new DatabaseManager();
+        db.initialize(":memory:");
+        // Insert seed users so foreign key constraints on games.white_user_id / black_user_id pass.
+        try (java.sql.PreparedStatement ps = db.getConnection().prepareStatement(
+                "INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)")) {
+            ps.setInt(1, 1);
+            ps.setString(2, "alice");
+            ps.setString(3, "hash1");
+            ps.executeUpdate();
+            ps.setInt(1, 2);
+            ps.setString(2, "bob");
+            ps.setString(3, "hash2");
+            ps.executeUpdate();
+        }
+        return new GameRepository(db);
     }
 
     private Server server;
@@ -227,7 +260,7 @@ class GameInstanceTest {
 
     @Test
     void connectPlayer_nullPlayerName_usesDefaultForWhite() throws Exception {
-        gameInstance.connectPlayer(whiteHandler, null);
+        gameInstance.connectPlayer(whiteHandler, (String) null);
         gameInstance.connectPlayer(blackHandler, "Bob");
 
         Game game = getPrivateGame(gameInstance);
@@ -239,7 +272,7 @@ class GameInstanceTest {
     @Test
     void connectPlayer_nullPlayerName_usesDefaultForBlack() throws Exception {
         gameInstance.connectPlayer(whiteHandler, "Alice");
-        gameInstance.connectPlayer(blackHandler, null);
+        gameInstance.connectPlayer(blackHandler, (String) null);
 
         Game game = getPrivateGame(gameInstance);
         String blackName = game.getPlayerBlack().name();
@@ -321,6 +354,25 @@ class GameInstanceTest {
 
         assertTrue(whiteHandler.hasMessageOfType(MessageType.MOVE), "White player must receive the relayed MOVE message after a valid move");
         assertTrue(blackHandler.hasMessageOfType(MessageType.MOVE), "Black player must receive the relayed MOVE message after a valid move");
+    }
+
+    @Test
+    void handleMove_validMove_relayContainsNormalizedProtocolString() {
+        connectBothPlayers();
+        whiteHandler.clearMessages();
+        blackHandler.clearMessages();
+
+        // e2-e4: a standard legal pawn opening for white.
+        Message moveMsg = new Message(MessageType.MOVE, "move=e2-e4 playerColor=WHITE");
+        gameInstance.processMessage(whiteHandler, moveMsg);
+
+        // The relayed MOVE must contain the normalized protocol string, not raw content verbatim.
+        // The normalized form of e2-e4 is "move=e2-e4 playerColor=WHITE" but the key assertion
+        // is that "move=e2-e4" is present (protocol string is produced by move.toProtocolString()).
+        assertTrue(blackHandler.getSentMessages().stream()
+                        .filter(m -> m.type() == MessageType.MOVE)
+                        .anyMatch(m -> m.content().contains("move=e2-e4")),
+                "Relayed MOVE must contain the normalized protocol string e2-e4");
     }
 
     @Test
@@ -412,38 +464,44 @@ class GameInstanceTest {
     }
 
     // ========================================================================
-    // disconnectPlayer: notifies opponent and removes observer
+    // disconnectPlayer: pauses game instead of resignation
     // ========================================================================
 
     @Test
-    void disconnect_notifiesOpponent_whenWhiteDisconnects() {
+    void disconnect_pausesGame_insteadOfResignation_whenWhiteDisconnects() {
         connectBothPlayers();
         blackHandler.clearMessages();
 
         gameInstance.disconnectPlayer(whiteHandler);
 
-        assertTrue(blackHandler.hasMessageOfType(MessageType.GAME_STATUS), "Black player must receive a GAME_STATUS message when white disconnects");
+        // Black must receive PAUSED, not resignation
+        assertTrue(blackHandler.hasGameStatusWithState("PAUSED"),
+                "Black player must receive GAME_STATUS gameState=PAUSED when white disconnects");
     }
 
     @Test
-    void disconnect_notifiesOpponent_resignationStateContent() {
-        connectBothPlayers();
-        blackHandler.clearMessages();
-
-        gameInstance.disconnectPlayer(whiteHandler);
-
-        assertTrue(blackHandler.getSentMessages().stream().filter(m -> m.type() == MessageType.GAME_STATUS).anyMatch(m -> m.content().contains("gameState=BLACK_WON_BY_RESIGNATION")), "The GAME_STATUS sent to black must indicate BLACK_WON_BY_RESIGNATION when white disconnects");
-    }
-
-    @Test
-    void disconnect_notifiesOpponent_whenBlackDisconnects() {
+    void disconnect_pausesGame_insteadOfResignation_whenBlackDisconnects() {
         connectBothPlayers();
         whiteHandler.clearMessages();
 
         gameInstance.disconnectPlayer(blackHandler);
 
-        assertTrue(whiteHandler.hasMessageOfType(MessageType.GAME_STATUS), "White player must receive a GAME_STATUS message when black disconnects");
-        assertTrue(whiteHandler.getSentMessages().stream().filter(m -> m.type() == MessageType.GAME_STATUS).anyMatch(m -> m.content().contains("gameState=WHITE_WON_BY_RESIGNATION")), "The GAME_STATUS sent to white must indicate WHITE_WON_BY_RESIGNATION when black disconnects");
+        // White must receive PAUSED, not resignation
+        assertTrue(whiteHandler.hasGameStatusWithState("PAUSED"),
+                "White player must receive GAME_STATUS gameState=PAUSED when black disconnects");
+    }
+
+    @Test
+    void disconnect_doesNotSendResignation_whenWhiteDisconnects() {
+        connectBothPlayers();
+        blackHandler.clearMessages();
+
+        gameInstance.disconnectPlayer(whiteHandler);
+
+        assertFalse(blackHandler.getSentMessages().stream()
+                        .filter(m -> m.type() == MessageType.GAME_STATUS)
+                        .anyMatch(m -> m.content().contains("WON_BY_RESIGNATION")),
+                "Disconnect must not trigger resignation messages");
     }
 
     @Test
@@ -490,6 +548,142 @@ class GameInstanceTest {
         // Only white has connected; game is null. Disconnecting must not throw.
         gameInstance.connectPlayer(whiteHandler, "Alice");
         assertDoesNotThrow(() -> gameInstance.disconnectPlayer(whiteHandler), "disconnectPlayer() when game is null must not throw");
+    }
+
+    // ========================================================================
+    // reconnectPlayer: resumes a paused game
+    // ========================================================================
+
+    @Test
+    void reconnect_resumesGame_afterDisconnect() {
+        connectBothPlayers();
+
+        // White disconnects — game goes PAUSED
+        gameInstance.disconnectPlayer(whiteHandler);
+
+        // White reconnects
+        TrackingClientHandler reconnectedWhite = new TrackingClientHandler(server);
+        PlayerSession session = new PlayerSession();
+        session.setUserId(1);
+        session.setUsername("Alice");
+        gameInstance.reconnectPlayer(reconnectedWhite, session);
+
+        // Both players should receive RUNNING notification
+        assertTrue(reconnectedWhite.hasGameStatusWithState("RUNNING"),
+                "Reconnecting player must receive GAME_STATUS gameState=RUNNING");
+    }
+
+    @Test
+    void reconnect_resumesGame_notifiesRemainingPlayer() {
+        connectBothPlayers();
+
+        // White disconnects
+        gameInstance.disconnectPlayer(whiteHandler);
+        blackHandler.clearMessages();
+
+        // White reconnects
+        TrackingClientHandler reconnectedWhite = new TrackingClientHandler(server);
+        PlayerSession session = new PlayerSession();
+        session.setUserId(1);
+        session.setUsername("Alice");
+        gameInstance.reconnectPlayer(reconnectedWhite, session);
+
+        // Black (remaining player) must also receive RUNNING notification
+        assertTrue(blackHandler.hasGameStatusWithState("RUNNING"),
+                "Remaining player must receive GAME_STATUS gameState=RUNNING after reconnect");
+    }
+
+    // ========================================================================
+    // Mutual save-for-later
+    // ========================================================================
+
+    @Test
+    void mutualSave_bothPlayersReceiveSaveAccepted() {
+        connectBothPlayers();
+        whiteHandler.clearMessages();
+        blackHandler.clearMessages();
+
+        // Both players request save
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.SAVE_GAME, ""));
+        gameInstance.processMessage(blackHandler, new Message(MessageType.SAVE_GAME, ""));
+
+        assertTrue(whiteHandler.hasMessageOfType(MessageType.SAVE_ACCEPTED),
+                "White must receive SAVE_ACCEPTED when both players agree to save");
+        assertTrue(blackHandler.hasMessageOfType(MessageType.SAVE_ACCEPTED),
+                "Black must receive SAVE_ACCEPTED when both players agree to save");
+    }
+
+    @Test
+    void mutualSave_onlyOnePlayer_doesNotSavePrematuraly() {
+        connectBothPlayers();
+        whiteHandler.clearMessages();
+        blackHandler.clearMessages();
+
+        // Only white requests save
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.SAVE_GAME, ""));
+
+        assertFalse(whiteHandler.hasMessageOfType(MessageType.SAVE_ACCEPTED),
+                "SAVE_ACCEPTED must not be sent before both players have agreed");
+    }
+
+    @Test
+    void mutualSave_opponentReceivesSaveGameForward() {
+        connectBothPlayers();
+        whiteHandler.clearMessages();
+        blackHandler.clearMessages();
+
+        // White requests save — black should receive a SAVE_GAME forwarded
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.SAVE_GAME, ""));
+
+        assertTrue(blackHandler.hasMessageOfType(MessageType.SAVE_GAME),
+                "When white requests save, black must receive a SAVE_GAME message forwarded");
+    }
+
+    // ========================================================================
+    // Chat relay
+    // ========================================================================
+
+    @Test
+    void chat_relayedToBothPlayers() {
+        connectBothPlayers();
+        whiteHandler.clearMessages();
+        blackHandler.clearMessages();
+
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.CHAT, "Hello!"));
+
+        assertTrue(whiteHandler.hasMessageOfType(MessageType.CHAT),
+                "Sender must receive the relayed CHAT message");
+        assertTrue(blackHandler.hasMessageOfType(MessageType.CHAT),
+                "Opponent must receive the relayed CHAT message");
+    }
+
+    @Test
+    void chat_relayedMessage_hasFromPrefix() {
+        connectBothPlayers();
+        blackHandler.clearMessages();
+
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.CHAT, "Hello!"));
+
+        assertTrue(blackHandler.getSentMessages().stream()
+                        .filter(m -> m.type() == MessageType.CHAT)
+                        .anyMatch(m -> m.content().contains("from=")),
+                "Relayed CHAT message must contain from= prefix");
+    }
+
+    @Test
+    void chat_newlinesStripped() {
+        connectBothPlayers();
+        blackHandler.clearMessages();
+
+        // A chat message containing newlines should not break the protocol
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.CHAT, "line1\nline2"));
+
+        assertTrue(blackHandler.hasMessageOfType(MessageType.CHAT),
+                "Chat with newlines must still be relayed without crashing");
+        assertTrue(blackHandler.getSentMessages().stream()
+                        .filter(m -> m.type() == MessageType.CHAT)
+                        .noneMatch(m -> m.content().contains("\n")),
+                "Relayed CHAT message must not contain newlines");
     }
 
     // ========================================================================
@@ -565,5 +759,88 @@ class GameInstanceTest {
         assertNotNull(game, "Game must be created after both players connect");
         assertNotNull(game.getRuleset(), "Game ruleset must not be null");
         assertEquals(GameState.RUNNING, game.getState(), "Game must be RUNNING after both players connect");
+    }
+
+    // ========================================================================
+    // Persistence tests (require in-memory SQLite)
+    // ========================================================================
+
+    @Test
+    void disconnect_withRepo_updatesDbStateToPaused() throws Exception {
+        GameRepository repo = buildInMemoryRepo();
+        // Create a game row first so we can check it
+        int dbGameId = repo.createGame(1, 2, "STANDARD", -1);
+        GameInstance gi = new GameInstance(1, RulesetOptions.STANDARD, repo, null, 30, dbGameId);
+        TrackingClientHandler white = new TrackingClientHandler(server);
+        TrackingClientHandler black = new TrackingClientHandler(server);
+
+        PlayerSession wSession = new PlayerSession();
+        wSession.setUserId(1);
+        wSession.setUsername("Alice");
+
+        PlayerSession bSession = new PlayerSession();
+        bSession.setUserId(2);
+        bSession.setUsername("Bob");
+
+        gi.connectPlayer(white, wSession);
+        gi.connectPlayer(black, bSession);
+        gi.disconnectPlayer(white);
+
+        var gameRecord = repo.findGameById(dbGameId).orElseThrow();
+        assertEquals("PAUSED", gameRecord.state(), "DB state must be PAUSED after disconnect");
+    }
+
+    @Test
+    void reconnect_withRepo_clearsDbDisconnect() throws Exception {
+        GameRepository repo = buildInMemoryRepo();
+        int dbGameId = repo.createGame(1, 2, "STANDARD", -1);
+        GameInstance gi = new GameInstance(1, RulesetOptions.STANDARD, repo, null, 30, dbGameId);
+        TrackingClientHandler white = new TrackingClientHandler(server);
+        TrackingClientHandler black = new TrackingClientHandler(server);
+
+        PlayerSession wSession = new PlayerSession();
+        wSession.setUserId(1);
+        wSession.setUsername("Alice");
+
+        PlayerSession bSession = new PlayerSession();
+        bSession.setUserId(2);
+        bSession.setUsername("Bob");
+
+        gi.connectPlayer(white, wSession);
+        gi.connectPlayer(black, bSession);
+        gi.disconnectPlayer(white);
+
+        // Reconnect
+        TrackingClientHandler reconnectedWhite = new TrackingClientHandler(server);
+        gi.reconnectPlayer(reconnectedWhite, wSession);
+
+        var gameRecord = repo.findGameById(dbGameId).orElseThrow();
+        assertNull(gameRecord.disconnectUserId(), "disconnect_user_id must be NULL after reconnect");
+    }
+
+    @Test
+    void mutualSave_withRepo_updatesDbStateToSaved() throws Exception {
+        GameRepository repo = buildInMemoryRepo();
+        int dbGameId = repo.createGame(1, 2, "STANDARD", -1);
+        GameInstance gi = new GameInstance(1, RulesetOptions.STANDARD, repo, null, 30, dbGameId);
+        TrackingClientHandler white = new TrackingClientHandler(server);
+        TrackingClientHandler black = new TrackingClientHandler(server);
+
+        PlayerSession wSession = new PlayerSession();
+        wSession.setUserId(1);
+        wSession.setUsername("Alice");
+
+        PlayerSession bSession = new PlayerSession();
+        bSession.setUserId(2);
+        bSession.setUsername("Bob");
+
+        gi.connectPlayer(white, wSession);
+        gi.connectPlayer(black, bSession);
+
+        gi.processMessage(white, new Message(MessageType.SAVE_GAME, ""));
+        gi.processMessage(black, new Message(MessageType.SAVE_GAME, ""));
+
+        var gameRecord = repo.findGameById(dbGameId).orElseThrow();
+        assertEquals("SAVED", gameRecord.state(), "DB state must be SAVED after mutual save");
     }
 }
