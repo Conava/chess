@@ -11,6 +11,8 @@
     <left>
         <VBox fx:id="leftPanel" spacing="12" BorderPane.alignment="CENTER">
             <padding><Insets top="20" right="12" bottom="20" left="16"/></padding>
+            <Label fx:id="gameLabelDisplay" styleClass="section-heading"
+                   wrapText="true" visible="false" managed="false"/>
             <VBox styleClass="card" alignment="TOP_CENTER" spacing="8">
                 <padding><Insets top="16" right="12" bottom="16" left="12"/></padding>
                 <Label fx:id="blackName"   styleClass="player-name" text="Black"/>
