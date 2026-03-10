@@ -5,8 +5,11 @@ import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.io.Message;
 import io.github.conava.chess.core.data.io.MessageParser;
+import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.data.player.PlayerColor;
+import io.github.conava.chess.core.logic.ruleset.Ruleset;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
+import io.github.conava.chess.core.logic.ruleset.chess960Ruleset.Chess960Ruleset;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.moves.CastleMove;
 import io.github.conava.chess.core.logic.moves.Move;
@@ -26,6 +29,11 @@ import java.util.logging.Logger;
  * It handles communication with the server, game state management, and player interactions.
  * The networking connection is provided externally via the {@link ServerConnection} interface,
  * keeping I/O out of the core module.
+ *
+ * <p>Board initialization is deferred: the board and ruleset are {@code null} after construction
+ * and are set only when the server's first response ({@code JOIN_CODE} for the creator,
+ * {@code SUCCESS} for the joiner) is received. This ensures the server is always the authority
+ * for game parameters (including the Chess 960 position index).
  */
 public class OnlineGame extends Game {
     private static final Logger LOGGER = Logger.getLogger(OnlineGame.class.getName());
@@ -48,7 +56,10 @@ public class OnlineGame extends Game {
     /**
      * Private constructor — use {@link #create} to obtain an instance.
      *
-     * @param selectedRuleset    The selected ruleset for the game.
+     * <p>The board is NOT initialized here. It will be initialized when the server's first
+     * response ({@code JOIN_CODE} or {@code SUCCESS}) is received.
+     *
+     * @param selectedRuleset    The selected ruleset for the game (used as fallback hint).
      * @param playerWhiteName    The name of the white player.
      * @param playerBlackName    The name of the black player.
      * @param onlineGameSettings The settings for the online game, including join code.
@@ -59,7 +70,7 @@ public class OnlineGame extends Game {
                        String playerBlackName,
                        Map<String, String> onlineGameSettings,
                        ServerConnection connection) {
-        super(selectedRuleset, playerWhiteName, playerBlackName);
+        super(selectedRuleset, playerWhiteName, playerBlackName, true); // deferBoardInit=true
         this.gameState = GameState.NO_GAME;
         this.joinCode = onlineGameSettings.get("joinCode");
         this.selectedRuleset = selectedRuleset;
@@ -98,6 +109,9 @@ public class OnlineGame extends Game {
      * </ol>
      * It is intentionally not called from the constructor — see {@link #create} for the
      * two-phase construction contract.
+     *
+     * <p>The ruleset is sent using the enum constant name (e.g. {@code STANDARD}, {@code CHESS960})
+     * so the server can parse it with {@code RulesetOptions.valueOf(...)}.
      */
     public void connectToServerGame() {
         Message connectMessage;
@@ -106,7 +120,8 @@ public class OnlineGame extends Game {
             localPlayerColor = PlayerColor.BLACK;
             gameState = GameState.RUNNING;
         } else {
-            connectMessage = new Message(MessageType.CREATE_GAME, "ruleset=" + selectedRuleset);
+            // Use enum name (STANDARD / CHESS960), not toString(), so server can valueOf() it.
+            connectMessage = new Message(MessageType.CREATE_GAME, "ruleset=" + selectedRuleset.name());
             localPlayerColor = PlayerColor.WHITE;
             gameState = GameState.WAITING_FOR_PLAYER;
         }
@@ -144,17 +159,60 @@ public class OnlineGame extends Game {
     }
 
     /**
+     * Builds the appropriate {@link Ruleset} from server-provided parameters.
+     *
+     * <p>If the message carries {@code ruleset=CHESS960} and a {@code position} parameter,
+     * a {@link Chess960Ruleset} is constructed with the given Scharnagl index. Otherwise,
+     * the locally-selected ruleset is used as a fallback (typically {@code StandardChessRuleset}).
+     *
+     * @param message The server message containing optional {@code ruleset} and {@code position} keys.
+     * @return The constructed {@link Ruleset}.
+     */
+    private Ruleset buildRulesetFromServerParams(Message message) {
+        String rulesetParam = message.getParameterValue("ruleset");
+        String positionParam = message.getParameterValue("position");
+        if ("CHESS960".equals(rulesetParam) && positionParam != null) {
+            try {
+                int index = Integer.parseInt(positionParam);
+                return new Chess960Ruleset(index);
+            } catch (NumberFormatException e) {
+                LOGGER.log(Level.WARNING, "Invalid position index in server message: " + positionParam);
+            }
+        }
+        return createRulesetFromSelected();
+    }
+
+    /**
+     * Creates a {@link Ruleset} from the locally-selected {@link RulesetOptions}.
+     * Used as a fallback when the server message carries no ruleset parameters.
+     */
+    private Ruleset createRulesetFromSelected() {
+        return createRuleset(selectedRuleset);
+    }
+
+    /**
      * Handles the JOIN_CODE message type.
+     *
+     * <p>For the game creator, this message is the server's first response. It carries the
+     * join code and, for Chess 960 games, also {@code position=N} and {@code ruleset=CHESS960}.
+     * Board initialization happens here — after this call the game is ready for play.
      *
      * @param message The message containing the join code.
      */
     private void handleJoinCode(Message message) {
         joinCode = message.getParameterValue(JOIN_CODE_PARAM);
         LOGGER.info("Join code received: " + joinCode + " - Please share this code with your friend to join the game");
+        if (board == null) {
+            Ruleset ruleset = buildRulesetFromServerParams(message);
+            initializeBoard(ruleset);
+        }
     }
 
     /**
      * Handles the MOVE message type.
+     *
+     * <p>Uses {@link Ruleset#deserializeMove} so that Chess 960 rulesets can reconstruct
+     * {@link CastleMove} instances with the correct rook-origin and king-dest files.
      *
      * @param message The message containing the move information.
      */
@@ -162,10 +220,16 @@ public class OnlineGame extends Game {
         if (Objects.equals(message.getParameterValue(PLAYER_COLOR_PARAM), localPlayerColor.toString())) {
             return;
         }
+        if (board == null) {
+            LOGGER.log(Level.WARNING, "Received MOVE before board was initialized; ignoring.");
+            return;
+        }
 
         try {
-            Move move = Move.fromString(Objects.requireNonNull(message.getParameterValue(MOVE_PARAM)),
-                    Objects.equals(message.getParameterValue(PLAYER_COLOR_PARAM), "WHITE") ? player0 : player1);
+            String wireString = Objects.requireNonNull(message.getParameterValue(MOVE_PARAM));
+            Player player =
+                    Objects.equals(message.getParameterValue(PLAYER_COLOR_PARAM), "WHITE") ? player0 : player1;
+            Move move = ruleset.deserializeMove(wireString, board, player);
             executeMoveFromRemote(move);
         } catch (IllegalMoveException e) {
             LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
@@ -188,12 +252,22 @@ public class OnlineGame extends Game {
     /**
      * Handles the SUCCESS message type.
      *
+     * <p>For the game joiner, a {@code SUCCESS player=black} message is the server's first
+     * response. It may also carry {@code position=N ruleset=CHESS960} for Chess 960 games.
+     * Board initialization happens here when the {@code player=black} parameter is present
+     * and the board has not yet been initialized.
+     *
      * @param message The message indicating success.
      */
     private void handleSuccess(Message message) {
         LOGGER.log(Level.INFO, "Success: " + message);
         if (Objects.equals(message.getParameterValue(MOVE_PARAM), "accepted")) {
             LOGGER.log(Level.INFO, "Move accepted by server");
+        }
+        // Initialize board for the joiner when SUCCESS player=black arrives.
+        if ("black".equals(message.getParameterValue("player")) && board == null) {
+            Ruleset ruleset = buildRulesetFromServerParams(message);
+            initializeBoard(ruleset);
         }
     }
 
@@ -293,6 +367,10 @@ public class OnlineGame extends Game {
      * {@link PromotionMove}, or plain {@link Move}) before delegating to
      * {@link Game#executeMove}.
      *
+     * <p>For {@link CastleMove} instances, the {@code rookOriginFile} and {@code kingDestFile}
+     * fields are preserved from the deserialized move — these carry Chess 960 rook/king
+     * destination information that must not be discarded.
+     *
      * @param move The move received from the server (with fresh, non-canonical squares).
      * @throws IllegalMoveException If the move is illegal according to the current board state.
      */
@@ -300,8 +378,8 @@ public class OnlineGame extends Game {
         Square boardStart = toBoardSquare(move.getStart());
         Square boardEnd   = toBoardSquare(move.getEnd());
         Move canonical;
-        if (move instanceof CastleMove) {
-            canonical = new CastleMove(boardStart, boardEnd);
+        if (move instanceof CastleMove cm) {
+            canonical = new CastleMove(boardStart, boardEnd, cm.getRookOriginFile(), cm.getKingDestFile());
         } else if (move instanceof PromotionMove pm) {
             canonical = new PromotionMove(boardStart, boardEnd, pm.getTargetPiece());
         } else {
@@ -313,12 +391,16 @@ public class OnlineGame extends Game {
     /**
      * Gets the legal squares for a given position.
      * Does not return the legal square for the online opponent if clicked on their piece.
+     * Returns an empty list if the board has not yet been initialized (deferred-init window).
      *
      * @param position The position to get legal squares for.
      * @return A list of legal squares.
      */
     @Override
     public List<Square> getLegalSquares(Square position) {
+        if (board == null) {
+            return new ArrayList<>();
+        }
         if (isLocalPlayerPiece(position)) {
             return super.getLegalSquares(position);
         }
@@ -332,6 +414,9 @@ public class OnlineGame extends Game {
      * @return true if the piece belongs to the local player, false otherwise.
      */
     private boolean isLocalPlayerPiece(Square position) {
+        if (board == null) {
+            return false;
+        }
         Piece p = board.getSquare(position.getY(), position.getX()).getPiece();
         return p != null && p.getPlayer().color() == localPlayerColor;
     }
@@ -350,9 +435,11 @@ public class OnlineGame extends Game {
      * <p>Saves the board, move list, game state, halfmove clock, and position history.
      * The position history map is deep-copied so that subsequent mutations to the live map
      * cannot corrupt the backup.
+     * If the board has not yet been initialized (deferred-init window), the board backup
+     * is set to {@code null}.
      */
     public void backupGameState() {
-        this.backupBoard = this.getBoard().getCopy();
+        this.backupBoard = (board != null) ? this.getBoard().getCopy() : null;
         this.backupMoves = new ArrayList<>(this.moves);
         this.backupGameState = this.getState();
         this.backupHalfMoveClock = this.halfMoveClock;
@@ -366,7 +453,7 @@ public class OnlineGame extends Game {
      * to the values captured by the most recent call to {@link #backupGameState()}.
      */
     public void restoreGameState() {
-        this.board = this.backupBoard.getCopy();
+        this.board = (backupBoard != null) ? this.backupBoard.getCopy() : null;
         this.moves = new ArrayList<>(this.backupMoves);
         this.setGameState(this.backupGameState);
         this.halfMoveClock = this.backupHalfMoveClock;

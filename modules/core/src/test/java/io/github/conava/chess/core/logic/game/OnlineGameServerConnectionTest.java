@@ -6,6 +6,7 @@ import io.github.conava.chess.core.data.io.MessageType;
 import io.github.conava.chess.core.data.pieces.*;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
+import io.github.conava.chess.core.logic.ruleset.chess960Ruleset.Chess960Ruleset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -63,6 +64,8 @@ class OnlineGameServerConnectionTest {
         // No joinCode → creating a new game; local player is WHITE
         game = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), connection);
         game.connectToServerGame();
+        // Simulate server's JOIN_CODE response — this initializes the board (deferred init).
+        game.handleMessage(new Message(MessageType.JOIN_CODE, "joinCode=99"));
         // Simulate a second player joining so the game transitions to RUNNING
         game.setGameState(GameState.RUNNING);
     }
@@ -220,7 +223,10 @@ class OnlineGameServerConnectionTest {
 
     private static OnlineGame freshOnlineGame() {
         RecordingConnection conn = new RecordingConnection();
-        return OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
+        OnlineGame g = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
+        // Initialize the board so backup/restore tests have valid state.
+        g.handleMessage(new Message(MessageType.JOIN_CODE, "joinCode=1"));
+        return g;
     }
 
     @Test
@@ -279,6 +285,109 @@ class OnlineGameServerConnectionTest {
         Map<String, Integer> restored = readGameField(g, "positionHistory");
         assertEquals(1, restored.get("KEY_A"),
                 "The backed-up positionHistory must be a deep copy; mutating the live map after backup must not affect the restored value");
+    }
+
+    // ---- T10: deferred board initialization ----
+
+    @Test
+    void boardIsNullBeforeJoinCodeReceived() {
+        RecordingConnection conn = new RecordingConnection();
+        OnlineGame freshGame = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
+        freshGame.connectToServerGame();
+        // board must be null until JOIN_CODE arrives
+        assertNull(freshGame.getBoard(),
+                "OnlineGame board must be null after construction, before JOIN_CODE is received");
+    }
+
+    @Test
+    void handleJoinCode_chess960_initializesBoard() {
+        RecordingConnection conn = new RecordingConnection();
+        OnlineGame g = OnlineGame.create(RulesetOptions.CHESS960, "Alice", "Bob", new HashMap<>(), conn);
+        g.connectToServerGame();
+
+        assertNull(g.getBoard(), "Board must be null before JOIN_CODE");
+
+        g.handleMessage(new Message(MessageType.JOIN_CODE,
+                "joinCode=7 position=518 ruleset=CHESS960"));
+
+        assertNotNull(g.getBoard(), "Board must be initialized after JOIN_CODE with Chess960 params");
+        assertNotNull(g.getRuleset(), "Ruleset must be set after JOIN_CODE with Chess960 params");
+        assertInstanceOf(Chess960Ruleset.class, g.getRuleset(),
+                "Ruleset must be Chess960Ruleset when JOIN_CODE carries ruleset=CHESS960");
+        assertEquals(518, ((Chess960Ruleset) g.getRuleset()).getIndex(),
+                "Chess960Ruleset must use position index from JOIN_CODE message");
+    }
+
+    @Test
+    void handleJoinCode_standard_initializesStandardBoard() {
+        RecordingConnection conn = new RecordingConnection();
+        OnlineGame g = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
+        g.connectToServerGame();
+
+        assertNull(g.getBoard(), "Board must be null before JOIN_CODE");
+
+        g.handleMessage(new Message(MessageType.JOIN_CODE, "joinCode=3"));
+
+        assertNotNull(g.getBoard(), "Board must be initialized after JOIN_CODE (standard game)");
+    }
+
+    @Test
+    void handleSuccess_chess960_initializesBoard() {
+        RecordingConnection conn = new RecordingConnection();
+        Map<String, String> settings = new HashMap<>();
+        settings.put("joinCode", "ABC");
+        OnlineGame g = OnlineGame.create(RulesetOptions.CHESS960, "Alice", "Bob", settings, conn);
+        g.connectToServerGame();
+
+        assertNull(g.getBoard(), "Board must be null before SUCCESS");
+
+        g.handleMessage(new Message(MessageType.SUCCESS,
+                "player=black position=100 ruleset=CHESS960"));
+
+        assertNotNull(g.getBoard(), "Board must be initialized after SUCCESS with Chess960 params");
+        assertInstanceOf(Chess960Ruleset.class, g.getRuleset(),
+                "Ruleset must be Chess960Ruleset when SUCCESS carries ruleset=CHESS960");
+        assertEquals(100, ((Chess960Ruleset) g.getRuleset()).getIndex(),
+                "Chess960Ruleset must use position index from SUCCESS message");
+    }
+
+    @Test
+    void handleSuccess_standard_initializesStandardBoard() {
+        RecordingConnection conn = new RecordingConnection();
+        Map<String, String> settings = new HashMap<>();
+        settings.put("joinCode", "XYZ");
+        OnlineGame g = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", settings, conn);
+        g.connectToServerGame();
+
+        assertNull(g.getBoard(), "Board must be null before SUCCESS");
+
+        g.handleMessage(new Message(MessageType.SUCCESS, "player=black"));
+
+        assertNotNull(g.getBoard(), "Board must be initialized after SUCCESS (standard game)");
+    }
+
+    @Test
+    void getLegalSquares_returnsEmpty_whenBoardNull() {
+        RecordingConnection conn = new RecordingConnection();
+        OnlineGame g = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
+        // Do NOT call handleJoinCode — board remains null
+
+        List<Square> result = g.getLegalSquares(new Square(1, 4));
+        assertNotNull(result, "getLegalSquares must never return null");
+        assertTrue(result.isEmpty(),
+                "getLegalSquares must return an empty list when board is null (deferred init window)");
+    }
+
+    @Test
+    void connectToServerGame_sendsRulesetByEnumName() {
+        RecordingConnection conn = new RecordingConnection();
+        OnlineGame g = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
+        g.connectToServerGame();
+
+        boolean hasRulesetSTANDARD = conn.sentMessages.stream()
+                .anyMatch(m -> m.contains("ruleset=STANDARD"));
+        assertTrue(hasRulesetSTANDARD,
+                "CREATE_GAME must send ruleset=STANDARD (enum name), not the display name, so the server can parse it");
     }
 
     // ---- simple capturing observer ----
