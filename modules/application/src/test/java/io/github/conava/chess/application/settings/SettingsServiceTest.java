@@ -1,7 +1,6 @@
 package io.github.conava.chess.application.settings;
 
 import io.github.conava.chess.application.i18n.I18n;
-import io.github.conava.chess.application.theme.BoardTheme;
 import io.github.conava.chess.application.theme.Theme;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,17 +28,6 @@ class SettingsServiceTest {
     void saveAndLoadTheme() {
         service.saveTheme(Theme.LIGHT_ARCTIC);
         assertEquals(Theme.LIGHT_ARCTIC, service.loadTheme());
-    }
-
-    @Test
-    void defaultBoardThemeIsClassic() {
-        assertEquals(BoardTheme.CLASSIC, service.loadBoardTheme());
-    }
-
-    @Test
-    void saveAndLoadBoardTheme() {
-        service.saveBoardTheme(BoardTheme.WALNUT);
-        assertEquals(BoardTheme.WALNUT, service.loadBoardTheme());
     }
 
     @Test

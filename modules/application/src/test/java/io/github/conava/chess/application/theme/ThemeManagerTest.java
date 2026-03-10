@@ -13,25 +13,11 @@ class ThemeManagerTest {
     }
 
     @Test
-    void defaultBoardThemeIsClassic() {
-        ThemeManager tm = new ThemeManager();
-        assertEquals(BoardTheme.CLASSIC, tm.getBoardTheme());
-    }
-
-    @Test
     void setThemeUpdatesProperty() {
         ThemeManager tm = new ThemeManager();
         tm.setTheme(Theme.LIGHT_ARCTIC);
         assertEquals(Theme.LIGHT_ARCTIC, tm.getTheme());
         assertEquals(Theme.LIGHT_ARCTIC, tm.currentThemeProperty().get());
-    }
-
-    @Test
-    void setBoardThemeUpdatesProperty() {
-        ThemeManager tm = new ThemeManager();
-        tm.setBoardTheme(BoardTheme.OCEAN);
-        assertEquals(BoardTheme.OCEAN, tm.getBoardTheme());
-        assertEquals(BoardTheme.OCEAN, tm.currentBoardThemeProperty().get());
     }
 
     @Test
@@ -43,17 +29,15 @@ class ThemeManagerTest {
     }
 
     @Test
-    void boardThemeCssFileReturnsCorrectPath() {
-        assertEquals("/css/board/classic.css", BoardTheme.CLASSIC.cssFile());
-        assertEquals("/css/board/ocean.css", BoardTheme.OCEAN.cssFile());
-        assertEquals("/css/board/walnut.css", BoardTheme.WALNUT.cssFile());
-    }
-
-    @Test
     void allThemesHaveDisplayNames() {
         for (Theme t : Theme.values()) {
             assertNotNull(t.displayName());
             assertFalse(t.displayName().isBlank());
         }
     }
+
+    // NOTE: A test verifying ThemeManager applies exactly 2 stylesheets (not 3)
+    // is not feasible here without TestFX, as it requires a live JavaFX Scene.
+    // The applyTheme() method calls scene.getStylesheets().setAll(base, themeCss)
+    // with exactly 2 arguments, which can be verified by code inspection.
 }
