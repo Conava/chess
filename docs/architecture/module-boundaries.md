@@ -29,9 +29,10 @@ Permitted content:
 - Move types (`Move`, `CastleMove`, `PromotionMove`)
 - Game lifecycle (`Game`, `OfflineGame`, `OnlineGame`, `ServerGame`, `GameState`)
 - Observer contract (`GameObserver`, `Observable`)
-- Ruleset abstraction (`Ruleset`, `RulesetOptions`, `StandardChessRuleset`)
-- Per-piece move generators (`PossibleStandard*Moves`)
-- Starting position builder (`PossibleStandardPosition`)
+- Ruleset abstraction (`Ruleset`, `RulesetOptions`, `AbstractChessRuleset`,
+  `StandardChessRuleset`, `Chess960Ruleset`, `Chess960StartPosition`)
+- Per-piece move generators (`PossibleStandard*Moves`, `PossibleChess960KingMoves`)
+- Starting position builders (`PossibleStandardPosition`, `Chess960StartPosition`)
 - Wire protocol data types (`Message`, `MessageParser`, `MessageType`)
 - Exceptions (`IllegalMoveException`)
 - The `ServerConnection` interface (defined here so `OnlineGame` can call it without importing application classes)

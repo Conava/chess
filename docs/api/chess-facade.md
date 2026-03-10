@@ -238,6 +238,22 @@ after `WAITING_FOR_PLAYER` state is reached via the observer callback.
 
 ---
 
+### `getGameLabel`
+
+```java
+public String getGameLabel()
+```
+
+Returns a human-readable label for the active game's ruleset variant. For standard chess,
+returns `""` (empty string). For Chess960, returns `"Chess 960 -- Position N"` where N is
+the Scharnagl index (0--959). Returns `""` when no game is active.
+
+`GameController` uses this method after game start to show or hide a label in the game UI.
+When the returned string is empty, the label is hidden (`managed=false`, `visible=false`)
+so it takes no space.
+
+---
+
 ## Observer registration
 
 ```java
@@ -281,7 +297,7 @@ These types are defined in `core` and used as parameters or return values of the
 | `Player` | `core.data.player` | Immutable record: `name()`, `color()` (`PlayerColor.WHITE` / `BLACK`). |
 | `PlayerColor` | `core.data.player` | Enum: `WHITE`, `BLACK`. |
 | `GameState` | `core.logic.game` | Enum of 14 states. |
-| `RulesetOptions` | `core.logic.ruleset` | Enum: `STANDARD` (only value). |
+| `RulesetOptions` | `core.logic.ruleset` | Enum: `STANDARD`, `CHESS960`. `toString()` returns display name. |
 | `IllegalMoveException` | `core.exceptions` | Thrown by `movePiece` and `promoteMove`. |
 
 ---

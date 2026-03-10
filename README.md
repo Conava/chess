@@ -17,6 +17,7 @@ with hard dependency boundaries enforced by architecture law.
 
 - **Offline play** — two players on the same machine, no network needed
 - **Online multiplayer** — TCP-based lobby system; host or join a game by code
+- **Chess960 (Fischer Random Chess)** — randomized back-rank starting positions (960 variants), with full castling support and online play
 - **Headless / API mode** — run without a GUI for programmatic game control (`nogui` flag)
 - **Pawn promotion** — interactive piece-selection dialog mid-game
 - **Castling** — king-side and queen-side with move-history tracking
@@ -70,7 +71,7 @@ These rules are enforced across all modules — no exceptions without explicit a
 |---------|----------------|---------|
 | **Façade** | `Chess.java` | Single API surface for all game interaction |
 | **Observer** | `GameObserver` / `Observable` | Decoupled, push-based state propagation to UI |
-| **Strategy** | `Ruleset` interface + `StandardChessRuleset` | Pluggable rule variants without conditionals |
+| **Strategy** | `Ruleset` interface + `AbstractChessRuleset` + `StandardChessRuleset` / `Chess960Ruleset` | Pluggable rule variants without conditionals |
 | **Factory Method** | `Game.createGame()` / `Game.createServerGame()` | Enforces module boundaries; keeps constructors package-private |
 | **Template Method** | `Game.executeMove()` | Defines move sequence; `OnlineGame` overrides for network relay |
 
@@ -84,7 +85,7 @@ These rules are enforced across all modules — no exceptions without explicit a
 | `OnlineGame` | core | Concrete networked game; delegates I/O to `ServerConnection` |
 | `ServerGame` | core | Server-side game; created only via `Game.createServerGame()` |
 | `GameObserver` | core | Observer interface — `onGameStateChanged()` |
-| `Ruleset` | core | Strategy interface — `getLegalMoves()`, `getGameState()` |
+| `Ruleset` | core | Strategy interface — `getLegalMoves()`, `getLegalSquares()`, `isCheck()` |
 | `GameController` | application | FXML controller; implements `GameObserver`; renders board |
 | `ServerCommunicationTask` | application | `javafx.concurrent.Task`; implements `ServerConnection` |
 | `GameInstance` | server | Per-game session; holds two `ClientHandler` refs; implements `GameObserver` |
@@ -102,7 +103,7 @@ chess/
 │   │           ├── game/              # Game (abstract), OfflineGame, OnlineGame, ServerGame
 │   │           ├── moves/             # Move, CastleMove, PromotionMove
 │   │           ├── observer/          # GameObserver, Observable
-│   │           └── ruleset/           # Ruleset, StandardChessRuleset, per-piece generators
+│   │           └── ruleset/           # Ruleset, AbstractChessRuleset, Standard/Chess960 rulesets
 │   │
 │   ├── application/                   # JavaFX desktop client
 │   │   └── src/main/
@@ -296,8 +297,8 @@ Client A                    Server                   Client B
 
 | Message | Direction | Format |
 |---------|-----------|--------|
-| `CREATE_GAME` | Client → Server | `CREATE_GAME ruleset=STANDARD playerName=<name>` |
-| `JOIN_CODE` | Server → Client | `JOIN_CODE joinCode=<gameId>` |
+| `CREATE_GAME` | Client → Server | `CREATE_GAME ruleset=STANDARD playerName=<name>` (or `ruleset=CHESS960`) |
+| `JOIN_CODE` | Server → Client | `JOIN_CODE joinCode=<gameId>` (Chess960 adds `position=<0-959> ruleset=CHESS960`) |
 | `JOIN_GAME` | Client → Server | `JOIN_GAME gameId=<id> playerName=<name>` |
 | `MOVE` | Client ↔ Server | `MOVE <from>-<to>` (e.g. `MOVE e2-e4`) |
 | `GAME_STATUS` | Server → Client | `GAME_STATUS status=<GameState>` |
@@ -323,9 +324,9 @@ If a player disconnects, the server awards a resignation win to the remaining pl
 
 | Module | Test Classes | Focus |
 |--------|-------------|-------|
-| `core` | 15 | Board state, piece construction, move generation, observer notifications, ruleset (all 6 piece types), move parsing, game factory |
+| `core` | 26 | Board state, piece construction, move generation, observer notifications, standard and Chess960 rulesets, castling integration, deferred init, move parsing, game factory |
 | `application` | 6 | Chess façade, i18n, settings service, theme manager, background move task, scene manager |
-| `server` | 3 | Server startup, game instance lifecycle, client handler integration |
+| `server` | 4 | Server startup, game instance lifecycle (standard + Chess960), client handler integration |
 
 ### Run Tests
 
@@ -345,8 +346,11 @@ mvn -pl modules/core -Dtest=BoardTest test
 ### Notable Test Classes
 
 - `StandardChessRulesetTest` — validates legal move generation for all piece types
+- `Chess960CastlingIntegrationTest` — full-stack Chess960 castling (27 tests)
+- `Chess960StartPositionTest` — position generation constraints and Scharnagl round-trip
 - `ObserverNotificationTest` — verifies Observer pattern wiring
 - `GameFactoryTest` — verifies façade-enforced game creation constraints
+- `GameDeferredInitTest` — deferred board initialization for online games
 - `ClientHandlerIntegrationTest` — end-to-end server message flow
 
 ## Roadmap

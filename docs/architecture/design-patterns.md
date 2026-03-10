@@ -200,15 +200,35 @@ public interface Ruleset {
 private Ruleset createRuleset(RulesetOptions selectedRuleset) {
     return switch (selectedRuleset) {
         case STANDARD -> new StandardChessRuleset();
-        // add new cases here, never add if/else in Game itself
+        case CHESS960  -> new Chess960Ruleset();
     };
 }
 ```
 
 `RulesetOptions` is the enum that callers (setup controllers) use to choose a ruleset. It
-currently has one value: `STANDARD`.
+has two values: `STANDARD` and `CHESS960`. Each value carries a `displayName` field
+(e.g., `"Standard Chess"`, `"Chess 960"`) used by `toString()` for UI display. The
+`ComboBox` in setup controllers calls `toString()` automatically; server-side parsing
+uses `valueOf()` (the constant name), so display names do not affect the wire protocol.
 
-`StandardChessRuleset` delegates to six per-piece move generators:
+### Class hierarchy
+
+`AbstractChessRuleset` is a shared abstract base class extracted from the original
+`StandardChessRuleset`. It owns all shared chess logic: pseudo-legal move dispatch,
+check-legality filtering via deep-copy simulation, `isCheck`, and board validation.
+Protected template-method hooks allow subclasses to customize behavior:
+
+- `getPseudoLegalKingSquares` -- which king move generator to use
+- `isCastlingCandidate` -- how to detect a castling move in the legal-squares filter
+- `buildCastleMove` -- how to construct the `CastleMove` for castling
+
+`StandardChessRuleset` extends `AbstractChessRuleset` and overrides only `getStartBoard`.
+
+`Chess960Ruleset` extends `AbstractChessRuleset` and overrides `getStartBoard`,
+`getPseudoLegalKingSquares`, `getLegalSquares` (castling transit-square check),
+`getGameLabel`, and `deserializeMove`.
+
+Both `StandardChessRuleset` and `Chess960Ruleset` delegate to per-piece move generators:
 
 | Generator class | Piece |
 |----------------|-------|
@@ -218,15 +238,32 @@ currently has one value: `STANDARD`.
 | `PossibleStandardPawnMoves` | Pawn — forward + capture + two-step advance + en passant |
 | `PossibleStandardQueenMoves` | Queen — delegates to rook + bishop generators |
 | `PossibleStandardRookMoves` | Rook — horizontal/vertical rays |
+| `PossibleChess960KingMoves` | King — one-step + Chess960 castling (king-to-rook-file encoding) |
+
+### Chess960 as a concrete example
+
+Chess960 (Fischer Random Chess) is the second ruleset implementation and a real-world
+demonstration of the Strategy pattern. It differs from standard chess in two ways:
+
+1. The back-rank starting position is randomized (960 valid positions).
+2. Castling encodes the intent as "king moves to the rook's file" rather than "king moves
+   two squares", because the king and rooks can start on any file.
+
+`Chess960Ruleset` overrides just the methods that differ. All shared logic (pawn moves,
+en passant, check detection, stalemate, etc.) is inherited from `AbstractChessRuleset`.
+The `Ruleset` interface's default methods (`getGameLabel()`, `deserializeMove()`) provide
+extension points that Chess960 overrides without changing any consuming code.
 
 ### Adding a new ruleset
 
-1. Create a new class in `modules/core/src/main/java/.../logic/ruleset/` that implements
-   `Ruleset`.
-2. Add a new value to `RulesetOptions`.
+1. Create a new class that extends `AbstractChessRuleset` (if it shares standard chess
+   move logic) or implements `Ruleset` directly (if entirely different).
+2. Add a new value to `RulesetOptions` with a `displayName`.
 3. Add a `case` in `Game.createRuleset()` that returns an instance of the new class.
 4. The setup controllers in `application` already read `RulesetOptions` values and pass them
    through. No changes are needed in the UI layer.
+5. If the ruleset needs server-provided parameters for online play, use the deferred board
+   initialization pattern (`deferBoardInit=true` in the `Game` constructor) as Chess960 does.
 
 See [guides/adding-a-ruleset.md](../guides/adding-a-ruleset.md) for a step-by-step walkthrough.
 
@@ -235,9 +272,20 @@ See [guides/adding-a-ruleset.md](../guides/adding-a-ruleset.md) for a step-by-st
 - Architecture Law 5: "New rule variants must implement `Ruleset`, not branch inside `Game`
   or `Chess`."
 
+### `Ruleset` interface default methods
+
+The `Ruleset` interface provides default methods that rulesets can override:
+
+| Method | Default | Purpose |
+|--------|---------|---------|
+| `getGameLabel()` | `""` | Display label for the game (e.g., "Chess 960 -- Position 518") |
+| `deserializeMove(String, Board, Player)` | `Move.fromString(...)` | Reconstruct a `Move` from its wire string; Chess960 overrides for castling |
+| `isCastlingMove(Square, Square)` | `abs(deltaX) == 2` | Detect whether a king move is a castling attempt |
+| `buildCastleMove(Square, Square)` | `new CastleMove(start, end)` | Construct the appropriate `CastleMove` subtype |
+
 ### Check-legality filtering
 
-`StandardChessRuleset.getLegalSquares` filters pseudo-legal moves through a deep-copy simulation.
+`AbstractChessRuleset.getLegalSquares` filters pseudo-legal moves through a deep-copy simulation.
 For each candidate move, it creates a deep copy of the board via `Board.getCopy()`, applies the
 move on the copy, and calls `isCheck` to verify the player's king is not left in check. Moves
 that fail this test are excluded. Castling is further restricted: castling while in check and
@@ -253,10 +301,14 @@ O(moves x pieces) per turn. See ADR 0006 for the decision rationale.
 | File | What to read |
 |------|-------------|
 | `Ruleset.java` | The interface every ruleset must implement |
-| `RulesetOptions.java` | The enum of available rulesets |
-| `StandardChessRuleset.java` | The only current implementation |
-| `Game.java` — `createRuleset` | How the enum is mapped to an implementation |
-| `PossibleStandard*Moves.java` | Per-piece pseudo-legal move generation |
+| `RulesetOptions.java` | The enum of available rulesets (`STANDARD`, `CHESS960`) |
+| `AbstractChessRuleset.java` | Shared base class with template-method hooks |
+| `StandardChessRuleset.java` | Standard chess -- extends `AbstractChessRuleset`, overrides `getStartBoard` only |
+| `Chess960Ruleset.java` | Chess960 -- extends `AbstractChessRuleset`, overrides castling + start position |
+| `Chess960StartPosition.java` | Random position generator + Scharnagl index codec |
+| `Game.java` -- `createRuleset` | How the enum is mapped to an implementation |
+| `PossibleStandard*Moves.java` | Per-piece pseudo-legal move generation (shared) |
+| `PossibleChess960KingMoves.java` | Chess960-specific king move generation |
 
 ---
 

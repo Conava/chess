@@ -94,18 +94,38 @@ These apply to ALL tasks. Never violate without explicit human approval.
 
 ## Design Patterns in Use
 - Observer: `GameObserver` / `Observable` — all state change notifications
-- Strategy: `Ruleset` interface — rule variants
+- Strategy: `Ruleset` interface — rule variants (`StandardChessRuleset`, `Chess960Ruleset`)
+- Template Method: `AbstractChessRuleset` — shared chess logic with hooks for castling and king moves
 - Façade: `Chess.java` — single entry point for all game interaction
 
 ## Current State
 - Swing-to-JavaFX migration is complete. The `application` module uses JavaFX 21 exclusively.
 - JavaFX target: 21. FXML + Controller pattern. Entry point extends `Application`.
 - All JavaFX UI updates via `Platform.runLater()`. No direct UI mutation from observer callbacks.
+- **Chess960 (Fischer Random Chess) is implemented** as a second ruleset variant.
+  - `AbstractChessRuleset` is the shared base class; both `StandardChessRuleset` and
+    `Chess960Ruleset` extend it.
+  - `Chess960Ruleset` owns position generation (`Chess960StartPosition`), Chess960-specific
+    castling logic (`PossibleChess960KingMoves`), and move deserialization for castling moves.
+  - `CastleMove` carries optional `rookOriginFile`/`kingDestFile` fields for Chess960 castling.
+  - `Board.handleCastleMove` branches on these fields to handle both standard and Chess960 castling.
+  - The `Ruleset` interface has default methods: `getGameLabel()`, `deserializeMove()`,
+    `isCastlingMove()`, `buildCastleMove()`. Chess960 overrides what it needs.
+  - `RulesetOptions` has a `displayName` field; `toString()` returns it (e.g., `"Chess 960"`).
+  - Online Chess960: the server generates the position, sends the Scharnagl index (0-959) to
+    both clients via `JOIN_CODE` and `SUCCESS` messages. `OnlineGame` uses deferred board
+    initialization (`deferBoardInit=true`) and calls `initializeBoard(Ruleset)` once the server
+    provides the position. This pattern is generic and works for any future ruleset needing
+    server-provided parameters.
+  - `Game.getRuleset()` accessor exposes the active ruleset.
+  - `Chess.getGameLabel()` facade method delegates to `game.getRuleset().getGameLabel()`.
+  - `GameController` displays a position label (e.g., "Chess 960 -- Position 518") when present.
 - `StandardChessRuleset` enforces check legality via deep-copy simulation (see ADR 0006).
 - En passant, castling, checkmate, stalemate, 50-move rule, threefold repetition, and
   insufficient material detection are all implemented in `core`.
 - `Piece.copy()` and `Board.getCopy()` provide deep-copy support used by the check-legality filter.
-- Known performance debt: `hasAnyLegalMove` is O(moves x pieces) per turn due to deep-copy simulation.
+- Known performance debt: `hasAnyLegalMove` is O(moves x pieces) per turn due to deep-copy
+  simulation. Chess960 amplifies this for castling candidates (up to 6 deep copies per candidate).
 
 ## Conventions
 - No test code in `src/main`. No production logic in `src/test`.
