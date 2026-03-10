@@ -98,8 +98,9 @@ networking protocol logic -- those belong to `core` and `server` respectively.
   `chess.addObserver(this)` in `initialize()`. Observer callback dispatches all UI mutations
   via `Platform.runLater(this::update)`. Builds the 8x8 board as a `GridPane` of `StackPane`
   squares with responsive `NumberBinding`-based sizing. Handles square click logic, legal-move
-  dot marker animation, promotion detection, and delegates move execution to `ExecuteMove` via
-  a single-thread `ExecutorService`.
+  dot marker animation, promotion detection (passes `squareSize`-derived binding to
+  `PromotionController` for responsive sizing), and delegates move execution to `ExecuteMove`
+  via a single-thread `ExecutorService`.
 - **Collaborators:** `Chess`, `SceneManager`, `ThemeManager`, `I18n`, `ExecuteMove`,
   `PromotionController`, `WaitingController`, `GameEndController`.
 
@@ -127,9 +128,11 @@ networking protocol logic -- those belong to `core` and `server` respectively.
 - **Collaborators:** `I18n`, `SettingsService`.
 
 ### `io.github.conava.chess.application.controllers.PromotionController`
-- **Responsibility:** Pawn promotion overlay. Displays piece icons for the promoting player's
-  colour and captures the user's selection. The caller reads `getSelectedPiece()` after
-  dismissal.
+- **Responsibility:** Pawn promotion overlay. Accepts a `NumberBinding` (`cellSize`) from
+  `GameController` so that button and image sizes scale responsively with the board.
+  Buttons use the `promotion-piece-btn` style class. A 140ms fade+scale entry animation
+  plays when the overlay appears. Displays piece icons for the promoting player's colour
+  and captures the user's selection. The caller reads `getSelectedPiece()` after dismissal.
 - **Collaborators:** `I18n`.
 
 ### `io.github.conava.chess.application.controllers.SettingsController`
