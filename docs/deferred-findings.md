@@ -54,6 +54,12 @@ Resolved items are removed.
 **Description:** `ChessTest.java` has placeholder test methods with empty bodies. `SceneManagerTest.java` covers constructor injection and basic overlay guard behaviour. Full controller tests (board rendering, click logic, overlay flows) require a running JavaFX runtime (TestFX or Headless FX) and are not yet in place.
 **Fix:** Add TestFX-based integration tests for `GameController` click handling, promotion overlay flow, and game-end overlay.
 
+### A-004 · `SettingsService.loadTheme()` corrupt-value fallback branch is untested
+**Severity:** Low
+**File:** `modules/application/src/main/java/io/github/conava/chess/application/settings/SettingsService.java`
+**Description:** `loadTheme()` wraps `Theme.valueOf(...)` in a try/catch that returns `Theme.DARK_PURPLE` if the stored string does not match any enum constant. This fallback guard is unverified by any test. The logic is a one-liner catch block with low branching complexity, so the risk is minimal.
+**Fix:** Add a test `loadThemeReturnsDefaultForUnknownStoredValue` that writes a nonsense value to the Preferences node and asserts `loadTheme()` returns `Theme.DARK_PURPLE`.
+
 ### A-003 · `SceneManager.showDialog()` is deprecated
 **Severity:** Low
 **File:** `modules/application/src/main/java/io/github/conava/chess/application/navigation/SceneManager.java`

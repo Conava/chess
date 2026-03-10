@@ -73,7 +73,7 @@ The JavaFX desktop client. Owns the UI layer:
 - **Navigation** — `SceneManager` (scene lifecycle) and `OverlayManager` (modal overlays)
 - **Network** — `ServerCommunicationTask` implements core's `ServerConnection` interface to
   manage the TCP socket for online games
-- **Theming** — `ThemeManager`, `Theme` enum (4 UI themes), `BoardTheme` enum (3 board schemes)
+- **Theming** — `ThemeManager`, `Theme` enum (6 themes with integrated board colors)
 - **Localization** — `I18n` wraps `ResourceBundle`; English and German bundles
 - **Settings persistence** — `SettingsService` via `java.util.prefs.Preferences`
 - **Background tasks** — `ExecuteMove extends Task<Void>` keeps move execution off the FX thread
