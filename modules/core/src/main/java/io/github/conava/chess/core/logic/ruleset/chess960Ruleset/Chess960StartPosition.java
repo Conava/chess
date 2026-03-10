@@ -50,6 +50,51 @@ public class Chess960StartPosition {
     // -------------------------------------------------------------------------
 
     /**
+     * Generates a random Scharnagl index (0–959) using the five-step placement algorithm,
+     * without constructing any board, squares, or pieces.
+     *
+     * <p>This is a lightweight alternative to {@link #generate(Player, Player)} for callers
+     * that only need the index (e.g. the {@code Chess960Ruleset} no-arg constructor).
+     *
+     * @return a randomly chosen Scharnagl index in [0, 959]
+     */
+    public static int generateIndex() {
+        Random rng = new Random();
+
+        Piece[] dummy = new Piece[8];
+
+        // Step 1: dark-square bishop (even files: 0, 2, 4, 6)
+        int darkBishopFile = rng.nextInt(4) * 2;
+        dummy[darkBishopFile] = new Bishop(null);
+
+        // Step 2: light-square bishop (odd files: 1, 3, 5, 7)
+        int lightBishopFile = rng.nextInt(4) * 2 + 1;
+        dummy[lightBishopFile] = new Bishop(null);
+
+        List<Integer> remaining = new ArrayList<>();
+        for (int x = 0; x < 8; x++) {
+            if (dummy[x] == null) remaining.add(x);
+        }
+
+        // Step 3: queen
+        int queenPos = rng.nextInt(remaining.size());
+        dummy[remaining.remove(queenPos)] = new Queen(null);
+
+        // Step 4: two knights
+        int knight1Pos = rng.nextInt(remaining.size());
+        dummy[remaining.remove(knight1Pos)] = new Knight(null);
+        int knight2Pos = rng.nextInt(remaining.size());
+        dummy[remaining.remove(knight2Pos)] = new Knight(null);
+
+        // Step 5: Rook, King, Rook
+        dummy[remaining.get(0)] = new Rook(null);
+        dummy[remaining.get(1)] = new King(null);
+        dummy[remaining.get(2)] = new Rook(null);
+
+        return computeIndex(dummy);
+    }
+
+    /**
      * Generates a valid Chess960 starting position using constrained-random placement.
      *
      * <p>Algorithm (5 steps):

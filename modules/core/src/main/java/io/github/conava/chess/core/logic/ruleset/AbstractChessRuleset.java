@@ -135,6 +135,30 @@ public abstract class AbstractChessRuleset implements Ruleset {
     }
 
     /**
+     * Returns {@code true} if moving a piece from {@code from} to {@code to} does not leave
+     * the moving player's king in check.
+     *
+     * <p>Deep-copies the board, simulates a plain {@link Move} from {@code from} to {@code to},
+     * and calls {@link #isCheck} on the resulting position. This helper is used by both the
+     * standard and Chess960 legal-move filters for non-castling moves.
+     *
+     * @param board  the current board
+     * @param from   the source square
+     * @param to     the target square
+     * @param player the player whose king must not be in check after the move
+     * @param moves  move history (forwarded to {@link #isCheck} for en passant detection)
+     * @return {@code true} if the position after the move is not check for {@code player}
+     */
+    protected boolean isLegalAfterSimulation(Board board, Square from, Square to,
+                                              Player player, List<Move> moves) {
+        Board copy = board.getCopy();
+        Square copyFrom = copy.getSquare(from.getY(), from.getX());
+        Square copyTo   = copy.getSquare(to.getY(), to.getX());
+        copy.executeMove(new Move(copyFrom, copyTo));
+        return !isCheck(copy, player, moves);
+    }
+
+    /**
      * Dispatches pseudo-legal square generation to the appropriate per-piece move generator.
      *
      * <p>The King case delegates to {@link #getPseudoLegalKingSquares}, which subclasses

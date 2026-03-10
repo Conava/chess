@@ -50,21 +50,12 @@ public class Chess960Ruleset extends AbstractChessRuleset {
     /**
      * Constructs a {@code Chess960Ruleset} with a randomly generated starting position.
      *
-     * <p>A temporary {@link Player} pair is used to generate the back rank so the index
-     * can be computed via {@link Chess960StartPosition#computeIndex(Piece[])}. The actual
-     * board is rebuilt per {@link #getStartBoard(Player, Player)} call from the stored index,
-     * ensuring each call receives pieces owned by the correct players.
+     * <p>Delegates to {@link Chess960StartPosition#generateIndex()} which runs the five-step
+     * Scharnagl placement algorithm and returns only the integer index, without constructing
+     * any board squares or piece instances.
      */
     public Chess960Ruleset() {
-        // Generate with dummy players just to compute the back rank and derive the index.
-        Player dummy1 = new Player("_gen1", PlayerColor.WHITE);
-        Player dummy2 = new Player("_gen2", PlayerColor.BLACK);
-        Square[][] generatedBoard = Chess960StartPosition.generate(dummy1, dummy2);
-        Piece[] backRank = new Piece[8];
-        for (int x = 0; x < 8; x++) {
-            backRank[x] = generatedBoard[0][x].getPiece();
-        }
-        this.scharnaglIndex = Chess960StartPosition.computeIndex(backRank);
+        this.scharnaglIndex = Chess960StartPosition.generateIndex();
     }
 
     /**
@@ -148,7 +139,7 @@ public class Chess960Ruleset extends AbstractChessRuleset {
 
     /**
      * Constructs a Chess960-aware {@link CastleMove} with explicit rook-origin and king-dest
-     * file values so that {@code Board.handleCastleMove960} places pieces on the correct
+     * file values so that {@code Board.executeMove} places pieces on the correct
      * squares.
      *
      * @param source the king's current square
@@ -247,12 +238,8 @@ public class Chess960Ruleset extends AbstractChessRuleset {
                     legal.add(targetSquare);
                 }
             } else {
-                // Non-castling move: standard deep-copy check filter
-                Board finalBoardCopy = board.getCopy();
-                Square finalStart = finalBoardCopy.getSquare(square.getY(), square.getX());
-                Square finalEnd   = finalBoardCopy.getSquare(targetSquare.getY(), targetSquare.getX());
-                finalBoardCopy.executeMove(new Move(finalStart, finalEnd));
-                if (!isCheck(finalBoardCopy, movingPlayer, moves)) {
+                // Non-castling move: delegate to shared helper
+                if (isLegalAfterSimulation(board, square, targetSquare, movingPlayer, moves)) {
                     legal.add(targetSquare);
                 }
             }

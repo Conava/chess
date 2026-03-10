@@ -35,4 +35,9 @@ class RulesetOptionsTest {
     void values_hasTwoConstants() {
         assertEquals(2, RulesetOptions.values().length);
     }
+
+    @Test
+    void values_containsExactlyTwoOptions() {
+        assertEquals(2, RulesetOptions.values().length, "Exactly STANDARD and CHESS960 must exist");
+    }
 }

@@ -287,6 +287,25 @@ class OnlineGameServerConnectionTest {
                 "The backed-up positionHistory must be a deep copy; mutating the live map after backup must not affect the restored value");
     }
 
+    // ---- T12: NumberFormatException fallback for invalid position param ----
+
+    @Test
+    void handleJoinCode_invalidPositionParam_fallsBackGracefully() {
+        RecordingConnection conn = new RecordingConnection();
+        OnlineGame g = OnlineGame.create(RulesetOptions.STANDARD, "Alice", "Bob", new HashMap<>(), conn);
+        g.connectToServerGame();
+
+        // position=abc is non-numeric — NumberFormatException must be caught, and the game
+        // must fall back to the standard ruleset and still have a non-null board.
+        assertDoesNotThrow(() ->
+                g.handleMessage(new Message(MessageType.JOIN_CODE,
+                        "joinCode=5 position=abc ruleset=CHESS960")),
+                "A non-numeric position param must not propagate any exception");
+
+        assertNotNull(g.getBoard(),
+                "Board must be initialized even when position= is non-numeric (fallback to standard)");
+    }
+
     // ---- T10: deferred board initialization ----
 
     @Test
