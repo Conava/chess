@@ -308,6 +308,43 @@ class Chess960CastlingIntegrationTest {
     }
 
     // =========================================================================
+    // T08-3b: Queenside castle — king at file 1 (b1), rook at file 0 (a1).
+    //
+    // Previously avoided because the direction-mismatch bug in handleCastleMove960
+    // caused wrong queenside detection when kingDestFile (2) > kingStartFile (1).
+    // With the fix (using rookFile instead of kingDestFile), rookFile=0 < kingStartFile=1
+    // → queenside=true. King lands at c1 (x=2), rook at d1 (x=3).
+    // =========================================================================
+
+    @Test
+    void queensideCastle_kingAtFile1_rookAtFile0_kingLandsOnCFile_rookLandsOnDFile() {
+        // King at x=1 (b1), queenside rook at x=0 (a1). No pieces between them.
+        // rookOriginFile=0 < kingStartFile=1 → queenside direction correctly detected.
+        // After castle: king at x=2 (c1), rook at x=3 (d1).
+        Square[][] squares = emptyBoard();
+        King king = new King(white);
+        Rook queensideRook = new Rook(white);
+        King blackKing = new King(black);
+        squares[0][1].setPiece(king);
+        squares[0][0].setPiece(queensideRook);
+        squares[7][4].setPiece(blackKing);
+        Board board = new Board(squares);
+
+        board.executeMove(new CastleMove(
+                board.getSquare(0, 1), board.getSquare(0, 0),
+                /*rookOriginFile=*/ 0, /*kingDestFile=*/ 2));
+
+        assertInstanceOf(King.class, pieceAt(board, 0, 2),
+                "King must land on c1 (x=2) after queenside castle with king at b1 and rook at a1");
+        assertInstanceOf(Rook.class, pieceAt(board, 0, 3),
+                "Rook must land on d1 (x=3) after queenside castle with king at b1 and rook at a1");
+        assertNull(pieceAt(board, 0, 1),
+                "King's original square (x=1, b1) must be empty after castle");
+        assertNull(pieceAt(board, 0, 0),
+                "Rook's original square (x=0, a1) must be empty after castle");
+    }
+
+    // =========================================================================
     // T08-4: Castle blocked by a piece in the post-castle corridor.
     //
     // King at x=4, rooks at x=0 and x=7.
@@ -673,6 +710,39 @@ class Chess960CastlingIntegrationTest {
 
         assertFalse(legal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
                 "Castling must be illegal when the rook has already moved");
+    }
+
+    // =========================================================================
+    // T08-8b: Castling through check — king transit square is attacked.
+    //
+    // Plan scenario 5: king at file 4 (e1), rook at file 7 (h1).
+    // Enemy rook controls file 5 (f1) — one of the king's transit squares to g1.
+    // Castling must be illegal because the king would pass through f1 under attack.
+    // =========================================================================
+
+    @Test
+    void castling_illegal_whenKingTransitSquareIsAttacked_kingsideThroughFile5() {
+        // White king at (0,4), white rook at (0,7). Black rook at (1,5) controls f1 (x=5),
+        // which is the king's transit square on the way to g1 (x=6).
+        // The rook's square (x=7) must NOT appear in getLegalSquares.
+        Square[][] squares = emptyBoard();
+        King whiteKing = new King(white);
+        Rook whiteRook = new Rook(white);
+        Rook blackRook = new Rook(black);
+        King blackKing = new King(black);
+        squares[0][4].setPiece(whiteKing);
+        squares[0][7].setPiece(whiteRook);
+        squares[1][5].setPiece(blackRook); // controls f1 (file 5, rank 0)
+        squares[7][4].setPiece(blackKing);
+        Board board = new Board(squares);
+
+        Chess960Ruleset ruleset = new Chess960Ruleset(518);
+        List<Square> kingLegal = ruleset.getLegalSquares(
+                board.getSquare(0, 4), board, new ArrayList<>(), white, black);
+
+        assertFalse(kingLegal.stream().anyMatch(s -> s.getY() == 0 && s.getX() == 7),
+                "Kingside castling must be illegal when the king's transit square (f1, x=5) " +
+                "is controlled by an enemy rook — isKingTransitAttacked must fire");
     }
 
     @Test
