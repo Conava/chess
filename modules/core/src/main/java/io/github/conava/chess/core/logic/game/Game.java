@@ -59,7 +59,7 @@ public abstract class Game extends Observable {
     }
 
     private String getDefaultPlayerName(PlayerColor color) {
-        return color == PlayerColor.WHITE ? "Spieler 0 (Weiß)" : "Spieler 1 (Schwarz)";
+        return color == PlayerColor.WHITE ? "Player 1 (White)" : "Player 2 (Black)";
     }
 
     private Ruleset createRuleset(RulesetOptions selectedRuleset) {
