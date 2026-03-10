@@ -98,6 +98,11 @@ public class Board {
                 && startSquare.getX() != endSquare.getX()
                 && endSquare.getPiece() == null;
 
+        // Remove captured piece from the opponent's piece list before overwriting
+        if (endSquare.getPiece() != null) {
+            removePiece(endSquare);
+        }
+
         endSquare.setPiece(piece);
         removePiece(startSquare);
         startSquare.setPiece(null);
