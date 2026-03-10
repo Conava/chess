@@ -1,7 +1,6 @@
 package io.github.conava.chess.application.settings;
 
 import io.github.conava.chess.application.i18n.I18n;
-import io.github.conava.chess.application.theme.BoardTheme;
 import io.github.conava.chess.application.theme.Theme;
 
 import java.util.prefs.Preferences;
@@ -14,7 +13,6 @@ import java.util.prefs.Preferences;
 public class SettingsService {
 
     private static final String KEY_THEME = "theme";
-    private static final String KEY_BOARD_THEME = "boardTheme";
     private static final String KEY_LANGUAGE = "language";
     private static final String KEY_PLAYER_WHITE = "playerWhite";
     private static final String KEY_PLAYER_BLACK = "playerBlack";
@@ -44,18 +42,6 @@ public class SettingsService {
 
     public void saveTheme(Theme theme) {
         prefs.put(KEY_THEME, theme.name());
-    }
-
-    public BoardTheme loadBoardTheme() {
-        try {
-            return BoardTheme.valueOf(prefs.get(KEY_BOARD_THEME, BoardTheme.CLASSIC.name()));
-        } catch (IllegalArgumentException e) {
-            return BoardTheme.CLASSIC;
-        }
-    }
-
-    public void saveBoardTheme(BoardTheme theme) {
-        prefs.put(KEY_BOARD_THEME, theme.name());
     }
 
     public I18n.Language loadLanguage() {
