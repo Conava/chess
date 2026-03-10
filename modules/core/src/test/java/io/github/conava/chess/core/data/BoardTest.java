@@ -5,8 +5,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.player.PlayerColor;
+import io.github.conava.chess.core.data.pieces.King;
 import io.github.conava.chess.core.data.pieces.Knight;
 import io.github.conava.chess.core.data.pieces.Pawn;
+import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.data.player.Player;
 import io.github.conava.chess.core.logic.moves.Move;
 
@@ -37,6 +39,126 @@ public void setUp() {
 
     @Test
     void testBoard() {
+    }
+
+    // ---- Deep copy tests ----
+
+    private static Square[][] emptyBoard() {
+        Square[][] squares = new Square[8][8];
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                squares[y][x] = new Square(y, x);
+            }
+        }
+        return squares;
+    }
+
+    /**
+     * getCopy() must allocate new Square instances — not reuse the originals.
+     */
+    @Test
+    void getCopy_doesNotShareSquareInstances() {
+        Square[][] squares = emptyBoard();
+        squares[3][3].setPiece(new Knight(player1));
+        Board original = new Board(squares);
+
+        Board copy = original.getCopy();
+
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                assertNotSame(original.getSquare(y, x), copy.getSquare(y, x),
+                        "Square at [" + y + "][" + x + "] must be a new instance in the copy");
+            }
+        }
+    }
+
+    /**
+     * getCopy() must allocate new Piece instances — not share piece references.
+     */
+    @Test
+    void getCopy_doesNotSharePieceInstances() {
+        Square[][] squares = emptyBoard();
+        Knight knight = new Knight(player1);
+        squares[3][3].setPiece(knight);
+        Board original = new Board(squares);
+
+        Board copy = original.getCopy();
+
+        assertNotSame(knight, copy.getSquare(3, 3).getPiece(),
+                "Piece in the copy must be a distinct instance from the original");
+    }
+
+    /**
+     * Mutating a square's piece in the copy must not affect the original.
+     */
+    @Test
+    void getCopy_mutatingCopyDoesNotAffectOriginal() {
+        Square[][] squares = emptyBoard();
+        squares[3][3].setPiece(new Knight(player1));
+        Board original = new Board(squares);
+
+        Board copy = original.getCopy();
+        copy.getSquare(3, 3).setPiece(null);
+
+        assertNotNull(original.getSquare(3, 3).getPiece(),
+                "Original square must still have its piece after the copy's square is cleared");
+    }
+
+    /**
+     * King.hasMoved == true must be preserved in the copy.
+     */
+    @Test
+    void getCopy_preservesKingHasMoved() {
+        Player white = new Player("White", PlayerColor.WHITE);
+        Square[][] squares = emptyBoard();
+        King king = new King(white);
+        king.setHasMoved();
+        squares[0][4].setPiece(king);
+        Board original = new Board(squares);
+
+        Board copy = original.getCopy();
+
+        King copiedKing = (King) copy.getSquare(0, 4).getPiece();
+        assertTrue(copiedKing.getHasMoved(),
+                "King.hasMoved must be true in the copied board");
+    }
+
+    /**
+     * Rook.hasMoved == false must be preserved in the copy (rook not yet moved).
+     */
+    @Test
+    void getCopy_preservesRookHasNotMoved() {
+        Player white = new Player("White", PlayerColor.WHITE);
+        Square[][] squares = emptyBoard();
+        Rook rook = new Rook(white);
+        // hasMoved defaults to false — do not call setHasMoved
+        squares[0][0].setPiece(rook);
+        Board original = new Board(squares);
+
+        Board copy = original.getCopy();
+
+        Rook copiedRook = (Rook) copy.getSquare(0, 0).getPiece();
+        assertTrue(copiedRook.getHasNotMoved(),
+                "Rook.hasMoved must be false in the copied board when the original rook has not moved");
+    }
+
+    /**
+     * Rook.hasMoved == true must be preserved in the copy.
+     */
+    @Test
+    void getCopy_preservesRookHasMoved() {
+        Player white = new Player("White", PlayerColor.WHITE);
+        Square[][] squares = emptyBoard();
+        Rook rook = new Rook(white);
+        rook.setHasMoved();
+        squares[0][0].setPiece(rook);
+        Board original = new Board(squares);
+
+        Board copy = original.getCopy();
+
+        Rook copiedRook = (Rook) copy.getSquare(0, 0).getPiece();
+        assertFalse(copiedRook.getHasNotMoved(),
+                "Rook.hasMoved must be true in the copied board when the original rook has moved");
     }
 
     /**

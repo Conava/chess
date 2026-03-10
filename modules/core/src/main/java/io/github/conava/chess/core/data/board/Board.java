@@ -111,11 +111,30 @@ public class Board {
     }
 
     /**
-     * Returns a copy of the board.
-     * @return A new Board object that is a copy of the current board.
+     * Returns a deep copy of the board.
+     * <p>
+     * Every {@link io.github.conava.chess.core.data.Square} in the copy is a fresh
+     * instance; every {@link io.github.conava.chess.core.data.pieces.Piece} is
+     * produced by {@link io.github.conava.chess.core.data.pieces.Piece#copy()}, so
+     * stateful fields such as {@code King.hasMoved} and {@code Rook.hasMoved} are
+     * faithfully preserved. Mutating the copy's squares has no effect on the original.
+     *
+     * @return A new {@code Board} that is a structural deep copy of the current board.
      */
     public Board getCopy() {
-        return new Board(board);
+        int height = board.length;
+        int width = board[0].length;
+        Square[][] newSquares = new Square[height][width];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                newSquares[y][x] = new Square(y, x);
+                Piece piece = board[y][x].getPiece();
+                if (piece != null) {
+                    newSquares[y][x].setPiece(piece.copy());
+                }
+            }
+        }
+        return new Board(newSquares);
     }
 
     /**

@@ -174,7 +174,7 @@ public class PossibleStandardPawnMoves {
     private boolean isOnHomeSquare(PlayerColor color) {
         if (color.equals(PlayerColor.WHITE) && square.getY() == 1) {
             return true;
-        } else return color.equals(PlayerColor.BLACK) && square.getY() == 6;
+        } else return color.equals(PlayerColor.BLACK) && square.getY() == colCount - 2;
     }
 
     /**
