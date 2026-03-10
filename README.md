@@ -20,6 +20,9 @@ with hard dependency boundaries enforced by architecture law.
 - **Headless / API mode** — run without a GUI for programmatic game control (`nogui` flag)
 - **Pawn promotion** — interactive piece-selection dialog mid-game
 - **Castling** — king-side and queen-side with move-history tracking
+- **En passant** — automatic detection and capture
+- **Check-legality filtering** — prevents moving into check, castling through/out of check
+- **Game-end detection** — checkmate, stalemate, 50-move rule, threefold repetition, insufficient material
 - **Board themes** — Classic, Ocean, and Walnut color schemes
 - **UI themes** — Light and Dark modes with CSS-driven styling
 - **Localization** — English and German (`i18n` properties files)
@@ -349,12 +352,12 @@ mvn -pl modules/core -Dtest=BoardTest test
 ## Roadmap
 
 ### Chess Rules
-- [ ] En passant
-- [ ] Check-legality filtering (prevent moving into check)
-- [ ] Threefold repetition detection
-- [ ] Fifty-move rule enforcement
-- [ ] Insufficient material detection
-- [ ] Fix castling move validation
+- [x] En passant
+- [x] Check-legality filtering (prevent moving into check)
+- [x] Threefold repetition detection
+- [x] Fifty-move rule enforcement
+- [x] Insufficient material detection
+- [x] Fix castling move validation
 
 ### UI / UX
 - [ ] Keyboard shortcuts and accessibility
@@ -373,6 +376,22 @@ mvn -pl modules/core -Dtest=BoardTest test
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] Code coverage reporting
 - [ ] Docker image for server
+
+## Documentation
+
+Full technical documentation lives in the [`docs/`](docs/) folder:
+
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](docs/architecture/overview.md) | Module diagram, key classes, request flow traces |
+| [Module Boundaries](docs/architecture/module-boundaries.md) | Dependency rules, what belongs where, what is banned |
+| [Design Patterns](docs/architecture/design-patterns.md) | Façade, Observer, Strategy — how they are implemented |
+| [Chess Façade API](docs/api/chess-facade.md) | Complete reference for all `Chess` public methods |
+| [Getting Started](docs/guides/getting-started.md) | Prerequisites, build commands, first run |
+| [Contributing](docs/guides/contributing.md) | Branch strategy, conventions, PR checklist |
+| [Adding a Ruleset](docs/guides/adding-a-ruleset.md) | Step-by-step guide to implementing a new ruleset |
+| [Swing → JavaFX Migration](docs/migration/swing-to-javafx.md) | Migration status and architecture decisions |
+| [Architecture Decisions (ADRs)](docs/decisions/) | Why key decisions were made |
 
 ## Contributing
 
