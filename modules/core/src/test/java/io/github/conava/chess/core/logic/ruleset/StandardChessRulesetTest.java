@@ -291,26 +291,9 @@ class StandardChessRulesetTest {
         assertEquals(8, board.length);
     }
 
-    @Test
-    void getSudoLegalSquares() {
-        // covered by the specific tests above
-    }
-
-    @Test
-    void verifyMove() {
-    }
-
-    @Test
-    void testVerifyMove() {
-    }
-
-    @Test
-    void hasEnforcedMove() {
-    }
-
-    @Test
-    void isCheck() {
-    }
+    // getSudoLegalSquares — covered by the six getLegalSquares tests above (no stub needed).
+    // verifyMove / hasEnforcedMove — no corresponding method on StandardChessRuleset.
+    // isCheck — covered by castlingWhileInCheckIsExcluded and castlingThroughCheckIsExcluded.
 
     @Test
     void testGetLegalMoves() {
