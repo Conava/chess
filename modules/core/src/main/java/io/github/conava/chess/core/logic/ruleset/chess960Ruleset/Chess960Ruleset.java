@@ -213,7 +213,7 @@ public class Chess960Ruleset extends AbstractChessRuleset {
                                         Player player1, Player player2) {
         if (square.getPiece() == null) return Collections.emptyList();
 
-        List<Square> pseudoLegal = getSudoLegalSquares(square, board, moves);
+        List<Square> pseudoLegal = getPseudoLegalSquares(square, board, moves);
         List<Square> legal = new ArrayList<>();
 
         Player movingPlayer = square.getPiece().getPlayer();
@@ -288,14 +288,17 @@ public class Chess960Ruleset extends AbstractChessRuleset {
             // Find the king's actual file on this rank
             int kingFile = findKingFile(board, rank, player);
             if (kingFile < 0) {
-                // Fallback to Move.fromString if king not found (shouldn't happen in valid games)
-                return Move.fromString(wireString, player);
+                throw new IllegalStateException(
+                    "Chess960 castling deserialization failed: king or rook not found on rank "
+                        + rank + " for move " + wireString);
             }
 
             // Find the rook's file (kingside: look right; queenside: look left)
             int rookFile = findRookFile(board, rank, player, kingFile, kingside);
             if (rookFile < 0) {
-                return Move.fromString(wireString, player);
+                throw new IllegalStateException(
+                    "Chess960 castling deserialization failed: king or rook not found on rank "
+                        + rank + " for move " + wireString);
             }
 
             int kingDestFile = kingside ? 6 : 2;

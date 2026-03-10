@@ -328,17 +328,44 @@ class Chess960RulesetTest {
 
     @Test
     void getLegalSquares_includesRookSquare_forUnmovedRook() {
-        // Build a Chess960 position with king at file 4 and rooks at files 0 and 7
-        // but with clear corridors (no pieces between them except king and rooks)
-        Chess960Ruleset ruleset = new Chess960Ruleset(518);
-        Square[][] startSquares = ruleset.getStartBoard(white, black);
-        Board board = new Board(startSquares);
+        // Build a minimal Chess960 board: king at file 4, unmoved rooks at files 0 and 7,
+        // no pieces in between, and a lone black king somewhere far away so the board is valid.
+        Square[][] squares = buildEmptyBoard();
 
-        // The white king starts at file 4 (e1), row 0
-        // But in position 518, there are pieces between king and rooks
-        // Use a simpler test: ruleset dimension checks
-        assertEquals(8, ruleset.getWidth());
-        assertEquals(8, ruleset.getHeight());
+        King whiteKing = new King(white);
+        Rook queenRook = new Rook(white);
+        Rook kingRook  = new Rook(white);
+        King blackKing = new King(black);
+
+        squares[0][4].setPiece(whiteKing);  // white king at e1 (file 4)
+        squares[0][0].setPiece(queenRook);  // queenside rook at a1 (file 0)
+        squares[0][7].setPiece(kingRook);   // kingside rook at h1 (file 7)
+        squares[7][4].setPiece(blackKing);  // black king far away, no threat
+
+        Board board = new Board(squares);
+        Chess960Ruleset ruleset = new Chess960Ruleset(518);
+        List<Move> emptyHistory = new ArrayList<>();
+
+        List<Square> legalSquares = ruleset.getLegalSquares(
+                board.getSquare(0, 4), board, emptyHistory, white, black);
+
+        // The kingside rook square (file 7) must be a legal castling target
+        boolean containsKingsideRook = legalSquares.stream()
+                .anyMatch(s -> s.getY() == 0 && s.getX() == 7);
+        assertTrue(containsKingsideRook,
+                "Kingside rook square (file 7) must be in king's legal squares for castling");
+
+        // The queenside rook square (file 0) must also be a legal castling target
+        boolean containsQueensideRook = legalSquares.stream()
+                .anyMatch(s -> s.getY() == 0 && s.getX() == 0);
+        assertTrue(containsQueensideRook,
+                "Queenside rook square (file 0) must be in king's legal squares for castling");
+
+        // A square the king cannot move to (e.g. file 4 itself — the king's own square)
+        boolean containsOwnSquare = legalSquares.stream()
+                .anyMatch(s -> s.getY() == 0 && s.getX() == 4);
+        assertFalse(containsOwnSquare,
+                "The king's own square must not be in legal squares");
     }
 
     // -------------------------------------------------------------------------

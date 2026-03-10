@@ -30,4 +30,9 @@ class RulesetOptionsTest {
     void valueOf_chess960_resolvesByConstantName() {
         assertEquals(RulesetOptions.CHESS960, RulesetOptions.valueOf("CHESS960"));
     }
+
+    @Test
+    void values_hasTwoConstants() {
+        assertEquals(2, RulesetOptions.values().length);
+    }
 }
