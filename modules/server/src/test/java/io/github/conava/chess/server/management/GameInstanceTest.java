@@ -616,6 +616,27 @@ class GameInstanceTest {
     }
 
     @Test
+    void chess960GameInstance_whiteJoinCode_containsPositionAndRuleset() {
+        GameInstance chess960Instance = new GameInstance(7, RulesetOptions.CHESS960);
+        TrackingClientHandler chess960White = new TrackingClientHandler(server);
+
+        chess960Instance.connectPlayer(chess960White, "Alice");
+
+        // White's SUCCESS message must contain position=N and ruleset=CHESS960
+        String successContent = chess960White.getSentMessages().stream()
+                .filter(m -> m.type() == MessageType.SUCCESS)
+                .map(m -> m.content())
+                .findFirst()
+                .orElse("");
+        assertTrue(successContent.contains("player=white"),
+                "Chess960 white SUCCESS must contain player=white");
+        assertTrue(successContent.contains("ruleset=CHESS960"),
+                "Chess960 white SUCCESS must contain ruleset=CHESS960");
+        assertTrue(successContent.contains("position="),
+                "Chess960 white SUCCESS must contain position=<index>");
+    }
+
+    @Test
     void chess960GameInstance_startGame_createsGameWithCorrectRuleset() throws Exception {
         GameInstance chess960Instance = new GameInstance(6, RulesetOptions.CHESS960);
         TrackingClientHandler chess960White = new TrackingClientHandler(server);

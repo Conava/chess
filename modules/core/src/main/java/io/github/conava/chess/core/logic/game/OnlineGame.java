@@ -321,11 +321,19 @@ public class OnlineGame extends Game {
      * Executes a move by the local player and sends it to the server.
      * It backs up the current game state to quickly revert if the server rejects the move.
      *
+     * <p>Returns early with a warning if the board has not yet been initialized (the
+     * deferred-init window between construction and the server's first response), preventing
+     * a {@link NullPointerException} when board access is attempted.
+     *
      * @param move The move to be executed.
      * @throws IllegalMoveException If the move is illegal.
      */
     @Override
     protected void executeMove(Move move) throws IllegalMoveException {
+        if (board == null) {
+            LOGGER.log(Level.WARNING, "executeMove called before board was initialized; ignoring.");
+            return;
+        }
         if (isLocalPlayerTurn()) {
             backupGameState();
             super.executeMove(move);

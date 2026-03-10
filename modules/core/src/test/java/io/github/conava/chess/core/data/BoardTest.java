@@ -332,6 +332,39 @@ public void setUp() {
     }
 
     /**
+     * Chess960 kingside castle: king on e1 (x=4), rook on f1 (x=5).
+     * rookOriginFile=5, kingDestFile=6: king moves to g1 (x=6), rook moves to f1 (x=5).
+     * This tests the scenario where the rook's origin is adjacent to the king's destination.
+     */
+    @Test
+    void chess960KingsideCastle_rookOriginFile5_kingDestFile6() {
+        Player white = new Player("White", PlayerColor.WHITE);
+        Square[][] squares = emptyBoardStatic();
+
+        King king = new King(white);
+        Rook rook = new Rook(white);
+        squares[0][4].setPiece(king);   // king on e1 (x=4)
+        squares[0][5].setPiece(rook);   // rook on f1 (x=5)
+
+        Board board = new Board(squares);
+
+        // Chess960 castle: king "moves to" the rook's square (f1), rookOriginFile=5, kingDestFile=6
+        CastleMove castleMove = new CastleMove(squares[0][4], squares[0][5], 5, 6);
+        board.executeMove(castleMove);
+
+        // King must be on g1 (x=6)
+        assertNotNull(board.getSquare(0, 6).getPiece(), "King must be on g-file (x=6) after kingside castle");
+        assertInstanceOf(King.class, board.getSquare(0, 6).getPiece(), "Piece on g-file must be the King");
+
+        // Rook must be on f1 (x=5)
+        assertNotNull(board.getSquare(0, 5).getPiece(), "Rook must be on f-file (x=5) after kingside castle");
+        assertInstanceOf(Rook.class, board.getSquare(0, 5).getPiece(), "Piece on f-file must be the Rook");
+
+        // Original king square (e1) must be empty
+        assertNull(board.getSquare(0, 4).getPiece(), "e1 must be empty after king castled away");
+    }
+
+    /**
      * Standard castle move (rookOriginFile == -1) must still work correctly via the
      * existing hardcoded path — backward compatibility check.
      * King on e1 (x=4) castles kingside: king moves to g1 (x=6), rook from h1 (x=7) to f1 (x=5).

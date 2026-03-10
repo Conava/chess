@@ -93,7 +93,10 @@ public class GameInstance implements GameObserver {
         if (whitePlayerHandler == null) {
             whitePlayerHandler = clientHandler;
             whitePlayerName = (playerName != null && !playerName.isBlank()) ? playerName : "Player 1";
-            clientHandler.sendMessage(new Message(MessageType.SUCCESS, "player=white"));
+            String whiteSuccessContent = (positionIndex >= 0)
+                    ? "player=white position=" + positionIndex + " ruleset=CHESS960"
+                    : "player=white";
+            clientHandler.sendMessage(new Message(MessageType.SUCCESS, whiteSuccessContent));
         } else if (blackPlayerHandler == null) {
             blackPlayerHandler = clientHandler;
             blackPlayerName = (playerName != null && !playerName.isBlank()) ? playerName : "Player 2";

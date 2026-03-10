@@ -2,13 +2,9 @@ package io.github.conava.chess.core.logic.ruleset.possibleMoves;
 
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
-import io.github.conava.chess.core.data.pieces.King;
 import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.data.player.Player;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Pseudo-legal move generator for the king in Chess960 (Fischer Random Chess).
@@ -29,13 +25,11 @@ import java.util.List;
  *
  * <p>Check-through-transit-square filtering is handled by the ruleset layer
  * ({@code Chess960Ruleset.getLegalSquares}), not here.
+ *
+ * <p>Extends {@link AbstractKingMoveGenerator} which provides all shared logic:
+ * adjacency moves, king/rook hasMoved checks, and the directional castling walk.
  */
-public class PossibleChess960KingMoves {
-
-    private final Square square;
-    private final Board board;
-    private final int colCount;
-    private final int rowCount;
+public class PossibleChess960KingMoves extends AbstractKingMoveGenerator {
 
     /**
      * Constructs a new Chess960 king move generator.
@@ -44,120 +38,56 @@ public class PossibleChess960KingMoves {
      * @param board  The board state to scan.
      */
     public PossibleChess960KingMoves(Square square, Board board) {
-        this.square   = square;
-        this.board    = board;
-        this.colCount = board.getColCount();
-        this.rowCount = board.getRowCount();
+        super(square, board);
     }
 
     /**
-     * Returns all pseudo-legal squares the king can move to.
+     * After finding an unmoved rook with a clear king-to-rook path, also verifies that
+     * the post-castle destination corridor is clear.
      *
-     * <p>Includes one-step adjacency moves and, when castling conditions are met,
-     * the rook's square for each eligible rook on the same rank.
-     *
-     * @return list of candidate squares (not yet filtered for check)
+     * @param rank     the rank of both king and rook
+     * @param kingFile the king's file
+     * @param rookFile the rook's file
+     * @param kingside {@code true} for kingside, {@code false} for queenside
+     * @return {@code true} if the post-castle corridor is also clear
      */
-    public List<Square> getPossibleSquares() {
-        List<Square> possibleMoves = new ArrayList<>();
-        Player owner = square.isOccupiedBy();
-
-        // ---- one-step adjacency moves ----
-        int[] arrY = {-1, 0, +1, +1, +1, 0, -1, -1};
-        int[] arrX = {+1, +1, +1, 0, -1, -1, -1, 0};
-
-        for (int i = 0; i < 8; i++) {
-            int ny = square.getY() + arrY[i];
-            int nx = square.getX() + arrX[i];
-            if (isInBounds(ny, nx)) {
-                Square candidate = board.getSquare(ny, nx);
-                if (candidate.isEmpty() || !candidate.isOccupiedBy().equals(owner)) {
-                    possibleMoves.add(candidate);
-                }
-            }
-        }
-
-        // ---- Chess960 castling: add the rook's square, not g/c file ----
-        if (canCastleKingside()) {
-            Square rookSquare = findRookSquare(+1);
-            if (rookSquare != null) {
-                possibleMoves.add(rookSquare);
-            }
-        }
-        if (canCastleQueenside()) {
-            Square rookSquare = findRookSquare(-1);
-            if (rookSquare != null) {
-                possibleMoves.add(rookSquare);
-            }
-        }
-
-        return possibleMoves;
+    @Override
+    protected boolean onCastlingCandidateFound(int rank, int kingFile, int rookFile,
+                                               boolean kingside) {
+        return isCorridorClear(rank, kingFile, rookFile, kingside);
     }
 
     /**
-     * Returns true when kingside castling preconditions are met (king unmoved,
-     * unmoved friendly rook reachable to the right with no pieces between them).
-     */
-    private boolean canCastleKingside() {
-        if (square.getPiece() instanceof King king && king.getHasMoved()) {
-            return false;
-        }
-        return canCastleToward(+1);
-    }
-
-    /**
-     * Returns true when queenside castling preconditions are met (king unmoved,
-     * unmoved friendly rook reachable to the left with no pieces between them).
-     */
-    private boolean canCastleQueenside() {
-        if (square.getPiece() instanceof King king && king.getHasMoved()) {
-            return false;
-        }
-        return canCastleToward(-1);
-    }
-
-    /**
-     * Walks from the king's file toward the board edge in the given direction,
-     * checking whether castling is possible in that direction.
+     * Returns the rook's actual square as the castling target (Chess960 "king moves to
+     * rook" encoding). Walks in the given direction to find the first unmoved friendly
+     * rook — the same walk already performed by {@link #canCastleToward}, but returns
+     * the square rather than a boolean. This single scan replaces the previously
+     * redundant second walk in {@code findRookSquare}.
      *
-     * <p>Starting one step away from the king, each square is inspected:
-     * <ul>
-     *   <li>Empty square: continue walking.</li>
-     *   <li>Unmoved {@link Rook} owned by the same player as the king: castling
-     *       is possible only if the post-castle destination corridor is also clear
-     *       — verified by {@link #isCorridorClear}.</li>
-     *   <li>Any other piece (including a moved rook, an enemy rook, or any
-     *       non-rook piece): the path is blocked — return {@code false}.</li>
-     * </ul>
-     * If the board edge is reached without finding a rook, {@code false} is returned.
-     *
-     * @param direction {@code +1} for kingside (right) or {@code -1} for queenside (left)
-     * @return {@code true} if an unmoved friendly rook is found with no pieces between
-     *         it and the king and the post-castle destination corridor is also clear
+     * @param direction {@code +1} for kingside, {@code -1} for queenside
+     * @return the rook's square, or {@code null} if no eligible rook found
      */
-    private boolean canCastleToward(int direction) {
+    @Override
+    protected Square getCastlingTargetSquare(int direction) {
         Player owner = square.isOccupiedBy();
         int y = square.getY();
-        int kingFile = square.getX();
-        int x = kingFile + direction;
+        int x = square.getX() + direction;
 
         while (x >= 0 && x < rowCount) {
             Piece piece = board.getSquare(y, x).getPiece();
             if (piece == null) {
-                // empty square — keep walking
-            } else if (piece instanceof Rook rook
+                x += direction;
+                continue;
+            }
+            if (piece instanceof Rook rook
                     && rook.getHasNotMoved()
                     && piece.getPlayer().equals(owner)) {
-                // found an unmoved friendly rook with a clear king-to-rook path;
-                // also verify the post-castle destination corridor is clear
-                return isCorridorClear(y, kingFile, x, direction > 0);
-            } else {
-                // path is blocked
-                return false;
+                return board.getSquare(y, x);
             }
-            x += direction;
+            // blocked
+            return null;
         }
-        return false;
+        return null;
     }
 
     /**
@@ -205,45 +135,5 @@ public class PossibleChess960KingMoves {
             }
         }
         return true;
-    }
-
-    /**
-     * Returns the square of the first unmoved friendly rook found walking in
-     * {@code direction} from the king, or {@code null} if none is found.
-     *
-     * <p>This mirrors the walk in {@link #canCastleToward} but returns the
-     * actual rook square rather than a boolean, so the caller can add it
-     * directly to the candidate list.
-     *
-     * @param direction {@code +1} for kingside, {@code -1} for queenside
-     * @return the rook's square, or {@code null}
-     */
-    private Square findRookSquare(int direction) {
-        Player owner = square.isOccupiedBy();
-        int y = square.getY();
-        int x = square.getX() + direction;
-
-        while (x >= 0 && x < rowCount) {
-            Piece piece = board.getSquare(y, x).getPiece();
-            if (piece == null) {
-                x += direction;
-                continue;
-            }
-            if (piece instanceof Rook rook
-                    && rook.getHasNotMoved()
-                    && piece.getPlayer().equals(owner)) {
-                return board.getSquare(y, x);
-            }
-            // blocked
-            return null;
-        }
-        return null;
-    }
-
-    /**
-     * Returns {@code true} if the coordinates are within the board.
-     */
-    private boolean isInBounds(int y, int x) {
-        return y >= 0 && y < colCount && x >= 0 && x < rowCount;
     }
 }
