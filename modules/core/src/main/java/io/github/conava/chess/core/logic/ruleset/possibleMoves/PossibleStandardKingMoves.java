@@ -3,6 +3,7 @@ package io.github.conava.chess.core.logic.ruleset.possibleMoves;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.pieces.King;
+import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.pieces.Rook;
 import io.github.conava.chess.core.data.player.Player;
 
@@ -73,83 +74,72 @@ public class PossibleStandardKingMoves {
     }
 
     /**
-     * Checks if long castle is possible
+     * Checks if long castle (queenside) is possible.
+     * The king must not have moved. There must be an unmoved rook reachable
+     * by walking left from the king with no pieces between them.
      *
-     * @return ?isPossible
+     * @return true if queenside castling is possible
      */
     private boolean canCastleLong() {
         if (square.getPiece() instanceof King king && king.getHasMoved()) {
             return false;
-        } else return getRookLeft() != null && getRookLeft().getHasNotMoved() && getLeftEmpty();
+        }
+        return canCastleToward(-1);
     }
 
     /**
-     * Checks fi short castle is possible
+     * Checks if short castle (kingside) is possible.
+     * The king must not have moved. There must be an unmoved rook reachable
+     * by walking right from the king with no pieces between them.
      *
-     * @return ?isPossible
+     * @return true if kingside castling is possible
      */
     private boolean canCastleShort() {
         if (square.getPiece() instanceof King king && king.getHasMoved()) {
             return false;
-        } else return getRookRight() != null && getRookRight().getHasNotMoved() && getRightEmpty();
-    }
-
-    /**
-     * Finds a rook on the left is eligible for castling
-     *
-     * @return Rook that has not moved, null if none
-     */
-    private Rook getRookLeft() {
-        for (int x = 0; x <= rowCount / 2; x++) {
-            if (board.getSquare(square.getY(), x).getPiece() instanceof Rook rook && rook.getHasNotMoved()) {
-                return rook;
-            }
         }
-        return null;
+        return canCastleToward(+1);
     }
 
     /**
-     * Finds a rook on the right is eligible for castling
+     * Walks from the king's file toward the board edge in the given direction,
+     * checking whether castling is possible in that direction.
      *
-     * @return Rook that has not moved, null if none
+     * <p>Starting one step away from the king, each square is inspected:
+     * <ul>
+     *   <li>Empty square: continue walking.</li>
+     *   <li>Unmoved {@link Rook} owned by the same player as the king: castling is
+     *       possible — return {@code true}.</li>
+     *   <li>Any other piece (including a moved rook, an enemy rook, or any non-rook
+     *       piece): the path is blocked — return {@code false}.</li>
+     * </ul>
+     * If the board edge is reached without finding a rook, {@code false} is returned.
+     *
+     * @param direction {@code -1} for queenside (left) or {@code +1} for kingside (right)
+     * @return {@code true} if an unmoved friendly rook is found with no pieces between
+     *         it and the king
      */
-    private Rook getRookRight() {
-        for (int x = rowCount - 1; x >= rowCount / 2 + 1; x--) {
-            if (board.getSquare(square.getY(), x).getPiece() instanceof Rook rook && rook.getHasNotMoved()) {
-                return rook;
-            }
-        }
-        return null;
-    }
+    private boolean canCastleToward(int direction) {
+        Player owner = square.isOccupiedBy();
+        int y = square.getY();
+        int x = square.getX() + direction;
 
-    /**
-     * Finds if there are pieces blocking potential castling on the left
-     *
-     * @return Boolean if there are pieces blocking castling
-     */
-    private boolean getLeftEmpty() {
-        for (int x = 0; x <= rowCount / 2; x++) {
-            if (!(board.getSquare(square.getY(), x).getPiece() instanceof Rook rook && rook.getHasNotMoved()) ||
-                    !board.getSquare(square.getY(), x).isEmpty()) {
+        while (x >= 0 && x < rowCount) {
+            Piece piece = board.getSquare(y, x).getPiece();
+            if (piece == null) {
+                // square is empty — keep walking
+            } else if (piece instanceof Rook rook
+                    && rook.getHasNotMoved()
+                    && piece.getPlayer().equals(owner)) {
+                // found an unmoved friendly rook with a clear path — castling is allowed
+                return true;
+            } else {
+                // path is blocked by a piece that is not an eligible rook
                 return false;
             }
+            x += direction;
         }
-        return true;
-    }
-
-    /**
-     * Finds if there are pieces blocking potential castling on the right
-     *
-     * @return Boolean if there are pieces blocking castling
-     */
-    private boolean getRightEmpty() {
-        for (int x = rowCount - 1; x >= rowCount / 2 + 1; x--) {
-            if ((board.getSquare(square.getY(), x).getPiece() instanceof Rook rook && rook.getHasNotMoved()) ||
-                    !board.getSquare(square.getY(), x).isEmpty()) {
-                return false;
-            }
-        }
-        return true;
+        // reached the board edge without finding a rook
+        return false;
     }
 }
-
