@@ -107,6 +107,43 @@ class DrawDetectionTest {
     }
 
     /**
+     * King vs King is insufficient material: the game must be drawn.
+     *
+     * Sets up a bare K vs K position by replacing the board with one that contains
+     * only the two kings (white king on e1, black king on e8). Because this class is
+     * in the same package as Game, it can access the protected {@code board} and
+     * {@code positionHistory} fields directly to install the stripped board without
+     * going through legal moves. One legal white king move then triggers
+     * {@code evaluateGameEnd()}, which must detect insufficient material.
+     */
+    @Test
+    void insufficientMaterial_drawByKingVsKing() throws IllegalMoveException {
+        Game game = new OfflineGame(RulesetOptions.STANDARD, "White", "Black");
+        game.startGame();
+
+        // Build an 8x8 board with only two kings: white king on e1 (y=0, x=4),
+        // black king on e8 (y=7, x=4).
+        Square[][] squares = new Square[8][8];
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                squares[y][x] = new Square(y, x);
+            }
+        }
+        squares[0][4].setPiece(new King(game.player0)); // white king on e1
+        squares[7][4].setPiece(new King(game.player1)); // black king on e8
+
+        // Install the bare board and clear position history so that the stale
+        // initial-position key does not trigger threefold-repetition first.
+        game.board = new Board(squares);
+        game.positionHistory.clear();
+
+        // White king e1 -> d1 (y=0,x=4 -> y=0,x=3): a legal move far from the black king.
+        move(game, 0, 4, 0, 3);
+
+        assertEquals(GameState.DRAW_BY_INSUFFICIENT_MATERIAL, game.getState());
+    }
+
+    /**
      * After the first move, the halfmove clock should be 0 (pawn move resets it).
      * After a knight move, it should be 1.
      */
