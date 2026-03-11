@@ -4,6 +4,7 @@ import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.application.controllers.GameController;
 import io.github.conava.chess.application.controllers.LoginController;
 import io.github.conava.chess.application.controllers.MainMenuController;
+import io.github.conava.chess.application.controllers.OfflineSetupController;
 import io.github.conava.chess.application.controllers.RegisterController;
 import io.github.conava.chess.application.controllers.SettingsController;
 import io.github.conava.chess.application.controllers.WaitingForMatchController;
@@ -27,6 +28,7 @@ public class SceneManager {
     private static final String FXML_LOGIN = "/fxml/login.fxml";
     private static final String FXML_REGISTER = "/fxml/register.fxml";
     private static final String FXML_WAITING_FOR_MATCH = "/fxml/waiting-for-match.fxml";
+    private static final String FXML_LOCAL_SETUP = "/fxml/offline-setup.fxml";
 
     private final Stage primaryStage;
     private final Chess chess;
@@ -48,7 +50,16 @@ public class SceneManager {
 
     public void showMainMenu() {
         var controller = new MainMenuController(this, i18n);
-        swapScene(FXML_MAIN_MENU, controller, 900, 650);
+        swapScene(FXML_MAIN_MENU, controller, 980, 700);
+        primaryStage.setMaximized(false);
+    }
+
+    /**
+     * Shows the local (offline) game setup screen, replacing the current scene.
+     */
+    public void showLocalSetup() {
+        var controller = new OfflineSetupController(this, i18n, settingsService);
+        swapScene(FXML_LOCAL_SETUP, controller, 980, 700);
         primaryStage.setMaximized(false);
     }
 
@@ -61,7 +72,7 @@ public class SceneManager {
     public void showSettings() {
         var controller = new SettingsController(this, themeManager, i18n, settingsService);
         primaryStage.setMaximized(false);
-        swapScene(FXML_SETTINGS, controller, 760, 920);
+        swapScene(FXML_SETTINGS, controller, 980, 700);
     }
 
     /**
@@ -69,7 +80,7 @@ public class SceneManager {
      */
     public void showLogin() {
         var controller = new LoginController(this, chess, i18n);
-        swapScene(FXML_LOGIN, controller, 900, 650);
+        swapScene(FXML_LOGIN, controller, 980, 700);
         primaryStage.setMaximized(false);
     }
 
@@ -78,7 +89,7 @@ public class SceneManager {
      */
     public void showRegister() {
         var controller = new RegisterController(this, chess, i18n);
-        swapScene(FXML_REGISTER, controller, 900, 650);
+        swapScene(FXML_REGISTER, controller, 980, 700);
         primaryStage.setMaximized(false);
     }
 
@@ -103,7 +114,7 @@ public class SceneManager {
             return;
         }
         var controller = new WaitingForMatchController(this, chess, i18n, ruleset, ip, port);
-        swapScene(FXML_WAITING_FOR_MATCH, controller, 900, 650);
+        swapScene(FXML_WAITING_FOR_MATCH, controller, 980, 700);
         primaryStage.setMaximized(false);
     }
 

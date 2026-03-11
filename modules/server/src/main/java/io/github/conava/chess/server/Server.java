@@ -7,11 +7,15 @@ import io.github.conava.chess.server.config.ServerConfig;
 import io.github.conava.chess.server.management.ClientHandler;
 import io.github.conava.chess.server.management.GameInstance;
 import io.github.conava.chess.server.management.GameManager;
+import io.github.conava.chess.server.db.DatabaseManager;
 import io.github.conava.chess.server.persistence.GameRepository;
+import io.github.conava.chess.server.persistence.SessionRepository;
+import io.github.conava.chess.server.persistence.UserRepository;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -126,6 +130,23 @@ public class Server {
     public static void main(String[] args) {
         ServerConfig config = new ServerConfig();
         Server server = new Server(config);
+
+        DatabaseManager dbManager = new DatabaseManager();
+        try {
+            dbManager.initialize(config.getDbPath());
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to initialize database at: " + config.getDbPath(), e);
+            return;
+        }
+
+        UserRepository userRepository = new UserRepository(dbManager);
+        SessionRepository sessionRepository = new SessionRepository(dbManager);
+        AuthService authService = new AuthService(userRepository, sessionRepository, config.getSessionExpiryDays());
+        GameRepository gameRepository = new GameRepository(dbManager);
+
+        server.setAuthService(authService);
+        server.setGameRepository(gameRepository);
+
         server.start();
     }
 

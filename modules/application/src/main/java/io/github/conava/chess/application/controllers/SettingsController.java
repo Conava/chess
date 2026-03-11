@@ -22,9 +22,13 @@ public class SettingsController {
     @FXML
     private ToggleButton emberSwatch;
     @FXML
+    private ToggleButton abyssSwatch;
+    @FXML
     private ToggleButton manuscriptSwatch;
     @FXML
     private ToggleButton fjordSwatch;
+    @FXML
+    private ToggleButton sakuraSwatch;
     @FXML
     private ToggleGroup themeGroup;
     @FXML
@@ -50,8 +54,10 @@ public class SettingsController {
         switch (themeManager.getTheme()) {
             case DARK_PURPLE -> midnightSwatch.setSelected(true);
             case DARK_CHARCOAL -> emberSwatch.setSelected(true);
+            case DARK_ABYSS -> abyssSwatch.setSelected(true);
             case LIGHT_PAPER -> manuscriptSwatch.setSelected(true);
             case LIGHT_ARCTIC -> fjordSwatch.setSelected(true);
+            case LIGHT_SAKURA -> sakuraSwatch.setSelected(true);
         }
 
         if (i18n.getLanguage() == I18n.Language.EN) enToggle.setSelected(true);
@@ -63,8 +69,10 @@ public class SettingsController {
         themeGroup.selectedToggleProperty().addListener((o, old, sel) -> {
             if (sel == midnightSwatch) themeManager.setTheme(Theme.DARK_PURPLE);
             else if (sel == emberSwatch) themeManager.setTheme(Theme.DARK_CHARCOAL);
+            else if (sel == abyssSwatch) themeManager.setTheme(Theme.DARK_ABYSS);
             else if (sel == manuscriptSwatch) themeManager.setTheme(Theme.LIGHT_PAPER);
             else if (sel == fjordSwatch) themeManager.setTheme(Theme.LIGHT_ARCTIC);
+            else if (sel == sakuraSwatch) themeManager.setTheme(Theme.LIGHT_SAKURA);
         });
 
         langGroup.selectedToggleProperty().addListener((o, old, sel) -> {

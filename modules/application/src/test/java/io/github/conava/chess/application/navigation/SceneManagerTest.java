@@ -136,9 +136,9 @@ class SceneManagerTest {
                 sm.showMainMenu();
 
                 assertFalse(stage.isMaximized(), "showMainMenu should not maximize the stage");
-                // The SceneManager sets 900 x 650 on first show
-                assertEquals(900.0, stage.getScene().getWidth(), 1.0, "scene width");
-                assertEquals(650.0, stage.getScene().getHeight(), 1.0, "scene height");
+                // The SceneManager sets 980 x 700 on first show
+                assertEquals(980.0, stage.getScene().getWidth(), 1.0, "scene width");
+                assertEquals(700.0, stage.getScene().getHeight(), 1.0, "scene height");
             } catch (Throwable t) {
                 error.set(t);
             } finally {

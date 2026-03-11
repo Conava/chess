@@ -78,11 +78,7 @@ public class MainMenuController {
 
     @FXML
     private void onLocalGame() {
-        OfflineSetupController setup = sceneManager.showOverlay("/fxml/offline-setup.fxml", new OfflineSetupController(i18n, sceneManager.getSettingsService(), sceneManager::dismissOverlay));
-        if (!setup.isConfirmed()) return;
-
-        sceneManager.getChess().startGame(false, setup.getRuleset(), setup.getPlayerWhite(), setup.getPlayerBlack(), null);
-        sceneManager.showGame(setup.getRuleset());
+        sceneManager.showLocalSetup();
     }
 
     /**

@@ -3,47 +3,67 @@
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
 
-<VBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.LoginController"
-      alignment="CENTER" spacing="0">
+<HBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="io.github.conava.chess.application.controllers.LoginController">
 
-    <VBox alignment="CENTER" spacing="20" maxWidth="420">
-        <VBox.margin><Insets top="60" right="0" bottom="0" left="0"/></VBox.margin>
-        <padding><Insets top="40" right="48" bottom="40" left="48"/></padding>
-        <styleClass><String fx:value="overlay-card"/></styleClass>
+    <!-- ── Left: brand panel ─────────────────────────────────────────────── -->
+    <StackPane styleClass="menu-brand-panel" minWidth="280" maxWidth="320">
+        <!-- Watermark piece -->
+        <Label text="♔" mouseTransparent="true" StackPane.alignment="CENTER"
+               style="-fx-font-size: 200px; -fx-opacity: 0.08; -fx-rotate: -12;"/>
+        <!-- Branding -->
+        <VBox alignment="BOTTOM_CENTER" spacing="8" StackPane.alignment="CENTER">
+            <padding><Insets top="60" right="32" bottom="80" left="32"/></padding>
+            <Label text="%menu.title"
+                   style="-fx-font-size: 30px; -fx-font-weight: bold;"/>
+            <Label text="%login.title" styleClass="auth-screen-subtitle"/>
+        </VBox>
+    </StackPane>
+
+    <!-- ── Right: form panel ─────────────────────────────────────────────── -->
+    <VBox alignment="CENTER" HBox.hgrow="ALWAYS">
+        <padding><Insets top="60" right="64" bottom="60" left="64"/></padding>
 
         <Label text="%login.title" styleClass="dialog-title"/>
 
-        <GridPane hgap="12" vgap="12">
-            <columnConstraints>
-                <ColumnConstraints percentWidth="35"/>
-                <ColumnConstraints percentWidth="65" hgrow="ALWAYS"/>
-            </columnConstraints>
+        <!-- Server group -->
+        <VBox spacing="8">
+            <VBox.margin><Insets top="20"/></VBox.margin>
+            <Label text="%auth.server" styleClass="auth-section-label"/>
+            <HBox spacing="10">
+                <TextField fx:id="ipField" HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="portField" prefWidth="90"/>
+            </HBox>
+        </VBox>
 
-            <Label text="%dialog.online.ip" GridPane.rowIndex="0" GridPane.columnIndex="0"
-                   GridPane.valignment="CENTER"/>
-            <TextField fx:id="ipField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <!-- Account group -->
+        <VBox spacing="8">
+            <VBox.margin><Insets top="20"/></VBox.margin>
+            <Label text="%auth.account" styleClass="auth-section-label"/>
+            <TextField fx:id="usernameField" maxWidth="Infinity"/>
+            <PasswordField fx:id="passwordField" maxWidth="Infinity"/>
+        </VBox>
 
-            <Label text="%dialog.online.port" GridPane.rowIndex="1" GridPane.columnIndex="0"
-                   GridPane.valignment="CENTER"/>
-            <TextField fx:id="portField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <!-- Error message -->
+        <Label fx:id="errorLabel" styleClass="form-error" maxWidth="Infinity"
+               visible="false" managed="false">
+            <VBox.margin><Insets top="8"/></VBox.margin>
+        </Label>
 
-            <Label text="%login.username" GridPane.rowIndex="2" GridPane.columnIndex="0"
-                   GridPane.valignment="CENTER"/>
-            <TextField fx:id="usernameField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+        <!-- Action buttons -->
+        <VBox spacing="10">
+            <VBox.margin><Insets top="28"/></VBox.margin>
+            <Button fx:id="loginButton" text="%login.title" onAction="#onLogin"
+                    styleClass="btn-primary" maxWidth="Infinity"/>
+            <Button text="%dialog.offline.cancel" onAction="#onCancel"
+                    styleClass="btn-ghost" maxWidth="Infinity"/>
+        </VBox>
 
-            <Label text="%login.password" GridPane.rowIndex="3" GridPane.columnIndex="0"
-                   GridPane.valignment="CENTER"/>
-            <PasswordField fx:id="passwordField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-        </GridPane>
-
-        <Label fx:id="errorLabel" style="-fx-text-fill: red;" wrapText="true"
-               visible="false" managed="false"/>
-
-        <Button fx:id="loginButton" text="%login.title" onAction="#onLogin"
-                styleClass="btn-primary" maxWidth="Infinity"/>
-
+        <!-- Switch-screen link -->
         <Hyperlink fx:id="registerLink" text="%login.register" onAction="#onRegister"
-                   alignment="CENTER"/>
+                   maxWidth="Infinity" alignment="CENTER">
+            <VBox.margin><Insets top="14"/></VBox.margin>
+        </Hyperlink>
     </VBox>
-</VBox>
+
+</HBox>

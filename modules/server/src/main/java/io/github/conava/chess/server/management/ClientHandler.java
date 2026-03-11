@@ -248,6 +248,10 @@ public class ClientHandler implements Runnable {
      * @param message the {@code LOGIN} message; must not be {@code null}
      */
     private void handleLogin(Message message) {
+        if (authService == null) {
+            sendMessage(new Message(MessageType.ERROR, "Authentication service not available"));
+            return;
+        }
         String username = message.getParameterValue("username");
         String password = message.getParameterValue("password");
         try {
@@ -280,6 +284,10 @@ public class ClientHandler implements Runnable {
      * @param message the {@code REGISTER} message; must not be {@code null}
      */
     private void handleRegister(Message message) {
+        if (authService == null) {
+            sendMessage(new Message(MessageType.ERROR, "Authentication service not available"));
+            return;
+        }
         String username = message.getParameterValue("username");
         String password = message.getParameterValue("password");
         try {

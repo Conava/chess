@@ -207,6 +207,42 @@ Label {
     -fx-padding: 0 0 16 0;
 }
 
+/* ── Auth screens ────────────────────────────────────────────────────────── */
+
+.auth-section-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.auth-screen-subtitle {
+    -fx-font-size: 14px;
+}
+
+.form-error {
+    -fx-font-size: 12px;
+    -fx-wrap-text: true;
+}
+
+.auth-brand-strip {
+    -fx-background-radius: 14 0 0 14;
+}
+
+/* ── Main menu exit link ─────────────────────────────────────────────────── */
+
+.menu-exit-link {
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-border-width: 0;
+    -fx-padding: 6 4 6 4;
+}
+
+.menu-exit-link:hover {
+    -fx-background-color: transparent;
+    -fx-translate-y: 0;
+}
+
 /* ── Game-end overlay ────────────────────────────────────────────────────── */
 
 .game-end-title {

@@ -121,6 +121,15 @@ public class LoginController {
         sceneManager.showRegister();
     }
 
+    /**
+     * Handles the Cancel button click.
+     * Returns to the main menu without logging in.
+     */
+    @FXML
+    private void onCancel() {
+        sceneManager.showMainMenu();
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private void showError(String message) {

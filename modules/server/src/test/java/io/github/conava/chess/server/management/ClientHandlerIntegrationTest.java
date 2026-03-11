@@ -548,4 +548,52 @@ class ClientHandlerIntegrationTest {
             }
         }
     }
+
+    // ========================================================================
+    // Regression: null authService must return ERROR, not crash handler thread
+    // ========================================================================
+
+    /**
+     * Opens a connection where the ClientHandler has a null authService.
+     * This reproduces the original NPE bug where Server.main() did not wire
+     * the auth dependencies.
+     */
+    private Connection openConnectionWithoutAuth() throws IOException {
+        Socket clientSock = new Socket("127.0.0.1", serverSocket.getLocalPort());
+        Socket serverSideSocket = serverSocket.accept();
+        serverSideSocket.setSoTimeout(TIMEOUT_MS);
+
+        ClientHandler handler = new ClientHandler(serverSideSocket, server, gameManager, null, null);
+        handlerPool.submit(handler);
+        return new Connection(clientSock);
+    }
+
+    @Test
+    void register_withNullAuthService_returnsError_doesNotCrash() throws Exception {
+        try (Connection conn = openConnectionWithoutAuth()) {
+            conn.send("REGISTER:username=test password=testpass123");
+
+            String response = readUntilType(conn, MessageType.ERROR.name());
+            assertNotNull(response, "REGISTER with null authService must produce an ERROR, not crash");
+            assertTrue(response.contains("Authentication service not available"),
+                    "Error message must indicate auth service is unavailable");
+
+            // Verify handler is still alive: send another message.
+            conn.send("LOGIN:username=test password=testpass123");
+            String response2 = readUntilType(conn, MessageType.ERROR.name());
+            assertNotNull(response2, "Handler must continue processing after null-auth error");
+        }
+    }
+
+    @Test
+    void login_withNullAuthService_returnsError_doesNotCrash() throws Exception {
+        try (Connection conn = openConnectionWithoutAuth()) {
+            conn.send("LOGIN:username=test password=testpass123");
+
+            String response = readUntilType(conn, MessageType.ERROR.name());
+            assertNotNull(response, "LOGIN with null authService must produce an ERROR, not crash");
+            assertTrue(response.contains("Authentication service not available"),
+                    "Error message must indicate auth service is unavailable");
+        }
+    }
 }
