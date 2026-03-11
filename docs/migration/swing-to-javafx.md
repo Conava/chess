@@ -29,7 +29,7 @@ modules were not changed during the migration.
 | `JDialog` | FXML overlay loaded by `OverlayManager` |
 | `SwingUtilities.invokeLater` | `Platform.runLater()` |
 | Programmatic layout | FXML + CSS |
-| Look-and-feel | CSS stylesheets (base + theme + board theme) |
+| Look-and-feel | CSS stylesheets (base + theme) |
 
 ## Architecture decisions made during migration
 
@@ -74,14 +74,13 @@ All eight screens and overlays are implemented:
 | `game-end.fxml` | `GameEndController` | End-of-game result overlay |
 | `promotion.fxml` | `PromotionController` | Pawn promotion piece selection overlay |
 | `waiting.fxml` | `WaitingController` | Waiting-for-opponent overlay with join code |
-| `settings.fxml` | `SettingsController` | Theme, board, language, default name settings |
+| `settings.fxml` | `SettingsController` | Theme, language, default name settings |
 
 Themes and board color schemes implemented:
 
 | Category | Options |
 |----------|---------|
-| UI themes | Midnight (`dark-purple.css`), Ember (`dark-charcoal.css`), Manuscript (`light-paper.css`), Fjord (`light-arctic.css`) |
-| Board themes | Classic (`classic.css`), Ocean (`ocean.css`), Walnut (`walnut.css`) |
+| UI themes | Midnight (`dark-purple.css`), Ember (`dark-charcoal.css`), Abyss (`dark-abyss.css`), Manuscript (`light-paper.css`), Fjord (`light-arctic.css`), Sakura (`light-sakura.css`) |
 
 Locales implemented: English (`messages_en.properties`), German (`messages_de.properties`).
 

@@ -26,7 +26,7 @@ provide idiomatically.
 
 ### Consequences
 
-- Good: CSS-driven theming (`base.css` + four UI themes + three board themes) is implemented
+- Good: CSS-driven theming (`base.css` + six themes with integrated board colours) is implemented
   cleanly without manual `UIManager` configuration.
 - Good: `javafx.concurrent.Task` provides a standard pattern for background move execution
   (`ExecuteMove extends Task<Void>`).

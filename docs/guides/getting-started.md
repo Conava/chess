@@ -144,8 +144,7 @@ Both players need access to a running server instance.
 
 Open **Settings** from the main menu to change:
 
-- **UI theme** — Midnight, Ember, Manuscript, Fjord (dark/light variants)
-- **Board theme** — Classic, Ocean, Walnut
+- **UI theme** — Midnight, Ember, Abyss, Manuscript, Fjord, Sakura (dark/light variants)
 - **Language** — English, German
 - **Default player names** — prefilled in setup dialogs
 

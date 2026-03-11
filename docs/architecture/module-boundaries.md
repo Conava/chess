@@ -52,7 +52,7 @@ Permitted content:
   the sole façade
 - FXML controllers (`controllers/` package)
 - Scene and overlay management (`navigation/` package)
-- Theme system (`theme/` package — `ThemeManager`, `Theme`, `BoardTheme`)
+- Theme system (`theme/` package — `ThemeManager`, `Theme`)
 - Localization (`i18n/` package — `I18n`, language bundles)
 - Settings persistence (`settings/` package — `SettingsService`)
 - Network client (`network/` package — `ServerCommunicationTask implements ServerConnection`)
