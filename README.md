@@ -24,8 +24,7 @@ with hard dependency boundaries enforced by architecture law.
 - **En passant** — automatic detection and capture
 - **Check-legality filtering** — prevents moving into check, castling through/out of check
 - **Game-end detection** — checkmate, stalemate, 50-move rule, threefold repetition, insufficient material
-- **Board themes** — Classic, Ocean, and Walnut color schemes
-- **UI themes** — Light and Dark modes with CSS-driven styling
+- **6 visual themes** — Midnight, Ember, Abyss (dark) and Manuscript, Fjord, Sakura (light), each with integrated board colors and CSS-driven styling
 - **Localization** — English and German (`i18n` properties files)
 - **Concurrent server** — up to 40 simultaneous online games
 
@@ -114,11 +113,11 @@ chess/
 │   │       │   ├── network/           # ServerCommunicationTask
 │   │       │   ├── settings/          # SettingsService
 │   │       │   ├── tasks/             # ExecuteMove (background Task)
-│   │       │   ├── theme/             # ThemeManager, Theme, BoardTheme
+│   │       │   ├── theme/             # ThemeManager, Theme
 │   │       │   └── i18n/              # I18n localization helper
 │   │       └── resources/
 │   │           ├── fxml/              # 8 screen layouts
-│   │           ├── css/               # base + dark/light themes + 3 board schemes
+│   │           ├── css/               # base.css + 6 theme stylesheets
 │   │           ├── icon/              # 12 piece PNGs (6 pieces × 2 colors)
 │   │           └── i18n/              # messages_en.properties, messages_de.properties
 │   │
@@ -316,7 +315,7 @@ If a player disconnects, the server awards a resignation win to the remaining pl
 | Mocking | Mockito 5.5.0 | Application module tests only |
 | Networking | Java standard library | `ServerSocket`, `Socket`, `ConcurrentHashMap`, `Semaphore` |
 | Localization | Java `ResourceBundle` | English and German property files |
-| Theming | CSS | base + 2 UI themes + 3 board color schemes |
+| Theming | CSS | base.css + 6 theme stylesheets (board colors integrated per theme) |
 
 ## Testing
 

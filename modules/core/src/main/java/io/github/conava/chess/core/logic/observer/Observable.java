@@ -49,4 +49,16 @@ public abstract class Observable {
             observer.onGameStateChanged();
         }
     }
+
+    /**
+     * Invokes {@link GameObserver#onChatMessage(String, String)} on every registered observer.
+     *
+     * @param sender  display name of the player who sent the message
+     * @param content message text
+     */
+    public void notifyChatObservers(String sender, String content) {
+        for (GameObserver observer : observers) {
+            observer.onChatMessage(sender, content);
+        }
+    }
 }

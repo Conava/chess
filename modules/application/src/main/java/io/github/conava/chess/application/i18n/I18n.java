@@ -3,6 +3,7 @@ package io.github.conava.chess.application.i18n;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -23,8 +24,28 @@ public class I18n {
         bundle = ResourceBundle.getBundle("i18n/messages", locale);
     }
 
+    /**
+     * Returns the localised string for the given key.
+     *
+     * @param key the resource bundle key.
+     * @return the localised string.
+     */
     public String get(String key) {
         return bundle.getString(key);
+    }
+
+    /**
+     * Returns the localised string for the given key, formatted with the supplied arguments.
+     *
+     * <p>The pattern string may contain {@link MessageFormat} placeholders such as {@code {0}}
+     * and {@code {1}}.</p>
+     *
+     * @param key  the resource bundle key whose value contains a {@link MessageFormat} pattern.
+     * @param args the arguments to substitute into the pattern.
+     * @return the formatted localised string.
+     */
+    public String get(String key, Object... args) {
+        return MessageFormat.format(get(key), args);
     }
 
     public ResourceBundle getBundle() {

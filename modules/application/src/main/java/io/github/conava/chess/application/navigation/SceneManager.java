@@ -2,8 +2,12 @@ package io.github.conava.chess.application.navigation;
 
 import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.application.controllers.GameController;
+import io.github.conava.chess.application.controllers.LoginController;
 import io.github.conava.chess.application.controllers.MainMenuController;
+import io.github.conava.chess.application.controllers.OfflineSetupController;
+import io.github.conava.chess.application.controllers.RegisterController;
 import io.github.conava.chess.application.controllers.SettingsController;
+import io.github.conava.chess.application.controllers.WaitingForMatchController;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.settings.SettingsService;
 import io.github.conava.chess.application.theme.ThemeManager;
@@ -21,6 +25,10 @@ public class SceneManager {
     private static final String FXML_MAIN_MENU = "/fxml/main-menu.fxml";
     private static final String FXML_GAME = "/fxml/game.fxml";
     private static final String FXML_SETTINGS = "/fxml/settings.fxml";
+    private static final String FXML_LOGIN = "/fxml/login.fxml";
+    private static final String FXML_REGISTER = "/fxml/register.fxml";
+    private static final String FXML_WAITING_FOR_MATCH = "/fxml/waiting-for-match.fxml";
+    private static final String FXML_LOCAL_SETUP = "/fxml/offline-setup.fxml";
 
     private final Stage primaryStage;
     private final Chess chess;
@@ -42,7 +50,16 @@ public class SceneManager {
 
     public void showMainMenu() {
         var controller = new MainMenuController(this, i18n);
-        swapScene(FXML_MAIN_MENU, controller, 900, 650);
+        swapScene(FXML_MAIN_MENU, controller, 980, 700);
+        primaryStage.setMaximized(false);
+    }
+
+    /**
+     * Shows the local (offline) game setup screen, replacing the current scene.
+     */
+    public void showLocalSetup() {
+        var controller = new OfflineSetupController(this, i18n, settingsService);
+        swapScene(FXML_LOCAL_SETUP, controller, 980, 700);
         primaryStage.setMaximized(false);
     }
 
@@ -55,7 +72,50 @@ public class SceneManager {
     public void showSettings() {
         var controller = new SettingsController(this, themeManager, i18n, settingsService);
         primaryStage.setMaximized(false);
-        swapScene(FXML_SETTINGS, controller, 760, 920);
+        swapScene(FXML_SETTINGS, controller, 980, 700);
+    }
+
+    /**
+     * Shows the login screen, replacing the current scene.
+     */
+    public void showLogin() {
+        var controller = new LoginController(this, chess, i18n);
+        swapScene(FXML_LOGIN, controller, 980, 700);
+        primaryStage.setMaximized(false);
+    }
+
+    /**
+     * Shows the account registration screen, replacing the current scene.
+     */
+    public void showRegister() {
+        var controller = new RegisterController(this, chess, i18n);
+        swapScene(FXML_REGISTER, controller, 980, 700);
+        primaryStage.setMaximized(false);
+    }
+
+    /**
+     * Navigates to the matchmaking waiting screen where the client searches for an
+     * available opponent with the given ruleset on the specified server.
+     *
+     * <p>A persistent TCP connection to the server is opened before the waiting screen is
+     * shown. If the connection cannot be established the method returns without navigating
+     * (the current screen remains visible). Once connected, the {@link WaitingForMatchController}
+     * is constructed — which registers the {@code MATCHED} handler — and then
+     * {@link io.github.conava.chess.application.Chess#joinMatchmakingQueue(RulesetOptions)}
+     * is called from {@link WaitingForMatchController#initialize()} to avoid a race condition
+     * where the server's response could arrive before the handler is set.</p>
+     *
+     * @param ruleset the ruleset the player wants to use for the matched game
+     * @param ip      the server IP address or hostname
+     * @param port    the server port number
+     */
+    public void showWaitingForMatch(RulesetOptions ruleset, String ip, int port) {
+        if (!chess.connectToServer(ip, port)) {
+            return;
+        }
+        var controller = new WaitingForMatchController(this, chess, i18n, ruleset, ip, port);
+        swapScene(FXML_WAITING_FOR_MATCH, controller, 980, 700);
+        primaryStage.setMaximized(false);
     }
 
     /**

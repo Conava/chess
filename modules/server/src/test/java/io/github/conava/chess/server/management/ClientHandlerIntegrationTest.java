@@ -3,6 +3,11 @@ package io.github.conava.chess.server.management;
 import io.github.conava.chess.core.data.io.MessageParser;
 import io.github.conava.chess.core.data.io.MessageType;
 import io.github.conava.chess.server.Server;
+import io.github.conava.chess.server.auth.AuthService;
+import io.github.conava.chess.server.db.DatabaseManager;
+import io.github.conava.chess.server.persistence.GameRepository;
+import io.github.conava.chess.server.persistence.SessionRepository;
+import io.github.conava.chess.server.persistence.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,6 +26,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>Each test creates a loopback TCP socket pair: the server-side socket is handed to a
  * {@code ClientHandler} that runs in a background thread, while the test drives the
  * interaction through the client-side socket's streams.</p>
+ *
+ * <p>Authentication infrastructure uses an in-memory SQLite database so no external
+ * dependencies are required.</p>
  *
  * <p>Covered behaviours:
  * <ul>
@@ -35,13 +44,11 @@ import static org.junit.jupiter.api.Assertions.*;
  *       "No game instance available" ERROR</li>
  *   <li>sendMessage() is thread-safe: concurrent calls from two player threads do not
  *       corrupt the output stream (each line is a complete, parseable message)</li>
- * </ul>
- * </p>
- *
- * <p>Not covered here (require headless server lifecycle):
- * <ul>
- *   <li>Port validation (private static method)</li>
- *   <li>Console daemon thread</li>
+ *   <li>Unauthenticated clients get ERROR when attempting non-auth messages</li>
+ *   <li>LOGIN succeeds and returns AUTH_TOKEN</li>
+ *   <li>REGISTER succeeds and returns AUTH_TOKEN</li>
+ *   <li>Authenticated client can CREATE_GAME</li>
+ *   <li>LOGIN with wrong password returns ERROR</li>
  * </ul>
  * </p>
  */
@@ -52,12 +59,25 @@ class ClientHandlerIntegrationTest {
     private ServerSocket serverSocket;
     private ExecutorService handlerPool;
     private Server server;
+    private GameManager gameManager;
+    private AuthService authService;
+    private GameRepository gameRepository;
+    private DatabaseManager dbManager;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() throws IOException, SQLException {
         server = new Server();
+        gameManager = server.getGameManager();
         serverSocket = new ServerSocket(0); // port 0 = OS-assigned free port
         handlerPool = Executors.newCachedThreadPool();
+
+        // Set up in-memory SQLite database for auth tests
+        dbManager = new DatabaseManager();
+        dbManager.initialize(":memory:");
+        UserRepository userRepository = new UserRepository(dbManager);
+        SessionRepository sessionRepository = new SessionRepository(dbManager);
+        authService = new AuthService(userRepository, sessionRepository, 30);
+        gameRepository = new GameRepository(dbManager);
     }
 
     @AfterEach
@@ -65,6 +85,9 @@ class ClientHandlerIntegrationTest {
         handlerPool.shutdownNow();
         if (!serverSocket.isClosed()) {
             serverSocket.close();
+        }
+        if (dbManager != null) {
+            dbManager.close();
         }
     }
 
@@ -111,7 +134,7 @@ class ClientHandlerIntegrationTest {
         Socket serverSideSocket = serverSocket.accept();
         serverSideSocket.setSoTimeout(TIMEOUT_MS);
 
-        ClientHandler handler = new ClientHandler(serverSideSocket, server);
+        ClientHandler handler = new ClientHandler(serverSideSocket, server, gameManager, authService, gameRepository);
         handlerPool.submit(handler);
         return new Connection(clientSock);
     }
@@ -133,6 +156,114 @@ class ClientHandlerIntegrationTest {
             }
         }
         return null;
+    }
+
+    // ========================================================================
+    // Auth gating: unauthenticated client gets ERROR on non-auth messages
+    // ========================================================================
+
+    /**
+     * Verifies that an unauthenticated client receives ERROR when it sends CREATE_GAME
+     * without first authenticating.
+     */
+    @Test
+    void unauthenticatedClient_getsError_onCreateGame() throws Exception {
+        try (Connection conn = openConnection()) {
+            conn.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
+
+            String response = readUntilType(conn, MessageType.ERROR.name());
+            assertNotNull(response, "Unauthenticated CREATE_GAME must produce an ERROR response");
+            assertTrue(response.contains("Not authenticated"),
+                    "Error message must indicate the client is not authenticated");
+        }
+    }
+
+    // ========================================================================
+    // LOGIN: succeeds and returns AUTH_TOKEN
+    // ========================================================================
+
+    /**
+     * Verifies that LOGIN with valid credentials returns an AUTH_TOKEN response.
+     */
+    @Test
+    void login_succeeds_andReturnsToken() throws Exception {
+        // Pre-register the user directly in the DB
+        authService.register("alice", "password123");
+
+        try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=alice password=password123");
+
+            String response = readUntilType(conn, MessageType.AUTH_TOKEN.name());
+            assertNotNull(response, "LOGIN with valid credentials must produce an AUTH_TOKEN response");
+            assertTrue(response.contains("token="), "AUTH_TOKEN response must contain a token= parameter");
+            assertTrue(response.contains("userId="), "AUTH_TOKEN response must contain a userId= parameter");
+        }
+    }
+
+    // ========================================================================
+    // REGISTER: succeeds and returns AUTH_TOKEN
+    // ========================================================================
+
+    /**
+     * Verifies that REGISTER with valid credentials creates the account and returns AUTH_TOKEN.
+     */
+    @Test
+    void register_succeeds_andReturnsToken() throws Exception {
+        try (Connection conn = openConnection()) {
+            conn.send("REGISTER:username=bob password=securepass");
+
+            String response = readUntilType(conn, MessageType.AUTH_TOKEN.name());
+            assertNotNull(response, "REGISTER must produce an AUTH_TOKEN response");
+            assertTrue(response.contains("token="), "AUTH_TOKEN response must contain a token= parameter");
+            assertTrue(response.contains("userId="), "AUTH_TOKEN response must contain a userId= parameter");
+        }
+    }
+
+    // ========================================================================
+    // Authenticated client can CREATE_GAME
+    // ========================================================================
+
+    /**
+     * Verifies that after a successful LOGIN the client can send CREATE_GAME and receive
+     * a JOIN_CODE response (i.e., auth gating passes for authenticated clients).
+     */
+    @Test
+    void authenticatedClient_canCreateGame() throws Exception {
+        // Pre-register user
+        authService.register("charlie", "password123");
+
+        try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=charlie password=password123");
+
+            String authResponse = readUntilType(conn, MessageType.AUTH_TOKEN.name());
+            assertNotNull(authResponse, "LOGIN must succeed before CREATE_GAME test");
+
+            // Now send CREATE_GAME — should work because client is authenticated
+            conn.send("CREATE_GAME:ruleset=STANDARD playerName=Charlie");
+
+            String response = readUntilType(conn, MessageType.JOIN_CODE.name());
+            assertNotNull(response, "Authenticated client must receive JOIN_CODE after CREATE_GAME");
+        }
+    }
+
+    // ========================================================================
+    // LOGIN: wrong password returns ERROR
+    // ========================================================================
+
+    /**
+     * Verifies that LOGIN with incorrect credentials returns ERROR.
+     */
+    @Test
+    void login_fails_withWrongPassword() throws Exception {
+        // Pre-register the user with a different password
+        authService.register("dave", "correctpassword");
+
+        try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=dave password=wrongpassword");
+
+            String response = readUntilType(conn, MessageType.ERROR.name());
+            assertNotNull(response, "LOGIN with wrong password must produce an ERROR response");
+        }
     }
 
     // ========================================================================
@@ -158,7 +289,7 @@ class ClientHandlerIntegrationTest {
             assertNotNull(errorResponse, "First malformed message must return ERROR");
 
             // Handler must continue processing: send another valid-but-unroutable message.
-            // JOIN_GAME with missing gameId: should also return ERROR.
+            // JOIN_GAME without auth: should also return ERROR (not authenticated).
             conn.send("JOIN_GAME:playerName=Test");
             String secondError = readUntilType(conn, MessageType.ERROR.name());
             assertNotNull(secondError, "Handler must continue processing after a malformed message");
@@ -166,12 +297,16 @@ class ClientHandlerIntegrationTest {
     }
 
     // ========================================================================
-    // CREATE_GAME: invalid ruleset sends ERROR
+    // CREATE_GAME: invalid ruleset sends ERROR (after auth)
     // ========================================================================
 
     @Test
     void createGame_invalidRuleset_sendsError() throws Exception {
+        authService.register("user1", "password123");
         try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=user1 password=password123");
+            readUntilType(conn, MessageType.AUTH_TOKEN.name());
+
             conn.send("CREATE_GAME:ruleset=INVALID_RULESET playerName=Alice");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
@@ -181,7 +316,11 @@ class ClientHandlerIntegrationTest {
 
     @Test
     void createGame_missingRuleset_sendsError() throws Exception {
+        authService.register("user2", "password123");
         try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=user2 password=password123");
+            readUntilType(conn, MessageType.AUTH_TOKEN.name());
+
             conn.send("CREATE_GAME:playerName=Alice");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
@@ -190,12 +329,16 @@ class ClientHandlerIntegrationTest {
     }
 
     // ========================================================================
-    // JOIN_GAME: invalid game ID sends ERROR
+    // JOIN_GAME: invalid game ID sends ERROR (after auth)
     // ========================================================================
 
     @Test
     void joinGame_invalidCode_sendsError() throws Exception {
+        authService.register("user3", "password123");
         try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=user3 password=password123");
+            readUntilType(conn, MessageType.AUTH_TOKEN.name());
+
             // No games registered; gameId=999 does not exist.
             conn.send("JOIN_GAME:gameId=999 playerName=Bob");
 
@@ -206,7 +349,11 @@ class ClientHandlerIntegrationTest {
 
     @Test
     void joinGame_nonNumericGameId_sendsError() throws Exception {
+        authService.register("user4", "password123");
         try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=user4 password=password123");
+            readUntilType(conn, MessageType.AUTH_TOKEN.name());
+
             conn.send("JOIN_GAME:gameId=NOT_A_NUMBER playerName=Bob");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
@@ -220,9 +367,18 @@ class ClientHandlerIntegrationTest {
 
     @Test
     void joinGame_keyValueFormat_parsesGameIdCorrectly() throws Exception {
+        authService.register("user5", "password123");
+        authService.register("user6", "password123");
+
         // Create a game from connection 1, then join it from connection 2 using
         // the key=value format "gameId=<id> playerName=Bob".
         try (Connection conn1 = openConnection(); Connection conn2 = openConnection()) {
+            // Authenticate both connections
+            conn1.send("LOGIN:username=user5 password=password123");
+            readUntilType(conn1, MessageType.AUTH_TOKEN.name());
+
+            conn2.send("LOGIN:username=user6 password=password123");
+            readUntilType(conn2, MessageType.AUTH_TOKEN.name());
 
             // Creator sends CREATE_GAME.
             conn1.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
@@ -250,12 +406,16 @@ class ClientHandlerIntegrationTest {
     }
 
     // ========================================================================
-    // CREATE_GAME: with and without playerName
+    // CREATE_GAME: with and without playerName (after auth)
     // ========================================================================
 
     @Test
     void createGame_withPlayerName_receivesJoinCode() throws Exception {
+        authService.register("user7", "password123");
         try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=user7 password=password123");
+            readUntilType(conn, MessageType.AUTH_TOKEN.name());
+
             conn.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
 
             String response = readUntilType(conn, MessageType.JOIN_CODE.name());
@@ -265,8 +425,12 @@ class ClientHandlerIntegrationTest {
 
     @Test
     void createGame_noPlayerName_receivesJoinCode() throws Exception {
-        // No playerName parameter: the handler must default to "Player 1" and still succeed.
+        authService.register("user8", "password123");
         try (Connection conn = openConnection()) {
+            conn.send("LOGIN:username=user8 password=password123");
+            readUntilType(conn, MessageType.AUTH_TOKEN.name());
+
+            // No playerName parameter: the handler must default to "Player 1" and still succeed.
             conn.send("CREATE_GAME:ruleset=STANDARD");
 
             String response = readUntilType(conn, MessageType.JOIN_CODE.name());
@@ -280,12 +444,22 @@ class ClientHandlerIntegrationTest {
 
     @Test
     void joinGame_setsFieldCorrectly_movesDispatchedToGame() throws Exception {
+        authService.register("user9", "password123");
+        authService.register("user10", "password123");
+
         // If the shadow bug were present, the joiner's gameInstance field would remain null
         // after joinGame(), and any subsequent MOVE message would return
         // "No game instance available" ERROR instead of being dispatched to the game.
         // After the fix, the MOVE message must be dispatched to the game and return a
         // game-related response (not "No game instance available").
         try (Connection conn1 = openConnection(); Connection conn2 = openConnection()) {
+
+            // Authenticate both
+            conn1.send("LOGIN:username=user9 password=password123");
+            readUntilType(conn1, MessageType.AUTH_TOKEN.name());
+
+            conn2.send("LOGIN:username=user10 password=password123");
+            readUntilType(conn2, MessageType.AUTH_TOKEN.name());
 
             // Set up the game.
             conn1.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
@@ -315,7 +489,9 @@ class ClientHandlerIntegrationTest {
             // If we got an ERROR here, check it is NOT the "No game instance" error.
             // It should be a game-level error (wrong turn or illegal move).
             if (response != null) {
-                assertFalse(response.contains("No game instance available"), "After joinGame(), the gameInstance field must be set; " + "MOVE must be dispatched to the game, not rejected with 'No game instance available'");
+                assertFalse(response.contains("No game instance available"),
+                        "After joinGame(), the gameInstance field must be set; "
+                                + "MOVE must be dispatched to the game, not rejected with 'No game instance available'");
             }
             // If no error was received within timeout (e.g., black's move was accepted
             // somehow or MOVE was echoed), the test also passes — the key assertion is
@@ -329,11 +505,20 @@ class ClientHandlerIntegrationTest {
 
     @Test
     void sendMessage_concurrentCalls_eachLineIsParseable() throws Exception {
+        authService.register("user11", "password123");
+        authService.register("user12", "password123");
+
         // Create a game with two players so both ClientHandlers are active and
         // GameInstance will call sendMessage() on the white handler from two threads
         // after a MOVE (both players receive the move relay concurrently).
         // We verify that every line received on the client side is parseable.
         try (Connection conn1 = openConnection(); Connection conn2 = openConnection()) {
+
+            conn1.send("LOGIN:username=user11 password=password123");
+            readUntilType(conn1, MessageType.AUTH_TOKEN.name());
+
+            conn2.send("LOGIN:username=user12 password=password123");
+            readUntilType(conn2, MessageType.AUTH_TOKEN.name());
 
             conn1.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
             String joinCodeLine = readUntilType(conn1, MessageType.JOIN_CODE.name());
@@ -351,14 +536,64 @@ class ClientHandlerIntegrationTest {
             String moveLine = readUntilType(conn1, MessageType.MOVE.name());
             if (moveLine != null) {
                 // The line must be parseable without throwing.
-                assertDoesNotThrow(() -> MessageParser.parse(moveLine), "Each line received on the client must be parseable (no corruption from concurrent writes)");
+                assertDoesNotThrow(() -> MessageParser.parse(moveLine),
+                        "Each line received on the client must be parseable (no corruption from concurrent writes)");
             }
 
             // Also verify conn2 (black) received the MOVE relay.
             String moveLine2 = readUntilType(conn2, MessageType.MOVE.name());
             if (moveLine2 != null) {
-                assertDoesNotThrow(() -> MessageParser.parse(moveLine2), "Each line received on black's client must be parseable");
+                assertDoesNotThrow(() -> MessageParser.parse(moveLine2),
+                        "Each line received on black's client must be parseable");
             }
+        }
+    }
+
+    // ========================================================================
+    // Regression: null authService must return ERROR, not crash handler thread
+    // ========================================================================
+
+    /**
+     * Opens a connection where the ClientHandler has a null authService.
+     * This reproduces the original NPE bug where Server.main() did not wire
+     * the auth dependencies.
+     */
+    private Connection openConnectionWithoutAuth() throws IOException {
+        Socket clientSock = new Socket("127.0.0.1", serverSocket.getLocalPort());
+        Socket serverSideSocket = serverSocket.accept();
+        serverSideSocket.setSoTimeout(TIMEOUT_MS);
+
+        ClientHandler handler = new ClientHandler(serverSideSocket, server, gameManager, null, null);
+        handlerPool.submit(handler);
+        return new Connection(clientSock);
+    }
+
+    @Test
+    void register_withNullAuthService_returnsError_doesNotCrash() throws Exception {
+        try (Connection conn = openConnectionWithoutAuth()) {
+            conn.send("REGISTER:username=test password=testpass123");
+
+            String response = readUntilType(conn, MessageType.ERROR.name());
+            assertNotNull(response, "REGISTER with null authService must produce an ERROR, not crash");
+            assertTrue(response.contains("Authentication service not available"),
+                    "Error message must indicate auth service is unavailable");
+
+            // Verify handler is still alive: send another message.
+            conn.send("LOGIN:username=test password=testpass123");
+            String response2 = readUntilType(conn, MessageType.ERROR.name());
+            assertNotNull(response2, "Handler must continue processing after null-auth error");
+        }
+    }
+
+    @Test
+    void login_withNullAuthService_returnsError_doesNotCrash() throws Exception {
+        try (Connection conn = openConnectionWithoutAuth()) {
+            conn.send("LOGIN:username=test password=testpass123");
+
+            String response = readUntilType(conn, MessageType.ERROR.name());
+            assertNotNull(response, "LOGIN with null authService must produce an ERROR, not crash");
+            assertTrue(response.contains("Authentication service not available"),
+                    "Error message must indicate auth service is unavailable");
         }
     }
 }

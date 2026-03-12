@@ -6,38 +6,58 @@ import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.game.Game;
 import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.moves.Move;
+import io.github.conava.chess.core.logic.moves.PromotionMove;
 import io.github.conava.chess.core.logic.observer.GameObserver;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import io.github.conava.chess.core.logic.ruleset.chess960Ruleset.Chess960Ruleset;
+import io.github.conava.chess.server.persistence.GameRepository;
 
+import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Represents a single server-side game session, managing two player slots (white and black),
- * deferred game creation, and in-game message routing.
+ * deferred game creation, in-game message routing, disconnect/reconnect handling, mutual
+ * save-for-later, and chat relay.
  *
  * <p>Game creation is deferred until both players have connected via
- * {@link #connectPlayer(ClientHandler, String)}. Until that point the internal {@link Game}
- * reference is {@code null} and move messages are silently ignored. This avoids the need to
- * store placeholder player names and keeps the {@link Game} superclass in a consistent state
- * from the moment it is constructed.</p>
+ * {@link #connectPlayer(ClientHandler, String)} or
+ * {@link #connectPlayer(ClientHandler, PlayerSession)}. Until that point the internal
+ * {@link Game} reference is {@code null} and move messages are silently ignored.</p>
  *
  * <p>This class implements {@link GameObserver} to receive state-change notifications from
- * the underlying {@link Game}. The observer is used exclusively for terminal state transitions
- * (checkmate, resignation, timeout, draw). Move relay is handled explicitly in
- * {@link #handleMove(ClientHandler, Message)} because the move data is only available at the
- * call site, not in the signal-only {@link #onGameStateChanged()} callback.</p>
+ * the underlying {@link Game}. The observer is used exclusively for terminal state transitions.
+ * Move relay is handled explicitly in {@link #handleMove(ClientHandler, Message)}.</p>
  *
- * <p>Both {@link #connectPlayer(ClientHandler, String)} and {@link #processMessage(ClientHandler, Message)}
- * are {@code synchronized} on this instance to prevent race conditions between the two player
- * threads sharing the same game.</p>
+ * <p>Both {@link #connectPlayer(ClientHandler, String)} and
+ * {@link #processMessage(ClientHandler, Message)} are {@code synchronized} on this instance
+ * to prevent race conditions between the two player threads sharing the same game.</p>
+ *
+ * <p>When a player disconnects during a non-terminal game, the game is set to
+ * {@link GameState#PAUSED} rather than awarding a resignation. A disconnect timer is
+ * started; if the disconnected player does not reconnect within
+ * {@code disconnectTimeoutSeconds} seconds, the remaining player wins by timeout.</p>
+ *
+ * <p>If a {@link GameRepository} is provided (non-null), all significant state changes
+ * (game creation, moves, chat, disconnect, reconnect, save) are persisted. When
+ * {@code gameRepository} is {@code null} all persistence calls are silently skipped,
+ * which is the default for the legacy no-args constructor used in tests.</p>
+ *
+ * @since 0.9
  */
 public class GameInstance implements GameObserver {
 
     private static final Logger LOGGER = Logger.getLogger(GameInstance.class.getName());
+
+    /** Maximum allowed length for a chat message content string. */
+    private static final int MAX_CHAT_LENGTH = 500;
 
     private final int gameId;
     private final RulesetOptions ruleset;
@@ -46,6 +66,23 @@ public class GameInstance implements GameObserver {
      * Scharnagl index for Chess960 games; {@code -1} for standard chess.
      */
     private final int positionIndex;
+
+    /**
+     * Optional persistence repository. {@code null} when no DB backing is configured.
+     */
+    private final GameRepository gameRepository;
+
+    /**
+     * The database primary key for the persisted game row, or {@code -1} when no
+     * repository is available.
+     */
+    private final int dbGameId;
+
+    /**
+     * Seconds before an absent player forfeits the game. Only used when
+     * {@code gameRepository} is non-null.
+     */
+    private final int disconnectTimeoutSeconds;
 
     private Game game;
     private GameState previousState;
@@ -56,38 +93,93 @@ public class GameInstance implements GameObserver {
     private ClientHandler whitePlayerHandler;
     private ClientHandler blackPlayerHandler;
 
+    /** Session for the white player; may be {@code null} when no auth context is available. */
+    private PlayerSession whitePlayerSession;
+
+    /** Session for the black player; may be {@code null} when no auth context is available. */
+    private PlayerSession blackPlayerSession;
+
+    /** Sequential move counter (1-based). Incremented on each successfully persisted move. */
+    private int moveNo;
+
+    /** Whether the white player has requested a mutual save. */
+    private boolean whiteSaveRequested;
+
+    /** Whether the black player has requested a mutual save. */
+    private boolean blackSaveRequested;
+
+    /** Lazy-initialised scheduler used for the disconnect timeout. */
+    private ScheduledExecutorService scheduler;
+
+    /** Cancellable handle for the active disconnect countdown timer. */
+    private ScheduledFuture<?> disconnectTimer;
+
+    // ── Constructors ──────────────────────────────────────────────────────────
+
     /**
-     * Constructs a new {@code GameInstance} in the {@code WAITING_FOR_PLAYER} state.
+     * Constructs a new {@code GameInstance} in the {@code WAITING_FOR_PLAYER} state,
+     * without persistence.
      *
-     * <p>No {@link Game} object is created at this point. Game creation is deferred until
-     * both players have connected via {@link #connectPlayer(ClientHandler, String)}, so that
-     * both player names are available before the {@link Game} superclass constructor runs.</p>
+     * <p>This constructor keeps the existing two-argument signature for backward
+     * compatibility with tests and callers that do not require DB integration.
+     * All persistence operations are skipped when using this constructor.</p>
      *
-     * @param gameId  The unique numeric identifier for this game session.
-     * @param ruleset The ruleset variant to use when the game is eventually created.
+     * @param gameId  the unique numeric identifier for this game session
+     * @param ruleset the ruleset variant to use when the game is eventually created
      */
     public GameInstance(int gameId, RulesetOptions ruleset) {
+        this(gameId, ruleset, null, null, 0, -1);
+    }
+
+    /**
+     * Constructs a new {@code GameInstance} with full persistence and disconnect-timeout
+     * support.
+     *
+     * <p>No {@link Game} object is created at construction time. Game creation is deferred
+     * until both players have connected so that both player names are available before the
+     * {@link Game} constructor runs.</p>
+     *
+     * @param gameId                   the unique numeric identifier for this game session
+     * @param ruleset                  the ruleset variant to use when the game is eventually created
+     * @param gameRepository           the persistence repository; {@code null} disables all DB calls
+     * @param gameManager              the server-wide game manager (reserved for future use); may be {@code null}
+     * @param disconnectTimeoutSeconds seconds before an absent player forfeits; ignored when
+     *                                 {@code gameRepository} is {@code null}
+     * @param dbGameId                 the database primary key for the game row, or {@code -1}
+     *                                 when {@code gameRepository} is {@code null}
+     */
+    /**
+     * Stored reference to the server-wide {@link GameManager}; may be {@code null}.
+     * Reserved for future use (e.g. removing the game from the active map on save/end).
+     */
+    private final GameManager gameManager;
+
+    public GameInstance(int gameId, RulesetOptions ruleset, GameRepository gameRepository,
+                        GameManager gameManager, int disconnectTimeoutSeconds, int dbGameId) {
         this.gameId = gameId;
         this.ruleset = ruleset;
         this.positionIndex = (ruleset == RulesetOptions.CHESS960) ? new Random().nextInt(960) : -1;
         this.game = null;
         this.previousState = null;
+        this.gameRepository = gameRepository;
+        this.gameManager = gameManager;
+        this.disconnectTimeoutSeconds = disconnectTimeoutSeconds;
+        this.dbGameId = dbGameId;
+        this.moveNo = 0;
+        this.whiteSaveRequested = false;
+        this.blackSaveRequested = false;
     }
 
+    // ── Player connection ─────────────────────────────────────────────────────
+
     /**
-     * Connects a player to this game instance and, when both slots are filled, creates the
-     * underlying {@link Game} and starts play.
+     * Connects a player using a name string only (no session context).
      *
      * <p>The first call fills the white (creator) slot; the second call fills the black
-     * (joiner) slot. On the second call, the {@link Game} is created via
-     * {@link Game#createServerGame(RulesetOptions, String, String)}, this instance is
-     * registered as a {@link GameObserver}, and a single {@code GAME_STATUS gameState=RUNNING}
-     * message is broadcast to both players.</p>
+     * (joiner) slot and starts the game.</p>
      *
-     * @param clientHandler The {@link ClientHandler} for the connecting player; must not be {@code null}.
-     * @param playerName    The display name for the connecting player. A blank or {@code null}
-     *                      value causes this {@link GameInstance} to substitute a default name
-     *                      ({@code "Player 1"} for white, {@code "Player 2"} for black).
+     * @param clientHandler the handler for the connecting player; must not be {@code null}
+     * @param playerName    display name; a blank or {@code null} value substitutes a default
      */
     public synchronized void connectPlayer(ClientHandler clientHandler, String playerName) {
         if (whitePlayerHandler == null) {
@@ -105,13 +197,42 @@ public class GameInstance implements GameObserver {
     }
 
     /**
+     * Connects a player using a {@link PlayerSession} for identity and DB operations.
+     *
+     * <p>The username from the session is used as the display name. If the session is
+     * {@code null} or has a blank username a default name is substituted.</p>
+     *
+     * <p>The first call fills the white slot; the second call fills the black slot and
+     * creates the game. When both sessions are available and a {@link GameRepository} is
+     * configured, the game row is created in the database on the second call.</p>
+     *
+     * @param clientHandler the handler for the connecting player; must not be {@code null}
+     * @param session       the authenticated session for the connecting player; may be {@code null}
+     */
+    public synchronized void connectPlayer(ClientHandler clientHandler, PlayerSession session) {
+        String playerName = (session != null && session.getUsername() != null && !session.getUsername().isBlank())
+                ? session.getUsername() : null;
+        if (whitePlayerHandler == null) {
+            whitePlayerHandler = clientHandler;
+            whitePlayerSession = session;
+            whitePlayerName = (playerName != null) ? playerName : "Player 1";
+            String whiteSuccessContent = (positionIndex >= 0) ? "player=white position=" + positionIndex + " ruleset=CHESS960" : "player=white";
+            clientHandler.sendMessage(new Message(MessageType.SUCCESS, whiteSuccessContent));
+        } else if (blackPlayerHandler == null) {
+            blackPlayerHandler = clientHandler;
+            blackPlayerSession = session;
+            blackPlayerName = (playerName != null) ? playerName : "Player 2";
+            String successContent = (positionIndex >= 0) ? "player=black position=" + positionIndex + " ruleset=CHESS960" : "player=black";
+            clientHandler.sendMessage(new Message(MessageType.SUCCESS, successContent));
+            startGame();
+        }
+    }
+
+    // ── Game lifecycle ────────────────────────────────────────────────────────
+
+    /**
      * Creates the {@link Game} via the factory, registers this instance as observer, and
      * notifies both players that the game is now {@code RUNNING}.
-     *
-     * <p>Only one {@code GAME_STATUS gameState=RUNNING} message is sent. The observer
-     * callback {@link #onGameStateChanged()} is NOT triggered for the RUNNING transition
-     * because RUNNING is not a terminal state, so there is no risk of a duplicate message
-     * from the observer path.</p>
      */
     private void startGame() {
         if (positionIndex >= 0) {
@@ -125,18 +246,14 @@ public class GameInstance implements GameObserver {
         sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=RUNNING"));
     }
 
+    // ── GameObserver ──────────────────────────────────────────────────────────
+
     /**
      * Observer callback invoked by the underlying {@link Game} whenever its state changes.
      *
-     * <p>This method handles terminal state transitions only. If the new game state differs
-     * from the previously observed state and is a terminal state (checkmate, resignation,
-     * timeout, or draw), a {@code GAME_STATUS} message is sent to both connected players.
-     * The RUNNING state is intentionally excluded: its notification is sent once in
-     * {@link #startGame()} so that this observer never sends a duplicate.</p>
-     *
-     * <p>This method is safe to call from any thread because {@link #processMessage} is
-     * synchronized on this instance, and {@code notifyObservers()} is called only from
-     * within synchronized contexts.</p>
+     * <p>Handles terminal state transitions only. If the new game state is terminal and
+     * differs from the previously observed state, a {@code GAME_STATUS} message is sent
+     * to both connected players.</p>
      */
     @Override
     public void onGameStateChanged() {
@@ -151,11 +268,13 @@ public class GameInstance implements GameObserver {
     }
 
     /**
-     * Returns {@code true} if the given {@link GameState} represents the end of the game
-     * (checkmate, resignation, timeout, or draw of any variant).
+     * Returns {@code true} if the given {@link GameState} represents a terminal game outcome.
      *
-     * @param state The state to test; must not be {@code null}.
-     * @return {@code true} if {@code state} is a terminal state, {@code false} otherwise.
+     * <p>Note: {@link GameState#PAUSED} and {@link GameState#SAVED} are explicitly NOT
+     * terminal — they represent suspended states from which play can resume.</p>
+     *
+     * @param state the state to test; must not be {@code null}
+     * @return {@code true} if {@code state} is a terminal state, {@code false} otherwise
      */
     private boolean isTerminalState(GameState state) {
         return switch (state) {
@@ -166,6 +285,8 @@ public class GameInstance implements GameObserver {
         };
     }
 
+    // ── Message dispatch ──────────────────────────────────────────────────────
+
     /**
      * Dispatches an in-game message from a client to the appropriate handler.
      *
@@ -173,14 +294,16 @@ public class GameInstance implements GameObserver {
      * from both player threads are processed serially, preventing race conditions on the
      * underlying {@link Game} object.</p>
      *
-     * @param clientHandler The {@link ClientHandler} that sent the message.
-     * @param message       The message to process; must not be {@code null}.
+     * @param clientHandler the handler that sent the message
+     * @param message       the message to process; must not be {@code null}
      */
     public synchronized void processMessage(ClientHandler clientHandler, Message message) {
         switch (message.type()) {
             case JOIN_CODE -> handleJoinCode(message);
             case MOVE -> handleMove(clientHandler, message);
             case GAME_STATUS -> handleGameStatus(clientHandler, message);
+            case CHAT -> handleChat(clientHandler, message);
+            case SAVE_GAME -> handleSaveGame(clientHandler, message);
             case SUCCESS -> handleSuccess(message);
             case ERROR -> handleError(message);
             case FAILURE -> handleFailure(message);
@@ -188,25 +311,12 @@ public class GameInstance implements GameObserver {
         }
     }
 
-    /**
-     * Sends a message to both connected players. Silently skips a slot if the handler
-     * for that slot is {@code null} (player not yet connected or already disconnected).
-     *
-     * @param message The message to broadcast; must not be {@code null}.
-     */
-    private void sendMessageToPlayers(Message message) {
-        if (whitePlayerHandler != null) {
-            whitePlayerHandler.sendMessage(message);
-        }
-        if (blackPlayerHandler != null) {
-            blackPlayerHandler.sendMessage(message);
-        }
-    }
+    // ── Handlers ─────────────────────────────────────────────────────────────
 
     /**
      * Handles a {@code JOIN_CODE} message by logging its content.
      *
-     * @param message The message containing the join code.
+     * @param message the message containing the join code
      */
     private void handleJoinCode(Message message) {
         LOGGER.log(Level.INFO, "Join code received: {0}", message.content());
@@ -214,19 +324,17 @@ public class GameInstance implements GameObserver {
 
     /**
      * Handles a {@code MOVE} message: parses the move, executes it on the game, then
-     * relays it to both players on success, or sends an {@code ERROR} to the sender on
-     * failure.
+     * relays the normalized protocol string to both players on success, or sends an
+     * {@code ERROR} to the sender on failure.
      *
-     * <p>Move relay is explicit (not observer-driven) because the move payload is only
-     * available at this call site -- the {@link GameObserver#onGameStateChanged()} callback
-     * carries no parameters.</p>
+     * <p>For {@link PromotionMove} instances, {@code game.promoteMove()} is called instead
+     * of {@code game.movePiece()} so the pawn is promoted to the correct piece type.</p>
      *
-     * <p>If the game has not yet been created (no players connected yet), the message is
-     * silently ignored to keep the handler thread alive during setup.</p>
+     * <p>After a successful move the serialized form is persisted via the repository (if
+     * available) and the move counter is incremented.</p>
      *
-     * @param clientHandler The {@link ClientHandler} that sent the move; used to send
-     *                      an error response on illegal or malformed input.
-     * @param message       The message carrying the move in {@code move=<notation> playerColor=<COLOR>} format.
+     * @param clientHandler the handler that sent the move
+     * @param message       the message carrying the move in {@code move=<notation> playerColor=<COLOR>} format
      */
     private void handleMove(ClientHandler clientHandler, Message message) {
         if (game == null) {
@@ -236,9 +344,27 @@ public class GameInstance implements GameObserver {
         try {
             var player = Objects.equals(message.getParameterValue("playerColor"), "WHITE") ? game.getPlayerWhite() : game.getPlayerBlack();
             Move move = game.getRuleset().deserializeMove(Objects.requireNonNull(message.getParameterValue("move")), game.getBoard(), player);
-            game.movePiece(move.getStart(), move.getEnd());
-            LOGGER.log(Level.INFO, "Move executed: {0}", message.content());
-            sendMessageToPlayers(new Message(MessageType.MOVE, message.content()));
+
+            if (move instanceof PromotionMove pm) {
+                game.promoteMove(pm.getStart(), pm.getEnd(), pm.getTargetPiece().getType());
+            } else {
+                game.movePiece(move.getStart(), move.getEnd());
+            }
+
+            String playerColor = message.getParameterValue("playerColor");
+            String relayContent = "move=" + move.toProtocolString() + " playerColor=" + playerColor;
+            LOGGER.log(Level.INFO, "Move executed: {0}", relayContent);
+            sendMessageToPlayers(new Message(MessageType.MOVE, relayContent));
+
+            // Persist the move if a repository is available
+            if (gameRepository != null && dbGameId > 0) {
+                moveNo++;
+                try {
+                    gameRepository.addMove(dbGameId, moveNo, move.toProtocolString());
+                } catch (SQLException e) {
+                    LOGGER.log(Level.WARNING, "Failed to persist move " + moveNo, e);
+                }
+            }
         } catch (IllegalMoveException e) {
             LOGGER.log(Level.WARNING, "Illegal move received: {0}", message.content());
             if (clientHandler != null) {
@@ -255,13 +381,11 @@ public class GameInstance implements GameObserver {
     /**
      * Handles a {@code GAME_STATUS} message from a client.
      *
-     * <p>If the message body is non-empty, it is treated as a resignation request.
-     * White may resign (sending {@code BLACK_WON_BY_RESIGNATION}) and black may resign
-     * (sending {@code WHITE_WON_BY_RESIGNATION}). If the body is empty, the current
-     * game state is returned to the requesting client.</p>
+     * <p>Non-empty content is treated as a resignation request. If the body is empty,
+     * the current game state is returned to the requesting client.</p>
      *
-     * @param clientHandler The {@link ClientHandler} requesting status or submitting a resignation.
-     * @param message       The {@code GAME_STATUS} message; content may be empty for a status query.
+     * @param clientHandler the handler requesting status or submitting a resignation
+     * @param message       the {@code GAME_STATUS} message
      */
     private void handleGameStatus(ClientHandler clientHandler, Message message) {
         if (game == null) {
@@ -291,9 +415,122 @@ public class GameInstance implements GameObserver {
     }
 
     /**
+     * Handles a {@code CHAT} message: sanitizes the content, prepends the sender's
+     * username as {@code from=<username>}, persists the message via the repository (if
+     * available), and relays the result to both players.
+     *
+     * <p>Newlines are stripped from the content to prevent protocol framing attacks.
+     * Content is truncated to {@value #MAX_CHAT_LENGTH} characters.</p>
+     *
+     * @param clientHandler the handler that sent the chat message
+     * @param message       the incoming {@code CHAT} message
+     */
+    /**
+     * Handles a {@code CHAT} message from the given client handler. Exposed as
+     * package-private so that {@link ClientHandler} can delegate directly after auth
+     * gating. See {@link #processMessage} for the general dispatch path.
+     *
+     * @param clientHandler the handler that sent the chat message
+     * @param message       the incoming {@code CHAT} message
+     */
+    void handleChat(ClientHandler clientHandler, Message message) {
+        if (game == null) {
+            return;
+        }
+
+        // Sanitize: strip newlines, truncate
+        String rawContent = message.content().replace("\n", "").replace("\r", "");
+        if (rawContent.length() > MAX_CHAT_LENGTH) {
+            rawContent = rawContent.substring(0, MAX_CHAT_LENGTH);
+        }
+
+        // Identify sender username
+        String senderUsername;
+        int senderUserId = 0;
+        if (clientHandler == whitePlayerHandler) {
+            senderUsername = (whitePlayerSession != null) ? whitePlayerSession.getUsername() : whitePlayerName;
+            senderUserId = (whitePlayerSession != null) ? whitePlayerSession.getUserId() : 0;
+        } else {
+            senderUsername = (blackPlayerSession != null) ? blackPlayerSession.getUsername() : blackPlayerName;
+            senderUserId = (blackPlayerSession != null) ? blackPlayerSession.getUserId() : 0;
+        }
+        if (senderUsername == null) {
+            senderUsername = "unknown";
+        }
+
+        String relayContent = "from=" + senderUsername + " " + rawContent;
+
+        // Persist if repository is available
+        if (gameRepository != null && dbGameId > 0 && senderUserId > 0) {
+            try {
+                gameRepository.addChatMessage(dbGameId, senderUserId, rawContent);
+            } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "Failed to persist chat message", e);
+            }
+        }
+
+        sendMessageToPlayers(new Message(MessageType.CHAT, relayContent));
+    }
+
+    /**
+     * Handles a {@code SAVE_GAME} request from a player.
+     *
+     * <p>Sets the requesting player's save flag and forwards the {@code SAVE_GAME} message
+     * to the opponent so they know their partner wants to save. When both flags are set,
+     * the game state is set to {@link GameState#SAVED}, the repository is updated, and
+     * {@link MessageType#SAVE_ACCEPTED} is sent to both players. The disconnect timer (if
+     * running) is cancelled.</p>
+     *
+     * @param clientHandler the handler requesting the save
+     * @param message       the {@code SAVE_GAME} message
+     */
+    /**
+     * Handles a {@code SAVE_GAME} request from a player. Exposed as package-private so
+     * that {@link ClientHandler} can delegate directly after auth gating. See
+     * {@link #processMessage} for the general dispatch path.
+     *
+     * @param clientHandler the handler requesting the save
+     * @param message       the {@code SAVE_GAME} message
+     */
+    void handleSaveGame(ClientHandler clientHandler, Message message) {
+        if (game == null) {
+            return;
+        }
+
+        // Record that this player wants to save
+        ClientHandler opponent;
+        if (clientHandler == whitePlayerHandler) {
+            whiteSaveRequested = true;
+            opponent = blackPlayerHandler;
+        } else {
+            blackSaveRequested = true;
+            opponent = whitePlayerHandler;
+        }
+
+        // Forward the request to the opponent so they can respond
+        if (opponent != null) {
+            opponent.sendMessage(new Message(MessageType.SAVE_GAME, ""));
+        }
+
+        // If both agreed, finalize the save
+        if (whiteSaveRequested && blackSaveRequested) {
+            cancelDisconnectTimer();
+            game.setGameState(GameState.SAVED);
+            if (gameRepository != null && dbGameId > 0) {
+                try {
+                    gameRepository.updateGameState(dbGameId, "SAVED");
+                } catch (SQLException e) {
+                    LOGGER.log(Level.WARNING, "Failed to persist SAVED state", e);
+                }
+            }
+            sendMessageToPlayers(new Message(MessageType.SAVE_ACCEPTED, ""));
+        }
+    }
+
+    /**
      * Handles a {@code SUCCESS} message by logging it.
      *
-     * @param message The success message.
+     * @param message the success message
      */
     private void handleSuccess(Message message) {
         LOGGER.log(Level.INFO, "Success: {0}", message);
@@ -302,7 +539,7 @@ public class GameInstance implements GameObserver {
     /**
      * Handles an {@code ERROR} message by logging it.
      *
-     * @param message The error message.
+     * @param message the error message
      */
     private void handleError(Message message) {
         LOGGER.log(Level.SEVERE, "Error: {0}", message.content());
@@ -311,42 +548,87 @@ public class GameInstance implements GameObserver {
     /**
      * Handles a {@code FAILURE} message by logging it.
      *
-     * @param message The failure message.
+     * @param message the failure message
      */
     private void handleFailure(Message message) {
         LOGGER.log(Level.SEVERE, "Failure: {0}", message.content());
     }
 
+    // ── Disconnect / reconnect ────────────────────────────────────────────────
+
     /**
      * Handles a player disconnecting from this game session.
      *
-     * <p>If the game exists and is in a non-terminal state, the disconnecting player's
-     * side is awarded a resignation loss: white's disconnect results in
-     * {@link GameState#BLACK_WON_BY_RESIGNATION} and black's disconnect results in
-     * {@link GameState#WHITE_WON_BY_RESIGNATION}. A {@code GAME_STATUS} message is then
-     * sent to the remaining connected player so they are informed of the outcome.</p>
+     * <p>If the game exists and is in a non-terminal state, the game is paused rather
+     * than ended. The remaining connected player receives a
+     * {@code GAME_STATUS gameState=PAUSED} message. A countdown timer is started; if the
+     * player does not reconnect within {@code disconnectTimeoutSeconds}, the remaining
+     * player wins by timeout.</p>
      *
-     * <p>After notification, the disconnected player's handler reference is nulled out and
-     * the observer is removed from the underlying {@link Game} (if one exists) to prevent
-     * memory leaks from dangling observer registrations.</p>
+     * <p>If no repository is configured the DB operations are skipped but the game is
+     * still paused and the in-memory disconnect timer is still started.</p>
      *
-     * <p>This method is {@code synchronized} on this instance to prevent concurrent
-     * disconnect and move-processing races.</p>
+     * <p>This method is {@code synchronized} on this instance.</p>
      *
-     * @param clientHandler The {@link ClientHandler} of the player who disconnected;
-     *                      must not be {@code null}.
+     * @param clientHandler the handler of the disconnecting player; must not be {@code null}
      */
     public synchronized void disconnectPlayer(ClientHandler clientHandler) {
         if (game != null && !isTerminalState(game.getState())) {
+            int disconnectedUserId = 0;
+            final GameState forfeitState;
+
             if (clientHandler == whitePlayerHandler) {
-                game.setGameState(GameState.BLACK_WON_BY_RESIGNATION);
-                if (blackPlayerHandler != null) {
-                    blackPlayerHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + GameState.BLACK_WON_BY_RESIGNATION.name()));
-                }
+                disconnectedUserId = (whitePlayerSession != null) ? whitePlayerSession.getUserId() : 0;
+                forfeitState = GameState.BLACK_WON_BY_TIMEOUT;
             } else if (clientHandler == blackPlayerHandler) {
-                game.setGameState(GameState.WHITE_WON_BY_RESIGNATION);
-                if (whitePlayerHandler != null) {
-                    whitePlayerHandler.sendMessage(new Message(MessageType.GAME_STATUS, "gameState=" + GameState.WHITE_WON_BY_RESIGNATION.name()));
+                disconnectedUserId = (blackPlayerSession != null) ? blackPlayerSession.getUserId() : 0;
+                forfeitState = GameState.WHITE_WON_BY_TIMEOUT;
+            } else {
+                forfeitState = null;
+            }
+
+            if (forfeitState != null) {
+                // Pause the game instead of awarding resignation immediately
+                game.setGameState(GameState.PAUSED);
+                sendMessageToOpponent(clientHandler, new Message(MessageType.GAME_STATUS, "gameState=PAUSED"));
+
+                // Persist disconnect info
+                if (gameRepository != null && dbGameId > 0) {
+                    try {
+                        if (disconnectedUserId > 0) {
+                            gameRepository.setDisconnect(dbGameId, disconnectedUserId);
+                        }
+                        gameRepository.updateGameState(dbGameId, "PAUSED");
+                    } catch (SQLException e) {
+                        LOGGER.log(Level.WARNING, "Failed to persist disconnect state", e);
+                    }
+                }
+
+                // Start forfeit countdown
+                final int finalDisconnectedUserId = disconnectedUserId;
+                if (disconnectTimeoutSeconds > 0) {
+                    if (scheduler == null) {
+                        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+                            Thread t = new Thread(r, "disconnect-timer-game-" + gameId);
+                            t.setDaemon(true);
+                            return t;
+                        });
+                    }
+                    disconnectTimer = scheduler.schedule(() -> {
+                        synchronized (GameInstance.this) {
+                            if (game != null && game.getState() == GameState.PAUSED) {
+                                game.setGameState(forfeitState);
+                                sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=" + forfeitState.name()));
+                                if (gameRepository != null && dbGameId > 0) {
+                                    try {
+                                        gameRepository.updateGameState(dbGameId, forfeitState.name());
+                                    } catch (SQLException e) {
+                                        LOGGER.log(Level.WARNING, "Failed to persist timeout state", e);
+                                    }
+                                }
+                            }
+                        }
+                    }, disconnectTimeoutSeconds, TimeUnit.SECONDS);
                 }
             }
         }
@@ -363,9 +645,108 @@ public class GameInstance implements GameObserver {
     }
 
     /**
+     * Reconnects a previously disconnected player to this game session.
+     *
+     * <p>Cancels the disconnect timer, clears the disconnect record in the database,
+     * updates the appropriate player handler, and sets the game state back to
+     * {@link GameState#RUNNING}. Both players (the reconnecting player and the one who
+     * stayed) receive a {@code GAME_STATUS gameState=RUNNING} message.</p>
+     *
+     * <p>Re-registers this instance as a {@link GameObserver} if it was removed during
+     * the disconnect.</p>
+     *
+     * <p>This method is {@code synchronized} on this instance.</p>
+     *
+     * @param handler the new {@link ClientHandler} for the reconnecting player
+     * @param session the authenticated session of the reconnecting player; may be {@code null}
+     */
+    public synchronized void reconnectPlayer(ClientHandler handler, PlayerSession session) {
+        cancelDisconnectTimer();
+
+        // Clear DB disconnect record
+        if (gameRepository != null && dbGameId > 0) {
+            try {
+                gameRepository.clearDisconnect(dbGameId);
+                gameRepository.updateGameState(dbGameId, "RUNNING");
+            } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "Failed to clear disconnect on reconnect", e);
+            }
+        }
+
+        // Determine which slot the reconnecting player fills. We use the session to match
+        // by userId if available; otherwise fill the first empty slot.
+        boolean reconnectedAsWhite = false;
+        if (whitePlayerHandler == null) {
+            whitePlayerHandler = handler;
+            whitePlayerSession = session;
+            reconnectedAsWhite = true;
+        } else if (blackPlayerHandler == null) {
+            blackPlayerHandler = handler;
+            blackPlayerSession = session;
+        } else {
+            LOGGER.log(Level.WARNING, "reconnectPlayer called but both slots are filled — ignoring (gameId={0})", gameId);
+            return;
+        }
+
+        // Re-register as observer if needed
+        if (game != null) {
+            // Avoid double-registration: remove first, then add
+            game.removeObserver(this);
+            game.addObserver(this);
+            game.setGameState(GameState.RUNNING);
+            previousState = GameState.RUNNING;
+        }
+
+        sendMessageToPlayers(new Message(MessageType.GAME_STATUS, "gameState=RUNNING"));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Sends a message to both connected players. Silently skips a slot if the handler
+     * for that slot is {@code null}.
+     *
+     * @param message the message to broadcast; must not be {@code null}
+     */
+    private void sendMessageToPlayers(Message message) {
+        if (whitePlayerHandler != null) {
+            whitePlayerHandler.sendMessage(message);
+        }
+        if (blackPlayerHandler != null) {
+            blackPlayerHandler.sendMessage(message);
+        }
+    }
+
+    /**
+     * Sends a message to the player who is NOT {@code sender}.
+     *
+     * @param sender  the handler that sent the original message; used to identify the opponent
+     * @param message the message to send to the opponent
+     */
+    private void sendMessageToOpponent(ClientHandler sender, Message message) {
+        if (sender == whitePlayerHandler && blackPlayerHandler != null) {
+            blackPlayerHandler.sendMessage(message);
+        } else if (sender == blackPlayerHandler && whitePlayerHandler != null) {
+            whitePlayerHandler.sendMessage(message);
+        }
+    }
+
+    /**
+     * Cancels the active disconnect timer if one is running.
+     */
+    private void cancelDisconnectTimer() {
+        if (disconnectTimer != null && !disconnectTimer.isDone()) {
+            disconnectTimer.cancel(false);
+            disconnectTimer = null;
+        }
+    }
+
+    // ── Accessors ─────────────────────────────────────────────────────────────
+
+    /**
      * Returns the numeric identifier for this game session.
      *
-     * @return The game ID assigned at construction time.
+     * @return the game ID assigned at construction time
      */
     public int getGameId() {
         return gameId;
@@ -374,7 +755,7 @@ public class GameInstance implements GameObserver {
     /**
      * Returns the Scharnagl position index for Chess960 games, or {@code -1} for standard chess.
      *
-     * @return The position index in [0, 959] for Chess960 games, or {@code -1} for standard chess.
+     * @return the position index in [0, 959] for Chess960 games, or {@code -1} for standard chess
      */
     public int getPositionIndex() {
         return positionIndex;
@@ -384,7 +765,7 @@ public class GameInstance implements GameObserver {
      * Returns the {@link ClientHandler} for the white player, or {@code null} if the
      * white slot has not yet been filled.
      *
-     * @return The white player's handler, or {@code null}.
+     * @return the white player's handler, or {@code null}
      */
     public ClientHandler getWhitePlayerHandler() {
         return whitePlayerHandler;
@@ -394,7 +775,7 @@ public class GameInstance implements GameObserver {
      * Returns the {@link ClientHandler} for the black player, or {@code null} if the
      * black slot has not yet been filled.
      *
-     * @return The black player's handler, or {@code null}.
+     * @return the black player's handler, or {@code null}
      */
     public ClientHandler getBlackPlayerHandler() {
         return blackPlayerHandler;

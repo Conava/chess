@@ -3,6 +3,7 @@ package io.github.conava.chess.application.controllers;
 import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.navigation.SceneManager;
+import io.github.conava.chess.application.network.ServerCommunicationTask;
 import io.github.conava.chess.application.tasks.ExecuteMove;
 import io.github.conava.chess.core.data.Square;
 import io.github.conava.chess.core.data.board.Board;
@@ -22,8 +23,12 @@ import javafx.scene.Scene;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -33,6 +38,7 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -64,6 +70,14 @@ public class GameController implements GameObserver {
     private VBox leftPanel;
     @FXML
     private VBox rightPanel;
+    @FXML
+    private VBox chatPanel;
+    @FXML
+    private ListView<String> chatList;
+    @FXML
+    private TextField chatInput;
+    @FXML
+    private Button saveExitBtn;
 
     private final StackPane[][] boardSquares = new StackPane[8][8];
     private final List<StackPane> markedSquares = new ArrayList<>();
@@ -91,7 +105,66 @@ public class GameController implements GameObserver {
         buildLabels();
         bindPanelWidths();
         registerWithGame();
+        configureOnlineFeatures();
         updateAll();
+    }
+
+    /**
+     * Detects whether the current game is online and, if so, shows the chat panel and the
+     * "Save &amp; Exit" button, then registers the chat, save-accepted, and save-game handlers
+     * on the active {@link ServerCommunicationTask}.
+     */
+    private void configureOnlineFeatures() {
+        boolean isOnline = chess.getJoinCode() != null;
+        if (!isOnline) return;
+
+        chatPanel.setVisible(true);
+        chatPanel.setManaged(true);
+        saveExitBtn.setVisible(true);
+        saveExitBtn.setManaged(true);
+
+        ServerCommunicationTask task = chess.getActiveServerTask();
+        if (task == null) return;
+
+        task.setChatHandler(msg -> {
+            String text = parseChatDisplay(msg.content());
+            Platform.runLater(() -> chatList.getItems().add(text));
+        });
+
+        task.setSaveAcceptedHandler(() ->
+                Platform.runLater(() -> {
+                    chess.endGame();
+                    sceneManager.showMainMenu();
+                }));
+
+        task.setSaveGameHandler(msg ->
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                            i18n.get("game.save.opponentRequest"),
+                            ButtonType.YES, ButtonType.NO);
+                    Optional<ButtonType> result = alert.showAndWait();
+                    if (result.isPresent() && result.get() == ButtonType.YES) {
+                        chess.requestSaveGame();
+                    }
+                }));
+    }
+
+    /**
+     * Formats a raw chat message content string for display in the chat list.
+     *
+     * <p>The server encodes chat messages as {@code "content=<text>"}. This method
+     * extracts the value after the first {@code '='} sign. If no {@code '='} is found the
+     * raw content is returned unchanged.</p>
+     *
+     * @param rawContent the message content string from the server.
+     * @return the human-readable chat text.
+     */
+    private String parseChatDisplay(String rawContent) {
+        int eqIdx = rawContent.indexOf('=');
+        if (eqIdx >= 0 && eqIdx < rawContent.length() - 1) {
+            return rawContent.substring(eqIdx + 1);
+        }
+        return rawContent;
     }
 
     // ── Board construction ────────────────────────────────────────────────────
@@ -374,6 +447,31 @@ public class GameController implements GameObserver {
             chess.endGame();
             sceneManager.showMainMenu();
         }
+    }
+
+    /**
+     * Sends the text in {@link #chatInput} to the opponent via the server.
+     * No-op if the input is blank.
+     */
+    @FXML
+    private void onSendChat() {
+        String text = chatInput.getText();
+        if (text == null || text.isBlank()) return;
+        chess.sendChat(text);
+        chatInput.clear();
+    }
+
+    /**
+     * Initiates a save-and-exit request. Sends a {@code SAVE_GAME} message to the server
+     * and shows a status label informing the local player that the request was sent.
+     * The actual navigation occurs when the opponent accepts (via {@link #configureOnlineFeatures()}'s
+     * {@code saveAcceptedHandler}).
+     */
+    @FXML
+    private void onSaveAndExit() {
+        chess.requestSaveGame();
+        saveExitBtn.setText(i18n.get("game.save.waiting"));
+        saveExitBtn.setDisable(true);
     }
 
     @FXML

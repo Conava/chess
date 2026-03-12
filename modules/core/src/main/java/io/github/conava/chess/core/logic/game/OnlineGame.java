@@ -41,6 +41,14 @@ public class OnlineGame extends Game {
     private static final String PLAYER_COLOR_PARAM = "playerColor";
     private static final String MOVE_PARAM = "move";
     private static final String GAME_STATE_PARAM = "gameState";
+    private static final String SENDER_PARAM = "sender";
+    private static final String CONTENT_PARAM = "content";
+    private static final String MOVES_PARAM = "moves";
+    private static final String RULESET_PARAM = "ruleset";
+    private static final String COLOR_PARAM = "color";
+
+    /** Whether the opponent (or server) has proposed saving the game for later. */
+    private volatile boolean saveOffered = false;
 
     private final ServerConnection connection;
     private String joinCode;
@@ -127,26 +135,18 @@ public class OnlineGame extends Game {
      */
     public void handleMessage(Message message) {
         switch (message.type()) {
-            case JOIN_CODE:
-                handleJoinCode(message);
-                break;
-            case MOVE:
-                handleMove(message);
-                break;
-            case GAME_STATUS:
-                handleGameStatus(message);
-                break;
-            case SUCCESS:
-                handleSuccess(message);
-                break;
-            case ERROR:
-                handleError(message);
-                break;
-            case FAILURE:
-                handleFailure(message);
-                break;
-            default:
-                LOGGER.log(Level.WARNING, "Unsupported message type: " + message.type());
+            case JOIN_CODE      -> handleJoinCode(message);
+            case MOVE           -> handleMove(message);
+            case GAME_STATUS    -> handleGameStatus(message);
+            case SUCCESS        -> handleSuccess(message);
+            case ERROR          -> handleError(message);
+            case FAILURE        -> handleFailure(message);
+            case CHAT           -> handleChat(message);
+            case GAME_HISTORY   -> handleGameHistory(message);
+            case SAVE_GAME      -> handleSaveGame();
+            case SAVE_ACCEPTED  -> handleSaveAccepted();
+            case MATCHED        -> handleMatched(message);
+            default             -> LOGGER.log(Level.WARNING, "Unhandled message type: {0}", message.type());
         }
     }
 
@@ -282,6 +282,150 @@ public class OnlineGame extends Game {
             restoreGameState();
             notifyObservers();
         }
+    }
+
+    /**
+     * Handles a CHAT message relayed by the server.
+     * Notifies all registered observers via {@link #notifyChatObservers}.
+     *
+     * @param message the incoming chat message (must carry {@code sender} and {@code content} params)
+     */
+    private void handleChat(Message message) {
+        String sender  = message.getParameterValue(SENDER_PARAM);
+        String content = message.getParameterValue(CONTENT_PARAM);
+        if (sender == null)  sender  = "?";
+        if (content == null) content = "";
+        notifyChatObservers(sender, content);
+    }
+
+    /**
+     * Handles a GAME_HISTORY message sent by the server when reconnecting to a paused game.
+     *
+     * <p>The message carries {@code moves=<csv>} — a comma-separated list of move protocol
+     * strings. Replays each move in order to restore the board to its saved state. Moves that
+     * fail to parse or execute are skipped with a warning.</p>
+     *
+     * @param message the history message from the server
+     */
+    private void handleGameHistory(Message message) {
+        if (board == null) {
+            // Board may not be initialised yet if this arrives before JOIN_CODE/SUCCESS.
+            String rulesetStr = message.getParameterValue(RULESET_PARAM);
+            RulesetOptions opts = selectedRuleset;
+            if (rulesetStr != null) {
+                try { opts = RulesetOptions.valueOf(rulesetStr); } catch (IllegalArgumentException ignored) {}
+            }
+            initializeBoard(createRuleset(opts));
+        }
+
+        String movesCsv = message.getParameterValue(MOVES_PARAM);
+        if (movesCsv == null || movesCsv.isBlank()) {
+            notifyObservers();
+            return;
+        }
+
+        for (String wireString : movesCsv.split(",")) {
+            if (wireString.isBlank()) continue;
+            try {
+                Player player = getCurrentPlayer();
+                Move move = ruleset.deserializeMove(wireString.trim(), board, player);
+                Square boardStart = toBoardSquare(move.getStart());
+                Square boardEnd   = toBoardSquare(move.getEnd());
+                Move canonical;
+                if (move instanceof CastleMove cm) {
+                    canonical = new CastleMove(boardStart, boardEnd, cm.getRookOriginFile(), cm.getKingDestFile());
+                } else if (move instanceof PromotionMove pm) {
+                    canonical = new PromotionMove(boardStart, boardEnd, pm.getTargetPiece());
+                } else {
+                    canonical = new Move(boardStart, boardEnd);
+                }
+                super.executeMove(canonical);
+            } catch (IllegalMoveException | RuntimeException e) {
+                LOGGER.log(Level.WARNING, "Skipping invalid history move ''{0}'': {1}", new Object[]{wireString, e.getMessage()});
+            }
+        }
+
+        // Apply the persisted terminal state if provided
+        String stateStr = message.getParameterValue(GAME_STATE_PARAM);
+        if (stateStr != null) {
+            try { gameState = GameState.valueOf(stateStr); } catch (IllegalArgumentException ignored) {}
+        }
+
+        notifyObservers();
+    }
+
+    /**
+     * Handles a SAVE_GAME signal from the server, indicating that the opponent (or the server
+     * on their behalf) has proposed saving the game for later. Sets the {@code saveOffered} flag
+     * and notifies observers so that the UI can present an accept/decline dialog.
+     */
+    private void handleSaveGame() {
+        saveOffered = true;
+        notifyObservers();
+    }
+
+    /**
+     * Handles a SAVE_ACCEPTED message: the server confirms the game has been persisted.
+     * Transitions state to {@link GameState#SAVED} and notifies observers.
+     */
+    private void handleSaveAccepted() {
+        gameState = GameState.SAVED;
+        saveOffered = false;
+        notifyObservers();
+    }
+
+    /**
+     * Handles a MATCHED message from the matchmaking service.
+     *
+     * <p>Content format: {@code gameId=<id> color=WHITE|BLACK opponentName=<name> ruleset=<RULESET>
+     * [position=<n>]}</p>
+     *
+     * <p>Initializes the board with the server-provided ruleset and sets the local player colour.
+     * After this call the game is in {@link GameState#RUNNING} and ready for play.</p>
+     *
+     * @param message the MATCHED message from the server
+     */
+    private void handleMatched(Message message) {
+        String colorStr = message.getParameterValue(COLOR_PARAM);
+        localPlayerColor = "BLACK".equalsIgnoreCase(colorStr) ? PlayerColor.BLACK : PlayerColor.WHITE;
+
+        if (board == null) {
+            Ruleset r = buildRulesetFromServerParams(message);
+            initializeBoard(r);
+        }
+
+        gameState = GameState.RUNNING;
+        notifyObservers();
+    }
+
+    // ── Public helpers ─────────────────────────────────────────────────────────
+
+    /**
+     * Returns {@code true} if the opponent (or server) has proposed saving the current game.
+     * The UI should query this flag after receiving an {@link GameObserver#onGameStateChanged()}
+     * notification and present an accept/decline dialog when it is {@code true}.
+     */
+    public boolean isSaveOffered() {
+        return saveOffered;
+    }
+
+    /**
+     * Sends a CHAT message to the server.
+     *
+     * @param content the text the local player wants to send; must not be null or blank
+     */
+    public void sendChatMessage(String content) {
+        if (content == null || content.isBlank()) return;
+        Message msg = new Message(MessageType.CHAT, CONTENT_PARAM + "=" + content);
+        sendMessageToServer(msg);
+    }
+
+    /**
+     * Proposes saving the current game for later. The server will coordinate with the
+     * opponent; if they also agree, a {@link MessageType#SAVE_ACCEPTED} confirmation follows.
+     */
+    public void requestSaveGame() {
+        sendMessageToServer(new Message(MessageType.SAVE_GAME, ""));
     }
 
     /**

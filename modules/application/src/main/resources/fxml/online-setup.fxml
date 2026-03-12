@@ -23,6 +23,10 @@
                       toggleGroup="$modeGroup"
                       styleClass="toggle-button" maxWidth="Infinity"
                       HBox.hgrow="ALWAYS"/>
+        <ToggleButton fx:id="findMatchToggle" text="%online.findMatch"
+                      toggleGroup="$modeGroup"
+                      styleClass="toggle-button" maxWidth="Infinity"
+                      HBox.hgrow="ALWAYS"/>
     </HBox>
 
     <!-- Connection card -->
@@ -61,6 +65,6 @@
 
     <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 20 0 0 0;">
         <Button text="%dialog.online.cancel" onAction="#onCancel" styleClass="btn-ghost"/>
-        <Button text="%dialog.online.start"  onAction="#onConnect" styleClass="btn-primary"/>
+        <Button fx:id="connectButton" text="%dialog.online.start"  onAction="#onConnect" styleClass="btn-primary"/>
     </HBox>
 </VBox>

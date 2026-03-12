@@ -21,6 +21,10 @@
     /* Board highlight tokens */
     board-selected:      rgba(2, 132, 199, 0.45);
     board-highlight:     rgba(2, 132, 199, 0.22);
+    board-light:         #d4e0ec;
+    board-dark:          #4f7a96;
+    app-badge-win:       #15803d;
+    app-badge-draw:      #b45309;
 
     -fx-background:                  app-bg;
     -fx-base:                        app-surface;
@@ -117,6 +121,12 @@
 .game-end-title           { -fx-text-fill: app-text; }
 .dialog-title             { -fx-text-fill: app-text; }
 .board-label              { -fx-text-fill: app-subtext; }
+.auth-section-label       { -fx-text-fill: app-subtext; }
+.auth-screen-subtitle     { -fx-text-fill: app-subtext; }
+.form-error               { -fx-text-fill: app-danger; }
+.auth-brand-strip         { -fx-background-color: app-card; }
+.menu-exit-link           { -fx-text-fill: app-subtext; }
+.menu-exit-link:hover     { -fx-text-fill: app-danger; }
 
 /* ── Form controls ───────────────────────────────────────────────────────── */
 
@@ -164,6 +174,8 @@
 .dark-square        { -fx-background-color: board-dark; }
 .highlighted-square { -fx-background-color: board-highlight; }
 .selected-square    { -fx-background-color: board-selected; }
+.board-coord-label-on-light { -fx-text-fill: board-dark; }
+.board-coord-label-on-dark  { -fx-text-fill: board-light; }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────────── */
 

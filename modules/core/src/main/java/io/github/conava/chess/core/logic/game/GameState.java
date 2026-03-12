@@ -15,6 +15,8 @@ public enum GameState {
     DRAW_BY_INSUFFICIENT_MATERIAL("Draw by insufficient material"),
     DRAW_BY_THREEFOLD_REPETITION("Draw by threefold repetition"),
     DRAW_BY_FIFTY_MOVE_RULE("Draw by the fifty-move rule"),
+    PAUSED("Game paused"),
+    SAVED("Game saved for later"),
     ;
 
     private final String message;

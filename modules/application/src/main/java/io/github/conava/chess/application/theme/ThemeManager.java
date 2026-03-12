@@ -11,8 +11,6 @@ public class ThemeManager {
 
     private final ObjectProperty<Theme> currentTheme =
             new SimpleObjectProperty<>(Theme.DARK_PURPLE);
-    private final ObjectProperty<BoardTheme> currentBoardTheme =
-            new SimpleObjectProperty<>(BoardTheme.CLASSIC);
     private final List<Scene> managedScenes = new ArrayList<>();
 
     public void registerScene(Scene scene) {
@@ -25,20 +23,13 @@ public class ThemeManager {
         managedScenes.forEach(this::applyTheme);
     }
 
-    public void setBoardTheme(BoardTheme boardTheme) {
-        currentBoardTheme.set(boardTheme);
-        managedScenes.forEach(this::applyTheme);
-    }
-
     private void applyTheme(Scene scene) {
         var base = getClass().getResource("/css/base.css");
         var themeCss = getClass().getResource(currentTheme.get().cssFile());
-        var boardCss = getClass().getResource(currentBoardTheme.get().cssFile());
-        if (base == null || themeCss == null || boardCss == null) return;
+        if (base == null || themeCss == null) return;
         scene.getStylesheets().setAll(
                 base.toExternalForm(),
-                themeCss.toExternalForm(),
-                boardCss.toExternalForm()
+                themeCss.toExternalForm()
         );
     }
 
@@ -46,15 +37,7 @@ public class ThemeManager {
         return currentTheme;
     }
 
-    public ObjectProperty<BoardTheme> currentBoardThemeProperty() {
-        return currentBoardTheme;
-    }
-
     public Theme getTheme() {
         return currentTheme.get();
-    }
-
-    public BoardTheme getBoardTheme() {
-        return currentBoardTheme.get();
     }
 }

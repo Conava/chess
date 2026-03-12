@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.*?>
+
+<HBox xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="io.github.conava.chess.application.controllers.RegisterController">
+
+    <!-- ── Left: brand panel ─────────────────────────────────────────────── -->
+    <StackPane styleClass="menu-brand-panel" minWidth="280" maxWidth="320">
+        <!-- Watermark piece -->
+        <Label text="♛" mouseTransparent="true" StackPane.alignment="CENTER"
+               style="-fx-font-size: 200px; -fx-opacity: 0.08; -fx-rotate: 10;"/>
+        <!-- Branding -->
+        <VBox alignment="BOTTOM_CENTER" spacing="8" StackPane.alignment="CENTER">
+            <padding><Insets top="60" right="32" bottom="80" left="32"/></padding>
+            <Label text="%menu.title"
+                   style="-fx-font-size: 30px; -fx-font-weight: bold;"/>
+            <Label text="%register.title" styleClass="auth-screen-subtitle"/>
+        </VBox>
+    </StackPane>
+
+    <!-- ── Right: form panel ─────────────────────────────────────────────── -->
+    <VBox alignment="CENTER" HBox.hgrow="ALWAYS">
+        <padding><Insets top="52" right="64" bottom="52" left="64"/></padding>
+
+        <Label text="%register.title" styleClass="dialog-title"/>
+
+        <!-- Server group -->
+        <VBox spacing="8">
+            <VBox.margin><Insets top="18"/></VBox.margin>
+            <Label text="%auth.server" styleClass="auth-section-label"/>
+            <HBox spacing="10">
+                <TextField fx:id="ipField" HBox.hgrow="ALWAYS"/>
+                <TextField fx:id="portField" prefWidth="90"/>
+            </HBox>
+        </VBox>
+
+        <!-- Account group -->
+        <VBox spacing="8">
+            <VBox.margin><Insets top="18"/></VBox.margin>
+            <Label text="%auth.account" styleClass="auth-section-label"/>
+            <TextField fx:id="usernameField" maxWidth="Infinity"/>
+            <PasswordField fx:id="passwordField" maxWidth="Infinity"/>
+            <PasswordField fx:id="confirmPasswordField" maxWidth="Infinity"/>
+        </VBox>
+
+        <!-- Error message -->
+        <Label fx:id="errorLabel" styleClass="form-error" maxWidth="Infinity"
+               visible="false" managed="false">
+            <VBox.margin><Insets top="8"/></VBox.margin>
+        </Label>
+
+        <!-- Action buttons -->
+        <VBox spacing="10">
+            <VBox.margin><Insets top="24"/></VBox.margin>
+            <Button fx:id="registerButton" text="%register.title" onAction="#onRegister"
+                    styleClass="btn-primary" maxWidth="Infinity"/>
+            <Button text="%dialog.offline.cancel" onAction="#onCancel"
+                    styleClass="btn-ghost" maxWidth="Infinity"/>
+        </VBox>
+
+        <!-- Switch-screen link -->
+        <Hyperlink fx:id="loginLink" text="%register.login" onAction="#onLogin"
+                   maxWidth="Infinity" alignment="CENTER">
+            <VBox.margin><Insets top="14"/></VBox.margin>
+        </Hyperlink>
+    </VBox>
+
+</HBox>

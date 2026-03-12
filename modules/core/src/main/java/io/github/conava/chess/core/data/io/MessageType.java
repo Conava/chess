@@ -8,5 +8,16 @@ public enum MessageType {
     GAME_STATUS,
     SUCCESS,
     ERROR,
-    FAILURE
+    FAILURE,
+    REGISTER,
+    LOGIN,
+    AUTH_TOKEN,
+    RESUME_GAME,
+    GAME_HISTORY,
+    CHAT,
+    QUEUE,
+    DEQUEUE,
+    MATCHED,
+    SAVE_GAME,
+    SAVE_ACCEPTED
 }

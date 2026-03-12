@@ -3,7 +3,6 @@ package io.github.conava.chess.application.controllers;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.navigation.SceneManager;
 import io.github.conava.chess.application.settings.SettingsService;
-import io.github.conava.chess.application.theme.BoardTheme;
 import io.github.conava.chess.application.theme.Theme;
 import io.github.conava.chess.application.theme.ThemeManager;
 import javafx.fxml.FXML;
@@ -23,19 +22,15 @@ public class SettingsController {
     @FXML
     private ToggleButton emberSwatch;
     @FXML
+    private ToggleButton abyssSwatch;
+    @FXML
     private ToggleButton manuscriptSwatch;
     @FXML
     private ToggleButton fjordSwatch;
     @FXML
+    private ToggleButton sakuraSwatch;
+    @FXML
     private ToggleGroup themeGroup;
-    @FXML
-    private ToggleButton classicSwatch;
-    @FXML
-    private ToggleButton oceanSwatch;
-    @FXML
-    private ToggleButton walnutSwatch;
-    @FXML
-    private ToggleGroup boardGroup;
     @FXML
     private ToggleButton enToggle;
     @FXML
@@ -59,14 +54,10 @@ public class SettingsController {
         switch (themeManager.getTheme()) {
             case DARK_PURPLE -> midnightSwatch.setSelected(true);
             case DARK_CHARCOAL -> emberSwatch.setSelected(true);
+            case DARK_ABYSS -> abyssSwatch.setSelected(true);
             case LIGHT_PAPER -> manuscriptSwatch.setSelected(true);
             case LIGHT_ARCTIC -> fjordSwatch.setSelected(true);
-        }
-
-        switch (themeManager.getBoardTheme()) {
-            case CLASSIC -> classicSwatch.setSelected(true);
-            case OCEAN -> oceanSwatch.setSelected(true);
-            case WALNUT -> walnutSwatch.setSelected(true);
+            case LIGHT_SAKURA -> sakuraSwatch.setSelected(true);
         }
 
         if (i18n.getLanguage() == I18n.Language.EN) enToggle.setSelected(true);
@@ -78,14 +69,10 @@ public class SettingsController {
         themeGroup.selectedToggleProperty().addListener((o, old, sel) -> {
             if (sel == midnightSwatch) themeManager.setTheme(Theme.DARK_PURPLE);
             else if (sel == emberSwatch) themeManager.setTheme(Theme.DARK_CHARCOAL);
+            else if (sel == abyssSwatch) themeManager.setTheme(Theme.DARK_ABYSS);
             else if (sel == manuscriptSwatch) themeManager.setTheme(Theme.LIGHT_PAPER);
             else if (sel == fjordSwatch) themeManager.setTheme(Theme.LIGHT_ARCTIC);
-        });
-
-        boardGroup.selectedToggleProperty().addListener((o, old, sel) -> {
-            if (sel == classicSwatch) themeManager.setBoardTheme(BoardTheme.CLASSIC);
-            else if (sel == oceanSwatch) themeManager.setBoardTheme(BoardTheme.OCEAN);
-            else if (sel == walnutSwatch) themeManager.setBoardTheme(BoardTheme.WALNUT);
+            else if (sel == sakuraSwatch) themeManager.setTheme(Theme.LIGHT_SAKURA);
         });
 
         langGroup.selectedToggleProperty().addListener((o, old, sel) -> {
@@ -97,7 +84,6 @@ public class SettingsController {
     @FXML
     private void onSave() {
         settingsService.saveTheme(themeManager.getTheme());
-        settingsService.saveBoardTheme(themeManager.getBoardTheme());
         settingsService.saveLanguage(i18n.getLanguage());
         settingsService.savePlayerWhite(whiteNameField.getText().trim());
         settingsService.savePlayerBlack(blackNameField.getText().trim());
@@ -107,7 +93,6 @@ public class SettingsController {
     @FXML
     private void onCancel() {
         themeManager.setTheme(settingsService.loadTheme());
-        themeManager.setBoardTheme(settingsService.loadBoardTheme());
         i18n.setLanguage(settingsService.loadLanguage());
         sceneManager.showMainMenu();
     }
