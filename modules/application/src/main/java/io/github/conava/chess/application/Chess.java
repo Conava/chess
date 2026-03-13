@@ -121,7 +121,7 @@ public class Chess extends Application {
         SceneManager sceneManager = new SceneManager(
                 primaryStage, this, themeManager, i18n, settingsService);
 
-        primaryStage.setTitle("Chess");
+        primaryStage.setTitle("The King's Game");
         primaryStage.setMinWidth(900);
         primaryStage.setMinHeight(650);
         sceneManager.showMainMenu();

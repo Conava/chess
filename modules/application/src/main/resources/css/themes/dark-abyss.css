@@ -17,6 +17,7 @@
     app-dot:             #22d3ee;
     app-gradient-start:  #060f1e;
     app-gradient-end:    #0b1830;
+    app-menu-scrim:      rgba(2, 8, 16, 0.93);
 
     /* Board highlight tokens */
     board-selected:      rgba(6, 182, 212, 0.52);
@@ -250,4 +251,42 @@
     -fx-background-color: app-elevated;
     -fx-border-color:     app-primary;
     -fx-effect: dropshadow(gaussian, derive(app-primary, 0%), 14, 0.3, 0, 3);
+}
+
+/* ── Cinematic main menu ────────────────────────────────────────────────── */
+
+.cinematic-nav-panel {
+    -fx-background-color: app-menu-scrim;
+    -fx-effect: dropshadow(gaussian, rgba(0, 10, 30, 0.55), 20, 0, 0, 5);
+}
+
+.cinematic-nav-button:hover {
+    -fx-background-color: app-primary, rgba(16, 32, 64, 0.60);
+    -fx-background-insets: 0 0 0 0, 0 0 0 3;
+    -fx-background-radius: 10, 10;
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.50), 12, 0.3, 0, 0);
+}
+
+.cinematic-nav-button:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+.cinematic-nav-button-exit:hover {
+    -fx-background-color: app-danger, rgba(16, 32, 64, 0.60);
+    -fx-background-insets: 0 0 0 0, 0 0 0 3;
+    -fx-background-radius: 10, 10;
+    -fx-effect: dropshadow(gaussian, rgba(244, 63, 94, 0.50), 12, 0.3, 0, 0);
+}
+
+.cinematic-title { -fx-text-fill: app-text; }
+.cinematic-tagline { -fx-text-fill: app-subtext; }
+.cinematic-accent-line { -fx-background-color: app-primary; }
+
+.cinematic-form-panel {
+    -fx-background-color: app-menu-scrim;
+    -fx-border-color: app-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0, 10, 30, 0.55), 20, 0, 0, 5);
 }

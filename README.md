@@ -24,7 +24,9 @@ with hard dependency boundaries enforced by architecture law.
 - **En passant** — automatic detection and capture
 - **Check-legality filtering** — prevents moving into check, castling through/out of check
 - **Game-end detection** — checkmate, stalemate, 50-move rule, threefold repetition, insufficient material
-- **6 visual themes** — Midnight, Ember, Abyss (dark) and Manuscript, Fjord, Sakura (light), each with integrated board colors and CSS-driven styling
+- **Cinematic main menu** — full-screen animated launcher with a perspective chessboard background, floating particle effects, drifting chess piece silhouettes, and staggered entrance animations — all procedurally generated (zero static image assets); fully responsive layout with font and spacing scaling driven by JavaFX property bindings; GPU-optimized particle rendering (half-resolution canvas at 20 FPS with 2x scale-up)
+- **6 visual themes** — Midnight, Ember, Abyss (dark) and Manuscript, Fjord, Sakura (light), each with integrated board colors and CSS-driven styling; the main menu adapts its entire visual identity to the active theme
+- **Reduced Motion accessibility** — a toggle in Settings disables all main menu animations for users with motion sensitivity or lower-end hardware
 - **Localization** — English and German (`i18n` properties files)
 - **Concurrent server** — up to 40 simultaneous online games
 
@@ -85,6 +87,18 @@ These rules are enforced across all modules — no exceptions without explicit a
 | `ServerGame` | core | Server-side game; created only via `Game.createServerGame()` |
 | `GameObserver` | core | Observer interface — `onGameStateChanged()` |
 | `Ruleset` | core | Strategy interface — `getLegalMoves()`, `getLegalSquares()`, `isCheck()` |
+| `MainMenuController` | application | FXML controller; builds layered cinematic menu with responsive layout, Canvas backgrounds, and animations |
+| `ResponsiveMenuLayout` | application | Static utility producing JavaFX `DoubleBinding`s for font/spacing scaling and compact title position (translateX/Y, scale) based on window dimensions |
+| `MenuLayoutTransition` | application | Single-phase panel open/close animation: smooth translate+scale on the content layer (title/accent/tagline) with reactive `DoubleBinding` targets for translateX/Y and scaleX/Y; slides navPanel via reactive `translateX` binding; no reparenting |
+| `CinematicBackground` | application | Composite background layer: half-resolution particle canvas (20 FPS, 2x scale-up) + silhouettes + color probe host |
+| `MenuParticleSystem` | application | Canvas rendering: floating particle effects |
+| `MenuSilhouetteLayer` | application | Drifting chess piece silhouette animations |
+| `MenuEntranceAnimation` | application | Orchestrates title + nav staggered entrance animations |
+| `CinematicPanelAnimator` | application | Static utility for slide+fade entrance/exit animations on frosted-glass form panels |
+| `MenuExitTransition` | application | Orchestrates cinematic exit animation before scene swap (uses relative `translateX`) |
+| `PanelHost` | application | Interface for panel lifecycle (show/switch/close); decouples sub-panel controllers from `MainMenuController` |
+| `PanelId` | application | Enum identifying each sub-panel (offline setup, online setup, settings, login, register, waiting-for-match) |
+| `ThemeColorResolver` | application | Reads CSS looked-up colors at runtime for Canvas rendering |
 | `GameController` | application | FXML controller; implements `GameObserver`; renders board |
 | `ServerCommunicationTask` | application | `javafx.concurrent.Task`; implements `ServerConnection` |
 | `GameInstance` | server | Per-game session; holds two `ClientHandler` refs; implements `GameObserver` |
@@ -108,16 +122,17 @@ chess/
 │   │   └── src/main/
 │   │       ├── java/io/github/conava/chess/application/
 │   │       │   ├── Chess.java         # Entry point + façade
-│   │       │   ├── controllers/       # 8 FXML controllers (game, menus, dialogs)
-│   │       │   ├── navigation/        # SceneManager, OverlayManager
+│   │       │   ├── controllers/       # 11 FXML controllers (game, menus, dialogs, settings)
+│   │       │   ├── navigation/        # SceneManager, OverlayManager, PanelHost, PanelId
 │   │       │   ├── network/           # ServerCommunicationTask
-│   │       │   ├── settings/          # SettingsService
+│   │       │   ├── menu/              # Cinematic menu: responsive layout, background, particles, silhouettes, animations
+│   │       │   ├── settings/          # SettingsService (includes reduced motion)
 │   │       │   ├── tasks/             # ExecuteMove (background Task)
-│   │       │   ├── theme/             # ThemeManager, Theme
+│   │       │   ├── theme/             # ThemeManager, Theme, ThemeColorResolver
 │   │       │   └── i18n/              # I18n localization helper
 │   │       └── resources/
-│   │           ├── fxml/              # 8 screen layouts
-│   │           ├── css/               # base.css + 6 theme stylesheets
+│   │           ├── fxml/              # 11 screen layouts
+│   │           ├── css/               # base.css + 6 theme stylesheets + dark/light base
 │   │           ├── icon/              # 12 piece PNGs (6 pieces × 2 colors)
 │   │           └── i18n/              # messages_en.properties, messages_de.properties
 │   │
@@ -324,7 +339,7 @@ If a player disconnects, the server awards a resignation win to the remaining pl
 | Module | Test Classes | Focus |
 |--------|-------------|-------|
 | `core` | 26 | Board state, piece construction, move generation, observer notifications, standard and Chess960 rulesets, castling integration, deferred init, move parsing, game factory |
-| `application` | 6 | Chess façade, i18n, settings service, theme manager, background move task, scene manager |
+| `application` | 29 | Chess façade, i18n, settings service, theme manager, background move task, scene manager, cinematic menu components (responsive layout, layout transitions, background, particles, silhouettes, entrance, exit, panel animator), theme color resolver, reduced motion, main menu controller, sub-panel responsive bindings, CSS responsive validation, FXML panel structure, panel navigation |
 | `server` | 4 | Server startup, game instance lifecycle (standard + Chess960), client handler integration |
 
 ### Run Tests
@@ -350,6 +365,13 @@ mvn -pl modules/core -Dtest=BoardTest test
 - `ObserverNotificationTest` — verifies Observer pattern wiring
 - `GameFactoryTest` — verifies façade-enforced game creation constraints
 - `GameDeferredInitTest` — deferred board initialization for online games
+- `ResponsiveMenuLayoutTest` — font/spacing scaling bindings across window sizes
+- `MenuLayoutTransitionTest` — smooth translate+scale animation with reactive bindings for panel open/close
+- `CinematicBackgroundTest` — half-resolution particle canvas, GPU-optimized rendering at 20 FPS
+- `MenuParticleSystemTest` — particle system lifecycle and rendering
+- `MenuExitTransitionTest` — cinematic exit animation with relative translateX
+- `CssResponsiveTest` — validates cinematic CSS has no hardcoded font sizes
+- `ThemeColorResolverTest` — runtime CSS color resolution for Canvas layers
 - `ClientHandlerIntegrationTest` — end-to-end server message flow
 
 ## Roadmap
@@ -363,9 +385,12 @@ mvn -pl modules/core -Dtest=BoardTest test
 - [x] Fix castling move validation
 
 ### UI / UX
-- [ ] Keyboard shortcuts and accessibility
+- [x] Cinematic main menu with procedural animations
+- [x] Responsive main menu layout (font/spacing scaling via property bindings)
+- [x] Reduced Motion accessibility setting
+- [ ] Keyboard shortcuts
 - [ ] In-game clock / time controls
-- [ ] Board coordinate labels (a–h, 1–8)
+- [ ] Board coordinate labels (a-h, 1-8)
 
 ### Server
 - [ ] TLS/SSL encryption

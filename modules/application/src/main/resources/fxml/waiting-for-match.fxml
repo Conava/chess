@@ -2,24 +2,40 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
-<?import java.lang.String?>
 
-<VBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.WaitingForMatchController"
-      alignment="CENTER" spacing="0">
+<!--
+    Waiting-for-match panel — cinematic frosted-glass panel, right-aligned
+    over the persistent cinematic background hosted in MainMenuController.
 
-    <VBox alignment="CENTER" spacing="24" maxWidth="420">
-        <VBox.margin><Insets top="60" right="0" bottom="0" left="0"/></VBox.margin>
-        <padding><Insets top="48" right="48" bottom="48" left="48"/></padding>
-        <styleClass><String fx:value="overlay-card"/></styleClass>
+    Converted from a centered full-screen VBox to the cinematic panel pattern
+    matching offline-setup.fxml / online-setup.fxml.
+    All fx:id attributes are preserved for WaitingForMatchController binding.
+-->
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="io.github.conava.chess.application.controllers.WaitingForMatchController"
+           style="-fx-background-color: transparent;">
 
-        <Label fx:id="searchingLabel" text="%matchmaking.searching" styleClass="dialog-title" wrapText="true"/>
+    <!-- Frosted-glass form panel, right-aligned over the persistent background -->
+    <VBox fx:id="waitingPanel" styleClass="cinematic-form-panel"
+          StackPane.alignment="CENTER_RIGHT">
+        <StackPane.margin><Insets top="20" right="40" bottom="20" left="0"/></StackPane.margin>
 
-        <ProgressIndicator fx:id="spinner" prefWidth="64" prefHeight="64"/>
+        <!-- Status heading -->
+        <Label fx:id="searchingLabel" text="%matchmaking.searching"
+               styleClass="dialog-title" wrapText="true"/>
 
-        <Label fx:id="rulesetLabel" style="-fx-font-size:14px;" wrapText="true"/>
+        <!-- Spinner -->
+        <ProgressIndicator fx:id="spinner" prefWidth="64" prefHeight="64"
+                           StackPane.alignment="CENTER"/>
 
+        <!-- Active ruleset description -->
+        <Label fx:id="rulesetLabel" wrapText="true"/>
+
+        <!-- Cancel action -->
         <Button fx:id="cancelBtn" text="%matchmaking.cancel" onAction="#onCancel"
-                styleClass="nav-button nav-button-exit" maxWidth="Infinity"/>
+                styleClass="btn-ghost" maxWidth="Infinity">
+            <VBox.margin><Insets top="12"/></VBox.margin>
+        </Button>
     </VBox>
-</VBox>
+
+</StackPane>

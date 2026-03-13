@@ -30,3 +30,4 @@ build/
 /modules/application/dependency-reduced-pom.xml
 /modules/server/dependency-reduced-pom.xml
 .claude/worktrees/
+.devline/

@@ -299,3 +299,58 @@ Label {
     -fx-shape: "";
     -fx-padding: 0;
 }
+
+/* ── Cinematic main menu ────────────────────────────────────────────────── */
+
+.cinematic-nav-panel {
+    -fx-background-radius: 14;
+}
+
+.cinematic-nav-button {
+    -fx-padding: 0 20 0 16;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-color: transparent;
+    -fx-font-family: "Segoe UI Variable";
+}
+
+.cinematic-title {
+    -fx-font-weight: bold;
+}
+
+.cinematic-tagline {
+}
+
+.cinematic-accent-line {
+    -fx-min-height: 2;
+    -fx-max-height: 2;
+}
+
+/* Cinematic form panel — frosted glass card for settings and setup screens */
+.cinematic-form-panel {
+    -fx-background-radius: 14;
+    -fx-max-width: Infinity;
+    -fx-alignment: TOP_LEFT;
+}
+
+.cinematic-form-panel .section-heading {
+    -fx-font-weight: bold;
+}
+
+/* Panel container — right 75% of the main menu shell */
+.cinematic-panel-container {
+    -fx-alignment: CENTER_RIGHT;
+    -fx-padding: 0;
+}
+
+/* Nav button states when a panel is open */
+.cinematic-nav-dimmed {
+    -fx-opacity: 0.45;
+}
+
+.cinematic-nav-active {
+    -fx-opacity: 1.0;
+}
+
+

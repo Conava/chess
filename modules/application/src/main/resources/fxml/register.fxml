@@ -3,47 +3,42 @@
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
 
-<HBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.RegisterController">
+<!--
+    Register panel — cinematic frosted-glass form, right-aligned over the
+    persistent cinematic background hosted in MainMenuController.
 
-    <!-- ── Left: brand panel ─────────────────────────────────────────────── -->
-    <StackPane styleClass="menu-brand-panel" minWidth="280" maxWidth="320">
-        <!-- Watermark piece -->
-        <Label text="♛" mouseTransparent="true" StackPane.alignment="CENTER"
-               style="-fx-font-size: 200px; -fx-opacity: 0.08; -fx-rotate: 10;"/>
-        <!-- Branding -->
-        <VBox alignment="BOTTOM_CENTER" spacing="8" StackPane.alignment="CENTER">
-            <padding><Insets top="60" right="32" bottom="80" left="32"/></padding>
-            <Label text="%menu.title"
-                   style="-fx-font-size: 30px; -fx-font-weight: bold;"/>
-            <Label text="%register.title" styleClass="auth-screen-subtitle"/>
-        </VBox>
-    </StackPane>
+    Converted from the old HBox (brand-panel + form) layout to a single
+    VBox matching the offline-setup.fxml / online-setup.fxml pattern.
+    All fx:id attributes are preserved for RegisterController binding.
+-->
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="io.github.conava.chess.application.controllers.RegisterController"
+           style="-fx-background-color: transparent;">
 
-    <!-- ── Right: form panel ─────────────────────────────────────────────── -->
-    <VBox alignment="CENTER" HBox.hgrow="ALWAYS">
-        <padding><Insets top="52" right="64" bottom="52" left="64"/></padding>
+    <!-- Frosted-glass form panel, right-aligned over the persistent background -->
+    <VBox fx:id="registerPanel" styleClass="cinematic-form-panel"
+          StackPane.alignment="CENTER_RIGHT">
+        <StackPane.margin><Insets top="20" right="40" bottom="20" left="0"/></StackPane.margin>
 
+        <!-- Title -->
         <Label text="%register.title" styleClass="dialog-title"/>
 
         <!-- Server group -->
-        <VBox spacing="8">
-            <VBox.margin><Insets top="18"/></VBox.margin>
-            <Label text="%auth.server" styleClass="auth-section-label"/>
-            <HBox spacing="10">
-                <TextField fx:id="ipField" HBox.hgrow="ALWAYS"/>
-                <TextField fx:id="portField" prefWidth="90"/>
-            </HBox>
-        </VBox>
+        <Label text="%auth.server" styleClass="section-heading">
+            <VBox.margin><Insets top="16"/></VBox.margin>
+        </Label>
+        <HBox spacing="10">
+            <TextField fx:id="ipField" promptText="%dialog.online.ip" HBox.hgrow="ALWAYS"/>
+            <TextField fx:id="portField" promptText="%dialog.online.port" prefWidth="90"/>
+        </HBox>
 
         <!-- Account group -->
-        <VBox spacing="8">
-            <VBox.margin><Insets top="18"/></VBox.margin>
-            <Label text="%auth.account" styleClass="auth-section-label"/>
-            <TextField fx:id="usernameField" maxWidth="Infinity"/>
-            <PasswordField fx:id="passwordField" maxWidth="Infinity"/>
-            <PasswordField fx:id="confirmPasswordField" maxWidth="Infinity"/>
-        </VBox>
+        <Label text="%auth.account" styleClass="section-heading">
+            <VBox.margin><Insets top="16"/></VBox.margin>
+        </Label>
+        <TextField fx:id="usernameField" promptText="%login.username" maxWidth="Infinity"/>
+        <PasswordField fx:id="passwordField" promptText="%login.password" maxWidth="Infinity"/>
+        <PasswordField fx:id="confirmPasswordField" promptText="%register.confirmPassword" maxWidth="Infinity"/>
 
         <!-- Error message -->
         <Label fx:id="errorLabel" styleClass="form-error" maxWidth="Infinity"
@@ -67,4 +62,4 @@
         </Hyperlink>
     </VBox>
 
-</HBox>
+</StackPane>

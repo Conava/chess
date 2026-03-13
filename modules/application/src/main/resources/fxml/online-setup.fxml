@@ -3,68 +3,76 @@
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
 
-<VBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.OnlineSetupController"
-      styleClass="overlay-card" spacing="0" minWidth="440">
-    <fx:define>
-        <ToggleGroup fx:id="modeGroup"/>
-    </fx:define>
-    <padding><Insets top="32" right="40" bottom="32" left="40"/></padding>
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="io.github.conava.chess.application.controllers.OnlineSetupController"
+           style="-fx-background-color: transparent;">
 
-    <Label text="%dialog.online.title" styleClass="dialog-title"/>
+    <!-- Frosted-glass form panel, right-aligned over the persistent background -->
+    <VBox fx:id="setupPanel" styleClass="cinematic-form-panel"
+          StackPane.alignment="CENTER_RIGHT">
+        <StackPane.margin><Insets top="20" right="40" bottom="20" left="0"/></StackPane.margin>
 
-    <!-- Full-width segmented mode toggle -->
-    <HBox spacing="0">
-        <ToggleButton fx:id="createToggle" text="%dialog.online.create"
-                      toggleGroup="$modeGroup" selected="true"
-                      styleClass="toggle-button" maxWidth="Infinity"
-                      HBox.hgrow="ALWAYS"/>
-        <ToggleButton fx:id="joinToggle" text="%dialog.online.join"
-                      toggleGroup="$modeGroup"
-                      styleClass="toggle-button" maxWidth="Infinity"
-                      HBox.hgrow="ALWAYS"/>
-        <ToggleButton fx:id="findMatchToggle" text="%online.findMatch"
-                      toggleGroup="$modeGroup"
-                      styleClass="toggle-button" maxWidth="Infinity"
-                      HBox.hgrow="ALWAYS"/>
-    </HBox>
+        <fx:define>
+            <ToggleGroup fx:id="modeGroup"/>
+        </fx:define>
 
-    <!-- Connection card -->
-    <VBox styleClass="card" spacing="10">
-        <VBox.margin><Insets top="16"/></VBox.margin>
-        <Label text="%dialog.online.connection" styleClass="section-heading"
-               style="-fx-padding: 0 0 4 0;"/>
-        <GridPane hgap="12" vgap="8">
-            <columnConstraints>
-                <ColumnConstraints percentWidth="35"/>
-                <ColumnConstraints percentWidth="65" hgrow="ALWAYS"/>
-            </columnConstraints>
-            <Label text="%dialog.online.ip" GridPane.rowIndex="0" GridPane.columnIndex="0"
-                   GridPane.valignment="CENTER"/>
-            <TextField fx:id="ipField" promptText="127.0.0.1"
-                       GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-            <Label text="%dialog.online.port" GridPane.rowIndex="1" GridPane.columnIndex="0"
-                   GridPane.valignment="CENTER"/>
-            <TextField fx:id="portField" promptText="8080"
-                       GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-        </GridPane>
-        <!-- Join code row — visible only in join mode -->
-        <Label fx:id="joinCodeLabel" text="%dialog.online.joincode"
-               visible="false" managed="false"/>
-        <TextField fx:id="joinCodeField" promptText="%dialog.online.joincode"
+        <!-- Title -->
+        <Label text="%dialog.online.title" styleClass="dialog-title"/>
+
+        <!-- Full-width segmented mode toggle -->
+        <HBox spacing="0">
+            <ToggleButton fx:id="createToggle" text="%dialog.online.create"
+                          toggleGroup="$modeGroup" selected="true"
+                          styleClass="toggle-button" maxWidth="Infinity"
+                          HBox.hgrow="ALWAYS"/>
+            <ToggleButton fx:id="joinToggle" text="%dialog.online.join"
+                          toggleGroup="$modeGroup"
+                          styleClass="toggle-button" maxWidth="Infinity"
+                          HBox.hgrow="ALWAYS"/>
+            <ToggleButton fx:id="findMatchToggle" text="%online.findMatch"
+                          toggleGroup="$modeGroup"
+                          styleClass="toggle-button" maxWidth="Infinity"
+                          HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <!-- Connection card -->
+        <VBox styleClass="card" spacing="10">
+            <VBox.margin><Insets top="16"/></VBox.margin>
+            <Label text="%dialog.online.connection" styleClass="section-heading"
+                   style="-fx-padding: 0 0 4 0;"/>
+            <GridPane hgap="12" vgap="8">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="35"/>
+                    <ColumnConstraints percentWidth="65" hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="%dialog.online.ip" GridPane.rowIndex="0" GridPane.columnIndex="0"
+                       GridPane.valignment="CENTER"/>
+                <TextField fx:id="ipField" promptText="127.0.0.1"
+                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                <Label text="%dialog.online.port" GridPane.rowIndex="1" GridPane.columnIndex="0"
+                       GridPane.valignment="CENTER"/>
+                <TextField fx:id="portField" promptText="8080"
+                           GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            </GridPane>
+            <!-- Join code row — visible only in join mode -->
+            <Label fx:id="joinCodeLabel" text="%dialog.online.joincode"
                    visible="false" managed="false"/>
+            <TextField fx:id="joinCodeField" promptText="%dialog.online.joincode"
+                       visible="false" managed="false"/>
+        </VBox>
+
+        <Separator style="-fx-padding: 4 0 0 0;"/>
+
+        <!-- Ruleset picker — hidden in join mode -->
+        <Label fx:id="rulesetLabel" text="%dialog.online.ruleset" styleClass="section-heading"/>
+        <ComboBox fx:id="rulesetBox" maxWidth="Infinity"/>
+
+        <Label fx:id="errorLabel" style="-fx-text-fill: red;" visible="false" managed="false"/>
+
+        <!-- Actions -->
+        <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 20 0 0 0;">
+            <Button text="%dialog.online.cancel" onAction="#onCancel" styleClass="btn-ghost"/>
+            <Button fx:id="connectButton" text="%dialog.online.start" onAction="#onConnect" styleClass="btn-primary"/>
+        </HBox>
     </VBox>
-
-    <Separator style="-fx-padding: 4 0 0 0;"/>
-
-    <!-- Ruleset picker — hidden in join mode -->
-    <Label fx:id="rulesetLabel" text="%dialog.online.ruleset" styleClass="section-heading"/>
-    <ComboBox fx:id="rulesetBox" maxWidth="Infinity"/>
-
-    <Label fx:id="errorLabel" style="-fx-text-fill: red;" visible="false" managed="false"/>
-
-    <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 20 0 0 0;">
-        <Button text="%dialog.online.cancel" onAction="#onCancel" styleClass="btn-ghost"/>
-        <Button fx:id="connectButton" text="%dialog.online.start"  onAction="#onConnect" styleClass="btn-primary"/>
-    </HBox>
-</VBox>
+</StackPane>

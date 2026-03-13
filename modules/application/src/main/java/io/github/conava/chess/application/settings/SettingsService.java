@@ -16,12 +16,12 @@ public class SettingsService {
     private static final String KEY_LANGUAGE = "language";
     private static final String KEY_PLAYER_WHITE = "playerWhite";
     private static final String KEY_PLAYER_BLACK = "playerBlack";
+    private static final String KEY_REDUCED_MOTION = "reducedMotion";
     private static final String KEY_AUTH_TOKEN = "authToken";
     private static final String KEY_USER_ID = "userId";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_SERVER_HOST = "serverHost";
     private static final String KEY_SERVER_PORT = "serverPort";
-
     private final Preferences prefs;
 
     public SettingsService() {
@@ -70,6 +70,26 @@ public class SettingsService {
 
     public void savePlayerBlack(String name) {
         prefs.put(KEY_PLAYER_BLACK, name);
+    }
+
+    // ── Reduced motion preference ──────────────────────────────────────────────
+
+    /**
+     * Returns whether the reduced-motion accessibility preference is enabled.
+     *
+     * @return {@code true} if reduced motion is active; defaults to {@code false}
+     */
+    public boolean loadReducedMotion() {
+        return prefs.getBoolean(KEY_REDUCED_MOTION, false);
+    }
+
+    /**
+     * Persists the reduced-motion accessibility preference.
+     *
+     * @param enabled {@code true} to enable reduced motion
+     */
+    public void saveReducedMotion(boolean enabled) {
+        prefs.putBoolean(KEY_REDUCED_MOTION, enabled);
     }
 
     // ── Auth token persistence ─────────────────────────────────────────────────
@@ -123,4 +143,5 @@ public class SettingsService {
     public void saveServerPort(int port) {
         prefs.putInt(KEY_SERVER_PORT, port);
     }
+
 }

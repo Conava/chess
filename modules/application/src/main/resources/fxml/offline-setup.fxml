@@ -3,62 +3,48 @@
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.*?>
 
-<HBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.OfflineSetupController">
+<StackPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="io.github.conava.chess.application.controllers.OfflineSetupController"
+           style="-fx-background-color: transparent;">
 
-    <!-- Left: brand panel -->
-    <StackPane styleClass="menu-brand-panel" minWidth="280" maxWidth="320">
-        <Label text="&#x265F;" mouseTransparent="true" StackPane.alignment="CENTER"
-               style="-fx-font-size: 200px; -fx-opacity: 0.08; -fx-rotate: 15;"/>
-        <VBox alignment="BOTTOM_CENTER" spacing="8" StackPane.alignment="CENTER">
-            <padding><Insets top="60" right="32" bottom="80" left="32"/></padding>
-            <Label text="%menu.title"
-                   style="-fx-font-size: 30px; -fx-font-weight: bold;"/>
-            <Label text="%dialog.offline.title" styleClass="auth-screen-subtitle"/>
-        </VBox>
-    </StackPane>
+    <!-- Frosted-glass form panel, right-aligned over the persistent background -->
+    <VBox fx:id="setupPanel" styleClass="cinematic-form-panel"
+          StackPane.alignment="CENTER_RIGHT">
+        <StackPane.margin><Insets top="20" right="40" bottom="20" left="0"/></StackPane.margin>
 
-    <!-- Right: form panel -->
-    <VBox alignment="CENTER" HBox.hgrow="ALWAYS">
-        <padding><Insets top="60" right="64" bottom="60" left="64"/></padding>
-
+        <!-- Title -->
         <Label text="%dialog.offline.title" styleClass="dialog-title"/>
 
         <!-- Player names -->
-        <VBox spacing="8">
-            <VBox.margin><Insets top="20"/></VBox.margin>
-            <Label text="%auth.players" styleClass="auth-section-label"/>
-            <GridPane hgap="12" vgap="10">
-                <columnConstraints>
-                    <ColumnConstraints percentWidth="38"/>
-                    <ColumnConstraints percentWidth="62" hgrow="ALWAYS"/>
-                </columnConstraints>
-                <Label text="%dialog.offline.white" GridPane.rowIndex="0" GridPane.columnIndex="0"
-                       GridPane.valignment="CENTER"/>
-                <TextField fx:id="whiteField" promptText="%dialog.offline.white"
-                           GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-                <Label text="%dialog.offline.black" GridPane.rowIndex="1" GridPane.columnIndex="0"
-                       GridPane.valignment="CENTER"/>
-                <TextField fx:id="blackField" promptText="%dialog.offline.black"
-                           GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-            </GridPane>
-        </VBox>
+        <Label text="%auth.players" styleClass="section-heading">
+            <VBox.margin><Insets top="16"/></VBox.margin>
+        </Label>
+        <GridPane hgap="12" vgap="12">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="38"/>
+                <ColumnConstraints percentWidth="62" hgrow="ALWAYS"/>
+            </columnConstraints>
+            <Label text="%dialog.offline.white" GridPane.rowIndex="0" GridPane.columnIndex="0"
+                   GridPane.valignment="CENTER"/>
+            <TextField fx:id="whiteField" promptText="%dialog.offline.white"
+                       GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            <Label text="%dialog.offline.black" GridPane.rowIndex="1" GridPane.columnIndex="0"
+                   GridPane.valignment="CENTER"/>
+            <TextField fx:id="blackField" promptText="%dialog.offline.black"
+                       GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        </GridPane>
 
-        <!-- Ruleset -->
-        <VBox spacing="8">
+        <!-- Ruleset selection -->
+        <Label text="%dialog.offline.ruleset" styleClass="section-heading">
             <VBox.margin><Insets top="20"/></VBox.margin>
-            <Label text="%dialog.offline.ruleset" styleClass="auth-section-label"/>
-            <ComboBox fx:id="rulesetBox" maxWidth="Infinity"/>
-        </VBox>
+        </Label>
+        <ComboBox fx:id="rulesetBox" maxWidth="Infinity"/>
 
         <!-- Actions -->
-        <VBox spacing="10">
+        <HBox spacing="12" alignment="CENTER">
             <VBox.margin><Insets top="28"/></VBox.margin>
-            <Button text="%dialog.offline.start" onAction="#onStart"
-                    styleClass="btn-primary" maxWidth="Infinity"/>
-            <Button text="%dialog.offline.cancel" onAction="#onCancel"
-                    styleClass="btn-ghost" maxWidth="Infinity"/>
-        </VBox>
+            <Button text="%dialog.offline.start" onAction="#onStart" styleClass="btn-primary"/>
+            <Button text="%dialog.offline.cancel" onAction="#onCancel" styleClass="btn-ghost"/>
+        </HBox>
     </VBox>
-
-</HBox>
+</StackPane>

@@ -1,88 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.geometry.*?>
 
-<HBox xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="io.github.conava.chess.application.controllers.MainMenuController">
+<StackPane xmlns:fx="http://javafx.com/fxml/1"
+           fx:id="rootPane"
+           fx:controller="io.github.conava.chess.application.controllers.MainMenuController">
 
-    <!-- ── Left: brand panel ─────────────────────────────────────────────── -->
-    <StackPane styleClass="menu-brand-panel" minWidth="420" maxWidth="480">
+    <!-- Navigation panel — left-aligned, vertically centered.
+         Animated layers (title, tagline) are added programmatically in the controller
+         and inserted before this node in the StackPane children list. -->
+    <VBox fx:id="navPanel" styleClass="cinematic-nav-panel"
+          alignment="CENTER"
+          StackPane.alignment="CENTER_RIGHT">
 
-        <!-- Hidden image slots — preserve controller fx:ids, not displayed -->
-        <ImageView fx:id="titleImage" visible="false" managed="false" fitWidth="0"/>
-        <ImageView fx:id="watermarkImage" visible="false" managed="false" fitWidth="0"/>
-
-        <!-- Theme-adaptive king watermark — inherits app-text, visible on every theme -->
-        <Label text="&#x2654;" mouseTransparent="true" StackPane.alignment="CENTER"
-               style="-fx-font-size: 280px; -fx-opacity: 0.10;"/>
-
-        <!-- Brand content — vertically centered -->
-        <VBox alignment="CENTER" spacing="0">
-            <padding><Insets top="60" right="52" bottom="80" left="52"/></padding>
-
-            <!-- Symbolic chess king — visual anchor -->
-            <Label text="&#x2654;"
-                   style="-fx-font-size: 76px; -fx-opacity: 0.72;"/>
-
-            <!-- App title -->
-            <Label text="%menu.title" wrapText="true"
-                   style="-fx-font-size: 64px; -fx-font-weight: bold; -fx-padding: 6 0 0 0;"/>
-
-            <!-- Accent line -->
-            <Region prefHeight="2" maxWidth="72"
-                    style="-fx-background-color: app-primary;">
-                <VBox.margin><Insets top="18" bottom="18"/></VBox.margin>
-            </Region>
-
-            <!-- Tagline -->
-            <Label text="%menu.tagline" styleClass="auth-screen-subtitle"/>
-        </VBox>
-    </StackPane>
-
-    <!-- ── Right: navigation panel ───────────────────────────────────────── -->
-    <VBox HBox.hgrow="ALWAYS" spacing="0">
-        <padding><Insets top="64" right="72" bottom="40" left="72"/></padding>
-
-        <!-- Top flexible spacer — pushes content to vertical center -->
-        <Region VBox.vgrow="ALWAYS"/>
-
-        <!-- Auth area (hidden until logged in) -->
-        <Label fx:id="welcomeLabel" wrapText="true" maxWidth="Infinity"
-               style="-fx-font-size: 13px; -fx-font-weight: bold;"
-               visible="false" managed="false">
-            <VBox.margin><Insets bottom="8"/></VBox.margin>
-        </Label>
-        <Button fx:id="logoutBtn" text="%menu.logout" onAction="#onLogout"
-                styleClass="btn-ghost" maxWidth="Infinity"
-                visible="false" managed="false">
-            <VBox.margin><Insets bottom="24"/></VBox.margin>
+        <Button fx:id="localGameBtn" text="%menu.local" onAction="#onLocalGame"
+                styleClass="cinematic-nav-button" maxWidth="Infinity">
+            <graphic><Label text="&#x2658;" mouseTransparent="true"/></graphic>
         </Button>
 
-        <!-- Primary: game mode buttons -->
-        <VBox spacing="12">
-            <Button text="%menu.local"  onAction="#onLocalGame"
-                    styleClass="nav-button" maxWidth="Infinity"/>
-            <Button text="%menu.online" onAction="#onOnlineGame"
-                    styleClass="nav-button" maxWidth="Infinity"/>
-        </VBox>
+        <Button fx:id="onlineGameBtn" text="%menu.online" onAction="#onOnlineGame"
+                styleClass="cinematic-nav-button" maxWidth="Infinity">
+            <graphic><Label text="&#x2656;" mouseTransparent="true"/></graphic>
+        </Button>
 
-        <!-- Gap to settings -->
-        <Region prefHeight="28"/>
+        <Button fx:id="settingsBtn" text="%menu.settings" onAction="#onSettings"
+                styleClass="cinematic-nav-button" maxWidth="Infinity">
+            <graphic><Label text="&#x2657;" mouseTransparent="true"/></graphic>
+        </Button>
 
-        <!-- Secondary: settings (ghost — clearly subordinate) -->
-        <Button text="%menu.settings" onAction="#onSettings"
-                styleClass="btn-ghost" maxWidth="Infinity"/>
-
-        <!-- Bottom flexible spacer -->
-        <Region VBox.vgrow="ALWAYS"/>
-
-        <!-- Exit — ghost button at bottom right, subordinate but readable -->
-        <HBox alignment="CENTER_RIGHT">
-            <Button fx:id="exitBtn" text="%menu.exit" onAction="#onExit"
-                    styleClass="btn-ghost"/>
-        </HBox>
+        <Button fx:id="exitBtn" text="%menu.exit" onAction="#onExit"
+                styleClass="cinematic-nav-button,cinematic-nav-button-exit" maxWidth="Infinity">
+            <graphic><Label text="&#x00D7;" mouseTransparent="true"/></graphic>
+        </Button>
     </VBox>
 
-</HBox>
+    <!-- Panel container — hosts sub-screen panels (offline setup, online setup, settings,
+         login, register, waiting-for-match) as in-place panels without scene swap.
+         Width is bound responsively via ResponsiveMenuLayout in the controller's initialize(). -->
+    <StackPane fx:id="panelContainer" styleClass="cinematic-panel-container"
+               StackPane.alignment="CENTER_RIGHT"
+               pickOnBounds="false"/>
+
+</StackPane>
