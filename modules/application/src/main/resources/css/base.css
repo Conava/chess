@@ -157,6 +157,48 @@ Label {
     -fx-padding: 5 10 5 10;
 }
 
+/* ── Scoresheet move list ─────────────────────────────────────────────────── */
+
+.scoresheet-row {
+    -fx-padding: 4 10 4 10;
+    -fx-spacing: 0;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.scoresheet-move-number {
+    -fx-font-family: "Consolas", "Menlo", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-min-width: 32;
+    -fx-alignment: CENTER_RIGHT;
+    -fx-padding: 0 8 0 0;
+}
+
+.scoresheet-white-move {
+    -fx-font-family: "Consolas", "Menlo", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-padding: 0 4 0 4;
+}
+
+.scoresheet-black-move {
+    -fx-font-family: "Consolas", "Menlo", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-padding: 0 4 0 4;
+}
+
+.scoresheet-header {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-spacing: 0;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.scoresheet-header-label {
+    -fx-font-family: "Consolas", "Menlo", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
 /* ── Board ───────────────────────────────────────────────────────────────── */
 
 .chess-board {

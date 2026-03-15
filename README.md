@@ -33,7 +33,8 @@ This is a portfolio project that demonstrates clean architecture, design pattern
 
 ### UI / UX
 - **Cinematic main menu** — full-screen animated launcher with a perspective chessboard background, floating particle effects, drifting chess piece silhouettes, and staggered entrance animations — all procedurally generated with zero static image assets
-- **Fully responsive layout** — font and spacing scaling driven by JavaFX property bindings
+- **Fully responsive layout** — board sizes from window height with side panels filling remaining space; font and spacing scaling driven by JavaFX property bindings
+- **Two-column scoresheet** — in-game move list with move numbers, white moves, and black moves
 - **6 visual themes** — Midnight, Ember, Abyss (dark) and Manuscript, Fjord, Sakura (light), with integrated board colors and CSS-driven styling
 - **Reduced Motion accessibility** — disables all menu animations for users with motion sensitivity
 - **Localization** — English and German via `ResourceBundle` property files
@@ -44,6 +45,7 @@ This is a portfolio project that demonstrates clean architecture, design pattern
 - **SQLite persistence** — users, sessions, and game data
 - **Matchmaking** — automatic opponent pairing
 - **Reconnection handling** — game pauses on disconnect, resumes on reconnect
+- **Server-side move validation** — every move is validated through the full chess engine before relay; illegal moves are rejected
 - **Configurable** — port, game limits, timeouts, and expiry via `server.properties`
 
 ## Architecture
@@ -209,7 +211,6 @@ mvn test -pl modules/server     # Server only
 - [ ] In-game clock / time controls
 - [ ] Board coordinate labels (a-h, 1-8)
 - [ ] TLS/SSL encryption
-- [ ] Server-side move validation
 - [ ] Persistent game history / replay
 - [ ] CI/CD pipeline
 - [ ] Docker image for server

@@ -167,6 +167,11 @@
     -fx-text-fill: app-primary;
 }
 
+.scoresheet-move-number { -fx-text-fill: app-subtext; }
+.scoresheet-white-move { -fx-text-fill: app-text; }
+.scoresheet-black-move { -fx-text-fill: app-text; }
+.scoresheet-header-label { -fx-text-fill: app-subtext; }
+
 /* ── Board ───────────────────────────────────────────────────────────────── */
 
 .legal-move-dot  { -fx-fill: app-dot; }
