@@ -247,6 +247,21 @@ public abstract class Game extends Observable {
     }
 
     /**
+     * Returns the local player's color in an online game session.
+     *
+     * <p>The default implementation returns {@code null}, indicating that this game has no
+     * concept of a "local" player (e.g. offline games where both players share the same
+     * screen). {@link OnlineGame} overrides this method to return the color assigned to
+     * the local client — {@link PlayerColor#WHITE} when the player created the game, or
+     * {@link PlayerColor#BLACK} when they joined via a join code.
+     *
+     * @return The local player's {@link PlayerColor}, or {@code null} for offline games.
+     */
+    public PlayerColor getLocalPlayerColor() {
+        return null;
+    }
+
+    /**
      * Sends the initial handshake to the game server, establishing participation in the game
      * session (either creating a new game or joining an existing one via join code).
      *
@@ -440,6 +455,38 @@ public abstract class Game extends Observable {
     }
 
     /**
+     * Executes a move that has already been validated by an authoritative source
+     * (e.g., the game server). Skips the local {@code isMoveValid()} check, which
+     * relies on virtual dispatch to {@code getLegalSquares()} — a method that
+     * subclasses may override for UI-filtering purposes (e.g., {@link OnlineGame}
+     * returns an empty list for opponent pieces to prevent UI highlights).
+     *
+     * <p>This method still performs all bookkeeping: halfmove clock update,
+     * board mutation, move recording, turn increment, game-end evaluation,
+     * and observer notification.</p>
+     *
+     * <p>The ordering of operations matches {@link #executeMove(Move)}: the halfmove
+     * clock must be updated <em>before</em> {@code board.executeMove} so that capture
+     * detection can inspect the destination square's current occupant.</p>
+     *
+     * @param move The pre-validated move to execute.
+     * @throws IllegalStateException if the game is not in {@link GameState#RUNNING} state,
+     *                               indicating a programming error (server sent a move while
+     *                               the game was not running).
+     */
+    protected void executeMoveWithoutLocalValidation(Move move) {
+        if (gameState != GameState.RUNNING) {
+            throw new IllegalStateException("Game is not running");
+        }
+        updateHalfMoveClock(move);
+        board.executeMove(move);
+        moves.add(move);
+        turnCount++;
+        evaluateGameEnd();
+        notifyObservers();
+    }
+
+    /**
      * Validates if a move is legal.
      *
      * @param move The move to validate.
@@ -584,9 +631,13 @@ public abstract class Game extends Observable {
      *   <li>En passant target file (if the last move was a double pawn push)</li>
      * </ul>
      *
+     * <p>Visibility is {@code protected} (not {@code private}) so that subclasses such as
+     * {@link OnlineGame} can re-seed {@code positionHistory} after resetting it for history
+     * replay without relying on the side-effect of {@code initializeBoard}.
+     *
      * @return A string fingerprint of the current position.
      */
-    private String computePositionKey() {
+    protected String computePositionKey() {
         StringBuilder sb = new StringBuilder();
 
         // Active colour

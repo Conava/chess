@@ -166,8 +166,9 @@ public class ClientHandler implements Runnable {
      */
     private void handleMessage(Message message) {
         switch (message.type()) {
-            case LOGIN    -> handleLogin(message);
-            case REGISTER -> handleRegister(message);
+            case LOGIN      -> handleLogin(message);
+            case REGISTER   -> handleRegister(message);
+            case AUTH_TOKEN -> handleTokenAuth(message);
             default -> {
                 // Auth gate: all other message types require an authenticated session
                 if (playerSession == null) {
@@ -308,6 +309,38 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Handles an {@code AUTH_TOKEN} message for re-authentication on a new TCP connection.
+     * Verifies the token and, if valid, restores the player session.
+     *
+     * @param message the {@code AUTH_TOKEN} message containing a {@code token} parameter
+     */
+    private void handleTokenAuth(Message message) {
+        if (authService == null) {
+            sendMessage(new Message(MessageType.ERROR, "Authentication service not available"));
+            return;
+        }
+        String token = message.getParameterValue("token");
+        if (token == null || token.isBlank()) {
+            sendMessage(new Message(MessageType.ERROR, "Missing token"));
+            return;
+        }
+        try {
+            Optional<PlayerSession> sessionOpt = authService.verifyToken(token);
+            if (sessionOpt.isEmpty()) {
+                sendMessage(new Message(MessageType.ERROR, "Invalid or expired token"));
+                return;
+            }
+            playerSession = sessionOpt.get();
+            String content = "token=" + token + " userId=" + playerSession.getUserId();
+            LOGGER.info("Token auth successful for user: " + playerSession.getUsername());
+            sendMessage(new Message(MessageType.AUTH_TOKEN, content));
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database error during token auth", e);
+            sendMessage(new Message(MessageType.ERROR, "Internal server error during authentication"));
+        }
+    }
+
     // ── Game management handlers ───────────────────────────────────────────────
 
     /**
@@ -389,10 +422,18 @@ public class ClientHandler implements Runnable {
         gameInstance = new GameInstance(gameId, ruleset);
         gameInstance.connectPlayer(this, playerName);
         gameManager.addGame(gameId, gameInstance);
-        String joinCodeContent = "joinCode=" + gameId;
+
+        String joinCode = gameManager.generateJoinCode();
+        gameManager.registerJoinCode(joinCode, gameInstance);
+
+        // Format as XXXX-XXXX-XXXX for display
+        String formattedCode = joinCode.substring(0, 4) + "-" + joinCode.substring(4, 8) + "-" + joinCode.substring(8);
+
+        String joinCodeContent = "joinCode=" + formattedCode;
         if (gameInstance.getPositionIndex() >= 0) {
             joinCodeContent += " position=" + gameInstance.getPositionIndex() + " ruleset=CHESS960";
         }
+        LOGGER.info("Game " + gameId + " created with join code: " + formattedCode + " by " + playerName);
         sendMessage(new Message(MessageType.JOIN_CODE, joinCodeContent));
     }
 
@@ -411,20 +452,19 @@ public class ClientHandler implements Runnable {
      * @param message the {@code JOIN_GAME} message; must not be {@code null}
      */
     private void joinGame(Message message) {
-        String gameIdParam = message.getParameterValue("gameId");
-        int gameId;
-        try {
-            gameId = Integer.parseInt(gameIdParam);
-        } catch (NumberFormatException | NullPointerException e) {
-            LOGGER.log(Level.WARNING, "Invalid or missing gameId in JOIN_GAME: " + message.content(), e);
-            sendMessage(new Message(MessageType.ERROR, "Invalid or missing gameId"));
+        String joinCodeParam = message.getParameterValue("joinCode");
+        if (joinCodeParam == null || joinCodeParam.isBlank()) {
+            sendMessage(new Message(MessageType.ERROR, "Missing join code"));
             return;
         }
-        GameInstance foundGame = gameManager.getGame(gameId);
+        // Strip dashes and normalize to uppercase for case-insensitive matching
+        String normalizedCode = joinCodeParam.replace("-", "").toUpperCase();
+        GameInstance foundGame = gameManager.removeAndGetByJoinCode(normalizedCode);
         if (foundGame == null) {
-            sendMessage(new Message(MessageType.ERROR, "Invalid join code"));
+            sendMessage(new Message(MessageType.ERROR, "Invalid or expired join code"));
             return;
         }
+        LOGGER.info("Player joined game " + foundGame.getGameId() + " with join code: " + joinCodeParam);
         String playerName = message.getParameterValue("playerName");
         if (playerName == null || playerName.isBlank()) {
             playerName = (playerSession != null && playerSession.getUsername() != null

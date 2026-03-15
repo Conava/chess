@@ -110,6 +110,10 @@ Label {
     -fx-background-color: rgba(0, 0, 0, 0.55);
 }
 
+.join-code-overlay-scrim {
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+}
+
 .overlay-card {
     -fx-background-radius: 14;
     -fx-padding: 32;

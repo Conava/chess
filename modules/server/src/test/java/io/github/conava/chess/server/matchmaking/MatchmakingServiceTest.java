@@ -201,12 +201,14 @@ class MatchmakingServiceTest {
             assertTrue(matched1.contains("joinCode="), "MATCHED message must contain joinCode=");
             assertTrue(matched2.contains("joinCode="), "MATCHED message must contain joinCode=");
 
-            // Both should have received the same join code
+            // Both should have received the same join code value
             String joinCode1 = extractParam(matched1, "joinCode");
             String joinCode2 = extractParam(matched2, "joinCode");
             assertEquals(joinCode1, joinCode2, "Both players must receive the same join code");
+            assertNotNull(joinCode1, "MATCHED message must have a non-null joinCode value");
 
-            // A GameInstance must exist in the GameManager
+            // For matchmaking, the joinCode in the MATCHED message is the numeric game ID
+            // (matchmaking bypasses the alphanumeric join code system). Verify the game exists.
             int gameId = Integer.parseInt(joinCode1);
             assertNotNull(gameManager.getGame(gameId), "A GameInstance must exist in GameManager after match");
         }

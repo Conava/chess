@@ -54,7 +54,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>disconnectPlayer removes the observer from the game to prevent memory leaks</li>
  *   <li>reconnectPlayer resumes a paused game</li>
  *   <li>mutual save-for-later: both SAVE_GAME requests result in SAVE_ACCEPTED</li>
- *   <li>chat messages are relayed to both players with from= prefix</li>
+ *   <li>chat messages are relayed to both players with sender= and content= parameters</li>
  *   <li>promotion moves execute and promote the pawn correctly</li>
  * </ul>
  * </p>
@@ -658,16 +658,89 @@ class GameInstanceTest {
     }
 
     @Test
-    void chat_relayedMessage_hasFromPrefix() {
+    void chat_relayedMessage_hasSenderPrefix() {
         connectBothPlayers();
         blackHandler.clearMessages();
 
-        gameInstance.processMessage(whiteHandler, new Message(MessageType.CHAT, "Hello!"));
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.CHAT, "content=Hello!"));
 
         assertTrue(blackHandler.getSentMessages().stream()
                         .filter(m -> m.type() == MessageType.CHAT)
-                        .anyMatch(m -> m.content().contains("from=")),
-                "Relayed CHAT message must contain from= prefix");
+                        .anyMatch(m -> m.content().contains("sender=")),
+                "Relayed CHAT message must contain sender= parameter");
+    }
+
+    /**
+     * Verifies that the relayed CHAT message uses explicit {@code sender=<name>} and
+     * {@code content=<text>} key-value parameters instead of the old {@code from=<name>}
+     * concatenation.
+     */
+    @Test
+    void chat_relayedMessage_hasSenderAndContentParams() {
+        connectBothPlayers();
+        blackHandler.clearMessages();
+
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.CHAT, "content=hello"));
+
+        assertTrue(blackHandler.getSentMessages().stream()
+                        .filter(m -> m.type() == MessageType.CHAT)
+                        .anyMatch(m -> m.content().contains("sender=") && m.content().contains("content=")),
+                "Relayed CHAT message must contain both sender= and content= parameters");
+    }
+
+    /**
+     * Verifies that a chat message with spaces in the content is relayed with the full
+     * content preserved (i.e., the content after {@code content=} contains the full
+     * original multi-word text).
+     */
+    @Test
+    void chat_relayedMessage_contentPreservesSpaces() {
+        connectBothPlayers();
+        blackHandler.clearMessages();
+
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.CHAT, "content=hello world"));
+
+        String relayedContent = blackHandler.getSentMessages().stream()
+                .filter(m -> m.type() == MessageType.CHAT)
+                .map(Message::content)
+                .findFirst()
+                .orElse("");
+
+        // Extract everything after "content=" — must be "hello world" (full text, not just "hello")
+        int contentIdx = relayedContent.indexOf("content=");
+        assertTrue(contentIdx >= 0, "Relayed CHAT message must contain content= parameter");
+        String extractedContent = relayedContent.substring(contentIdx + "content=".length());
+        assertEquals("hello world", extractedContent,
+                "Multi-word chat content must be fully preserved after content= in the relayed message");
+    }
+
+    /**
+     * Verifies that the {@code sender=} value in the relayed CHAT message matches the
+     * player name that was used when connecting the sending player.
+     */
+    @Test
+    void chat_relayedMessage_senderMatchesPlayerName() {
+        connectBothPlayers(); // white connected as "Alice"
+        blackHandler.clearMessages();
+
+        gameInstance.processMessage(whiteHandler, new Message(MessageType.CHAT, "content=hi"));
+
+        String relayedContent = blackHandler.getSentMessages().stream()
+                .filter(m -> m.type() == MessageType.CHAT)
+                .map(Message::content)
+                .findFirst()
+                .orElse("");
+
+        // Extract sender value: everything between "sender=" and the next space
+        int senderIdx = relayedContent.indexOf("sender=");
+        assertTrue(senderIdx >= 0, "Relayed CHAT message must contain sender= parameter");
+        int valueStart = senderIdx + "sender=".length();
+        int valueEnd = relayedContent.indexOf(' ', valueStart);
+        String senderValue = valueEnd >= 0
+                ? relayedContent.substring(valueStart, valueEnd)
+                : relayedContent.substring(valueStart);
+        assertEquals("Alice", senderValue,
+                "sender= in relayed CHAT must match the connecting player's name");
     }
 
     @Test

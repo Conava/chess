@@ -42,16 +42,24 @@ class SettingsServiceTest {
     }
 
     @Test
-    void defaultPlayerNamesAreEmpty() {
-        assertEquals("", service.loadPlayerWhite());
-        assertEquals("", service.loadPlayerBlack());
+    void defaultServerHostIsEmpty() {
+        assertEquals("", service.loadServerHost());
     }
 
     @Test
-    void saveAndLoadPlayerNames() {
-        service.savePlayerWhite("Alice");
-        service.savePlayerBlack("Bob");
-        assertEquals("Alice", service.loadPlayerWhite());
-        assertEquals("Bob", service.loadPlayerBlack());
+    void saveAndLoadServerHost() {
+        service.saveServerHost("192.168.1.1");
+        assertEquals("192.168.1.1", service.loadServerHost());
+    }
+
+    @Test
+    void defaultServerPortIs54321() {
+        assertEquals(54321, service.loadServerPort());
+    }
+
+    @Test
+    void saveAndLoadServerPort() {
+        service.saveServerPort(12345);
+        assertEquals(12345, service.loadServerPort());
     }
 }

@@ -327,9 +327,16 @@ public class OnlineSetupController {
         }
 
         if (joinToggle.isSelected()) {
-            String joinCode = joinCodeField.getText().trim();
-            if (joinCode.isEmpty()) {
+            String rawJoinCode = joinCodeField.getText().trim();
+            if (rawJoinCode.isEmpty()) {
                 showError(i18n.get("dialog.online.error.empty_join_code"));
+                return;
+            }
+            // Normalize: uppercase and strip dashes so input is format-agnostic.
+            // Users may enter codes as "XXXX-XXXX-XXXX" (with dashes) or "XXXXXXXXXXXX" (without).
+            String joinCode = normalizeJoinCode(rawJoinCode);
+            if (!isValidJoinCode(joinCode)) {
+                showError(i18n.get("dialog.online.error.invalid_join_code"));
                 return;
             }
             // JOIN mode — full scene swap to game
@@ -408,5 +415,33 @@ public class OnlineSetupController {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    /**
+     * Normalizes a raw join code entered by the user.
+     *
+     * <p>Accepts codes in any case with or without dashes (e.g. "abcd-1234-efgh" or
+     * "ABCD1234EFGH"). The normalized form is always uppercase with dashes stripped.</p>
+     *
+     * @param rawCode the raw join code string from user input (must not be {@code null}).
+     * @return the normalized join code: uppercase, dashes removed.
+     */
+    static String normalizeJoinCode(String rawCode) {
+        return rawCode.toUpperCase().replace("-", "");
+    }
+
+    /**
+     * Validates a normalized join code (after {@link #normalizeJoinCode}).
+     *
+     * <p>A valid join code must be exactly 12 characters long and contain only
+     * uppercase letters ({@code A-Z}) and digits ({@code 0-9}).</p>
+     *
+     * @param normalizedCode the join code after normalization (uppercase, no dashes).
+     * @return {@code true} if the code is exactly 12 alphanumeric characters.
+     */
+    static boolean isValidJoinCode(String normalizedCode) {
+        return normalizedCode != null
+                && normalizedCode.length() == 12
+                && normalizedCode.matches("[A-Z0-9]+");
     }
 }

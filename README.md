@@ -16,7 +16,7 @@ with hard dependency boundaries enforced by architecture law.
 ## Features
 
 - **Offline play** — two players on the same machine, no network needed
-- **Online multiplayer** — TCP-based lobby system; host or join a game by code
+- **Online multiplayer** — TCP-based lobby system; host or join a game by code; board auto-flips so each player sees their own pieces at the bottom
 - **Chess960 (Fischer Random Chess)** — randomized back-rank starting positions (960 variants), with full castling support and online play
 - **Headless / API mode** — run without a GUI for programmatic game control (`nogui` flag)
 - **Pawn promotion** — interactive piece-selection dialog mid-game
@@ -101,6 +101,7 @@ These rules are enforced across all modules — no exceptions without explicit a
 | `ThemeColorResolver` | application | Reads CSS looked-up colors at runtime for Canvas rendering |
 | `GameController` | application | FXML controller; implements `GameObserver`; renders board |
 | `ServerCommunicationTask` | application | `javafx.concurrent.Task`; implements `ServerConnection` |
+| `GameManager` | server | Game lifecycle, semaphore-limited concurrency, join-code index with expiry and background cleanup |
 | `GameInstance` | server | Per-game session; holds two `ClientHandler` refs; implements `GameObserver` |
 
 ## Project Structure
@@ -126,7 +127,7 @@ chess/
 │   │       │   ├── navigation/        # SceneManager, OverlayManager, PanelHost, PanelId
 │   │       │   ├── network/           # ServerCommunicationTask
 │   │       │   ├── menu/              # Cinematic menu: responsive layout, background, particles, silhouettes, animations
-│   │       │   ├── settings/          # SettingsService (includes reduced motion)
+│   │       │   ├── settings/          # SettingsService (theme, language, server defaults, reduced motion)
 │   │       │   ├── tasks/             # ExecuteMove (background Task)
 │   │       │   ├── theme/             # ThemeManager, Theme, ThemeColorResolver
 │   │       │   └── i18n/              # I18n localization helper
@@ -139,9 +140,16 @@ chess/
 │   └── server/                        # TCP multiplayer server
 │       └── src/main/java/io/github/conava/chess/server/
 │           ├── Server.java            # Entry point; accept loop; console commands
-│           └── management/
-│               ├── ClientHandler.java # Runnable per connected client
-│               └── GameInstance.java  # Per-game session manager
+│           ├── config/
+│           │   └── ServerConfig.java  # server.properties loader (port, limits, expiry)
+│           ├── management/
+│           │   ├── ClientHandler.java # Runnable per connected client
+│           │   ├── GameInstance.java   # Per-game session manager
+│           │   └── GameManager.java   # Game lifecycle, join-code index, concurrency
+│           ├── auth/                  # AuthService, login/register/token verification
+│           ├── db/                    # DatabaseManager (SQLite)
+│           ├── persistence/           # GameRepository, SessionRepository, UserRepository
+│           └── matchmaking/           # MatchmakingService
 │
 ├── docs/
 │   ├── decisions/                     # Architecture Decision Records (ADRs)
@@ -196,11 +204,19 @@ mvn javafx:run -pl modules/application -am -Djavafx.args=nogui
 ### Run the Server
 
 ```bash
-# Default port 54321
+# Default settings (port 54321)
 java -jar modules/server/target/server-0.9.jar
+```
 
-# Custom port
-java -jar modules/server/target/server-0.9.jar 8080
+The server reads `server.properties` from the working directory (falls back to defaults when absent):
+
+```properties
+port=54321
+max_games=40
+disconnect_timeout_seconds=300
+db_path=chess.db
+session_expiry_days=30
+join_code_expiry_seconds=600
 ```
 
 Server console commands (type while running):
@@ -247,8 +263,9 @@ chess.startGame(false, RulesetOptions.STANDARD, "Alice", "Bob", null);
 | `getPlayerBlack()` | `Player` | Black player info |
 | `getLegalSquares(Square)` | `List<Square>` | Legal destination squares for a piece |
 | `getPieceAt(Square)` | `Piece` | Piece on the given square (null if empty) |
-| `getMoveList()` | `List<String>` | Full move history as protocol strings (e.g. `"e2-e4"`) |
+| `getMoveList()` | `List<String>` | Full move history as protocol strings (e.g. `"e2-e4"`, `"a7-a8=QUEEN"` for promotions) |
 | `getJoinCode()` | `String` | Join code for the hosted online game (null if offline) |
+| `getLocalPlayerColor()` | `PlayerColor` | Color assigned to the local player in an online game; returns `null` for offline games or when no game is active |
 
 ### Observer Registration
 
@@ -276,9 +293,12 @@ public enum GameState {
     WHITE_WON_BY_RESIGNATION, BLACK_WON_BY_RESIGNATION,
     WHITE_WON_BY_TIMEOUT, BLACK_WON_BY_TIMEOUT,
     DRAW_BY_STALEMATE, DRAW_BY_INSUFFICIENT_MATERIAL,
-    DRAW_BY_THREEFOLD_REPETITION, DRAW_BY_FIFTY_MOVE_RULE
+    DRAW_BY_THREEFOLD_REPETITION, DRAW_BY_FIFTY_MOVE_RULE,
+    PAUSED, SAVED
 }
 ```
+
+**Non-terminal states:** `PAUSED` indicates the opponent has disconnected and the game is waiting for reconnection. The client keeps the board visible and shows a status indicator. `SAVED` indicates the game was persisted; the client navigates back to the main menu. Neither state triggers the game-end dialog.
 
 ## Server & Network Protocol
 
@@ -288,7 +308,8 @@ The server accepts TCP connections on port `54321` (configurable). Each client c
 
 - **Max concurrent games:** 40 (semaphore-limited)
 - **Protocol:** Newline-delimited plain-text messages
-- **No TLS, authentication, or reconnection** (see [Roadmap](#roadmap))
+- **Authentication:** optional login/register with token-based session persistence; re-authentication on reconnect via `AUTH_TOKEN`
+- **No TLS or automatic reconnection** (see [Roadmap](#roadmap))
 
 ### Connection Flow
 
@@ -296,13 +317,16 @@ The server accepts TCP connections on port `54321` (configurable). Each client c
 Client A                    Server                   Client B
    │                           │                         │
    │── CREATE_GAME ───────────>│                         │
-   │<─ JOIN_CODE (gameId) ─────│                         │
+   │<─ JOIN_CODE (code) ───────│                         │
    │                           │<──────── JOIN_GAME ─────│
    │<─ GAME_START ─────────────│─────────── GAME_START ──>│
    │                           │                         │
    │── MOVE (e2-e4) ──────────>│                         │
    │                           │─────────── MOVE ────────>│
    │<── MOVE (e7-e5) ──────────│<──────── MOVE ──────────│
+   │                           │                         │
+   │── CHAT (content=hi) ─────>│                         │
+   │<─ CHAT (sender+content) ──│── CHAT (sender+content)─>│
    │                           │                         │
    │<─ GAME_STATUS (terminal) ─│──────── GAME_STATUS ────>│
 ```
@@ -312,12 +336,23 @@ Client A                    Server                   Client B
 | Message | Direction | Format |
 |---------|-----------|--------|
 | `CREATE_GAME` | Client → Server | `CREATE_GAME ruleset=STANDARD playerName=<name>` (or `ruleset=CHESS960`) |
-| `JOIN_CODE` | Server → Client | `JOIN_CODE joinCode=<gameId>` (Chess960 adds `position=<0-959> ruleset=CHESS960`) |
-| `JOIN_GAME` | Client → Server | `JOIN_GAME gameId=<id> playerName=<name>` |
-| `MOVE` | Client ↔ Server | `MOVE <from>-<to>` (e.g. `MOVE e2-e4`) |
-| `GAME_STATUS` | Server → Client | `GAME_STATUS status=<GameState>` |
+| `JOIN_CODE` | Server → Client | `JOIN_CODE joinCode=<XXXX-XXXX-XXXX>` (Chess960 adds `position=<0-959> ruleset=CHESS960`) |
+| `JOIN_GAME` | Client → Server | `JOIN_GAME joinCode=<code> playerName=<name>` |
+| `MOVE` | Client ↔ Server | `MOVE <from>-<to>` (e.g. `MOVE e2-e4`); promotion appends `=<PIECE>` (e.g. `MOVE a7-a8=QUEEN`) |
+| `GAME_STATUS` | Client ↔ Server | `GAME_STATUS gameState=<GameState>` (server sends terminal states and `PAUSED`; client sends resignation) |
+| `CHAT` | Client → Server | `CHAT content=<text>` |
+| `CHAT` | Server → Client | `CHAT sender=<name> content=<text>` |
+| `LOGIN` | Client → Server | `LOGIN username=<user> password=<pass>` |
+| `REGISTER` | Client → Server | `REGISTER username=<user> password=<pass>` |
+| `AUTH_TOKEN` | Client ↔ Server | Client: `AUTH_TOKEN token=<token>` (re-auth on reconnect); Server: `AUTH_TOKEN token=<token> userId=<id>` (login/register/re-auth success) |
 
-If a player disconnects, the server awards a resignation win to the remaining player.
+**Join codes** are 12-character alphanumeric strings displayed as `XXXX-XXXX-XXXX`. The client strips dashes and uppercases the input before sending a `JOIN_GAME` message, so codes are case-insensitive and dash-agnostic. Unused join codes expire after a configurable timeout (default 600 s).
+
+**Chat encoding:** The client sends a `CHAT` message with `content=<text>`. The server wraps it as `sender=<name> content=<text>` and relays to both players. The client parses this format and displays it as `Name: message text`.
+
+**Board orientation:** The game creator plays white (board shown with white at the bottom). The joining player plays black (board is flipped so black pieces appear at the bottom). Player name labels and the active-player indicator swap accordingly.
+
+If a player disconnects, the server sends a `GAME_STATUS` with `PAUSED` to the remaining player. The client displays a non-blocking "waiting for reconnection" indicator while keeping the board visible. If the disconnected player does not reconnect, the server eventually awards a resignation win to the remaining player.
 
 ## Tech Stack
 
@@ -338,9 +373,9 @@ If a player disconnects, the server awards a resignation win to the remaining pl
 
 | Module | Test Classes | Focus |
 |--------|-------------|-------|
-| `core` | 26 | Board state, piece construction, move generation, observer notifications, standard and Chess960 rulesets, castling integration, deferred init, move parsing, game factory |
-| `application` | 29 | Chess façade, i18n, settings service, theme manager, background move task, scene manager, cinematic menu components (responsive layout, layout transitions, background, particles, silhouettes, entrance, exit, panel animator), theme color resolver, reduced motion, main menu controller, sub-panel responsive bindings, CSS responsive validation, FXML panel structure, panel navigation |
-| `server` | 4 | Server startup, game instance lifecycle (standard + Chess960), client handler integration |
+| `core` | 34 | Board state, piece construction, move generation, observer notifications, standard and Chess960 rulesets, castling integration, deferred init, move parsing, game factory, online game server connection (remote move execution, history replay, resignation logic) |
+| `application` | 31 | Chess façade, i18n, settings service, theme manager, background move task, scene manager, cinematic menu components (responsive layout, layout transitions, background, particles, silhouettes, entrance, exit, panel animator), theme color resolver, reduced motion, main menu controller, sub-panel responsive bindings, CSS responsive validation, FXML panel structure, panel navigation, game-end state classification, game-end win/loss determination for online mode |
+| `server` | 10 | Server startup, server config, game instance lifecycle (standard + Chess960), game manager, client handler integration, matchmaking, persistence (game, session, user repositories), authentication |
 
 ### Run Tests
 
@@ -372,6 +407,8 @@ mvn -pl modules/core -Dtest=BoardTest test
 - `MenuExitTransitionTest` — cinematic exit animation with relative translateX
 - `CssResponsiveTest` — validates cinematic CSS has no hardcoded font sizes
 - `ThemeColorResolverTest` — runtime CSS color resolution for Canvas layers
+- `GameControllerUpdateTest` — verifies PAUSED/SAVED states do not trigger game-end dialog; validates all terminal states are correctly classified
+- `GameEndControllerTest` — offline winner name resolution and online win/loss determination based on local player color
 - `ClientHandlerIntegrationTest` — end-to-end server message flow
 
 ## Roadmap
@@ -395,8 +432,8 @@ mvn -pl modules/core -Dtest=BoardTest test
 ### Server
 - [ ] TLS/SSL encryption
 - [ ] Reconnection support after disconnect
-- [ ] Player authentication
-- [ ] Configurable game limit (currently hardcoded at 40)
+- [x] Player authentication (login, register, token-based sessions)
+- [x] Configurable game limit (via `max_games` in `server.properties`)
 - [ ] Move validation on the server side
 - [ ] Persistent game history / replay
 

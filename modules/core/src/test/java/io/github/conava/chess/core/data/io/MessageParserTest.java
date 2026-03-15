@@ -127,6 +127,31 @@ class MessageParserTest {
         assertEquals("XYZ99", msg.getParameterValue("code"), "getParameterValue() must work with a single key-value pair");
     }
 
+    @Test
+    void getParameterValue_valueContainingEquals_returnsFullValue() {
+        // Promotion moves produce a value such as "a7-a8=QUEEN"; the split must not
+        // discard everything after the second '=' sign.
+        Message msg = new Message(MessageType.MOVE, "move=a7-a8=QUEEN playerColor=WHITE");
+        assertEquals("a7-a8=QUEEN", msg.getParameterValue("move"),
+                "getParameterValue('move') must return the full value including any '=' characters");
+    }
+
+    @Test
+    void getParameterValue_valueContainingMultipleEquals_returnsFullValue() {
+        // Ensures that more than one embedded '=' in a value is also preserved correctly.
+        Message msg = new Message(MessageType.MOVE, "data=x=y=z");
+        assertEquals("x=y=z", msg.getParameterValue("data"),
+                "getParameterValue('data') must return 'x=y=z' when the value contains multiple '=' characters");
+    }
+
+    @Test
+    void getParameterValue_promotionMoveSecondParam_returnsCorrectValue() {
+        // Verifies the second parameter is correctly extracted from a promotion message.
+        Message msg = new Message(MessageType.MOVE, "move=a7-a8=QUEEN playerColor=WHITE");
+        assertEquals("WHITE", msg.getParameterValue("playerColor"),
+                "getParameterValue('playerColor') must return 'WHITE' even when an earlier value contains '='");
+    }
+
     // -------------------------------------------------------------------------
     // Message construction guards
     // -------------------------------------------------------------------------

@@ -74,4 +74,18 @@ class ChessTest {
         chess.endGame();
         assertThrows(IllegalStateException.class, () -> chess.movePiece(new Square(6, 4), new Square(4, 4)));
     }
+
+    @Test
+    void getLocalPlayerColor_returnsNull_whenNoGameActive() {
+        Chess freshChess = new Chess();
+        assertNull(freshChess.getLocalPlayerColor(),
+                "getLocalPlayerColor() must return null when no game has been started");
+    }
+
+    @Test
+    void getLocalPlayerColor_returnsNull_forOfflineGame() {
+        // chess was started offline in setUp()
+        assertNull(chess.getLocalPlayerColor(),
+                "getLocalPlayerColor() must return null for an offline game");
+    }
 }

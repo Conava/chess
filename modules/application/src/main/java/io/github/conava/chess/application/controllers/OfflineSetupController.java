@@ -4,7 +4,6 @@ import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.menu.ResponsiveMenuLayout;
 import io.github.conava.chess.application.navigation.PanelHost;
 import io.github.conava.chess.application.navigation.SceneManager;
-import io.github.conava.chess.application.settings.SettingsService;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
@@ -49,7 +48,6 @@ public class OfflineSetupController {
 
     private final SceneManager sceneManager;
     private final I18n i18n;
-    private final SettingsService settingsService;
     private final PanelHost panelHost;
 
     @FXML
@@ -102,34 +100,28 @@ public class OfflineSetupController {
     /**
      * Constructs an {@code OfflineSetupController}.
      *
-     * @param sceneManager    the navigation manager used to show other screens and access the Chess facade.
-     * @param i18n            the internationalisation helper used for default player name lookup.
-     * @param settingsService the settings service used to load saved player name defaults.
-     * @param panelHost       the panel host used to close this panel when cancel is pressed.
+     * @param sceneManager the navigation manager used to show other screens and access the Chess facade.
+     * @param i18n         the internationalisation helper used for default player name lookup.
+     * @param panelHost    the panel host used to close this panel when cancel is pressed.
      */
-    public OfflineSetupController(SceneManager sceneManager, I18n i18n, SettingsService settingsService,
-                                  PanelHost panelHost) {
+    public OfflineSetupController(SceneManager sceneManager, I18n i18n, PanelHost panelHost) {
         this.sceneManager = sceneManager;
         this.i18n = i18n;
-        this.settingsService = settingsService;
         this.panelHost = panelHost;
     }
 
     /**
      * Initialises the panel after FXML injection.
      *
-     * <p>Populates the ruleset combo box, pre-fills player name fields from
-     * saved preferences, wires responsive bindings to {@link #stageWidthSource},
-     * and attaches a scene listener to sync {@code stageWidthSource} with the real
-     * stage width once available.</p>
+     * <p>Populates the ruleset combo box, wires responsive bindings to
+     * {@link #stageWidthSource}, and attaches a scene listener to sync
+     * {@code stageWidthSource} with the real stage width once available.
+     * Player name fields start empty; the user fills them in before starting a game.</p>
      */
     @FXML
     public void initialize() {
         rulesetBox.setItems(FXCollections.observableArrayList(RulesetOptions.values()));
         rulesetBox.getSelectionModel().selectFirst();
-        whiteField.setText(settingsService.loadPlayerWhite());
-        blackField.setText(settingsService.loadPlayerBlack());
-
         // Wire all bindings to stageWidthSource (immediately active at DEFAULT_STAGE_WIDTH).
         wireBindings();
 

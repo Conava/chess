@@ -132,6 +132,12 @@ public class GameInstance implements GameObserver {
     }
 
     /**
+     * Stored reference to the server-wide {@link GameManager}; may be {@code null}.
+     * Reserved for future use (e.g. removing the game from the active map on save/end).
+     */
+    private final GameManager gameManager;
+
+    /**
      * Constructs a new {@code GameInstance} with full persistence and disconnect-timeout
      * support.
      *
@@ -148,12 +154,6 @@ public class GameInstance implements GameObserver {
      * @param dbGameId                 the database primary key for the game row, or {@code -1}
      *                                 when {@code gameRepository} is {@code null}
      */
-    /**
-     * Stored reference to the server-wide {@link GameManager}; may be {@code null}.
-     * Reserved for future use (e.g. removing the game from the active map on save/end).
-     */
-    private final GameManager gameManager;
-
     public GameInstance(int gameId, RulesetOptions ruleset, GameRepository gameRepository,
                         GameManager gameManager, int disconnectTimeoutSeconds, int dbGameId) {
         this.gameId = gameId;
@@ -415,20 +415,19 @@ public class GameInstance implements GameObserver {
     }
 
     /**
-     * Handles a {@code CHAT} message: sanitizes the content, prepends the sender's
-     * username as {@code from=<username>}, persists the message via the repository (if
-     * available), and relays the result to both players.
+     * Handles a {@code CHAT} message: sanitizes the content, builds a properly structured
+     * relay message with {@code sender=<username> content=<text>} key-value parameters,
+     * persists the message via the repository (if available), and relays the result to
+     * both players.
      *
      * <p>Newlines are stripped from the content to prevent protocol framing attacks.
-     * Content is truncated to {@value #MAX_CHAT_LENGTH} characters.</p>
+     * Content is truncated to {@value #MAX_CHAT_LENGTH} characters. The {@code content}
+     * parameter is always placed LAST in the relay so that multi-word messages (with
+     * spaces) are fully preserved when the receiver extracts everything after
+     * {@code "content="}.</p>
      *
-     * @param clientHandler the handler that sent the chat message
-     * @param message       the incoming {@code CHAT} message
-     */
-    /**
-     * Handles a {@code CHAT} message from the given client handler. Exposed as
-     * package-private so that {@link ClientHandler} can delegate directly after auth
-     * gating. See {@link #processMessage} for the general dispatch path.
+     * <p>Exposed as package-private so that {@link ClientHandler} can delegate directly
+     * after auth gating. See {@link #processMessage} for the general dispatch path.</p>
      *
      * @param clientHandler the handler that sent the chat message
      * @param message       the incoming {@code CHAT} message
@@ -458,12 +457,23 @@ public class GameInstance implements GameObserver {
             senderUsername = "unknown";
         }
 
-        String relayContent = "from=" + senderUsername + " " + rawContent;
+        // Extract the actual message text from rawContent, which may arrive as
+        // "content=<text>" (sent by Chess.sendChat()) or as bare text.
+        // Rebuild with explicit key=value format so the client can parse both
+        // sender and content reliably. Content is placed LAST so that spaces
+        // inside the message text are fully preserved when the receiver reads
+        // everything after "content=".
+        String messageText = rawContent;
+        if (rawContent.startsWith("content=")) {
+            messageText = rawContent.substring("content=".length());
+        }
+        String relayContent = "sender=" + senderUsername + " content=" + messageText;
 
-        // Persist if repository is available
+        // Persist if repository is available; store the extracted message text, not
+        // the raw protocol string (which may include the leading "content=" prefix).
         if (gameRepository != null && dbGameId > 0 && senderUserId > 0) {
             try {
-                gameRepository.addChatMessage(dbGameId, senderUserId, rawContent);
+                gameRepository.addChatMessage(dbGameId, senderUserId, messageText);
             } catch (SQLException e) {
                 LOGGER.log(Level.WARNING, "Failed to persist chat message", e);
             }
@@ -481,13 +491,8 @@ public class GameInstance implements GameObserver {
      * {@link MessageType#SAVE_ACCEPTED} is sent to both players. The disconnect timer (if
      * running) is cancelled.</p>
      *
-     * @param clientHandler the handler requesting the save
-     * @param message       the {@code SAVE_GAME} message
-     */
-    /**
-     * Handles a {@code SAVE_GAME} request from a player. Exposed as package-private so
-     * that {@link ClientHandler} can delegate directly after auth gating. See
-     * {@link #processMessage} for the general dispatch path.
+     * <p>Exposed as package-private so that {@link ClientHandler} can delegate directly
+     * after auth gating. See {@link #processMessage} for the general dispatch path.</p>
      *
      * @param clientHandler the handler requesting the save
      * @param message       the {@code SAVE_GAME} message

@@ -19,6 +19,11 @@ public class ServerConfig {
     private final int disconnectTimeoutSeconds;
     private final String dbPath;
     private final int sessionExpiryDays;
+    /**
+     * Seconds before an unused join code is considered expired and cleaned up.
+     * Corresponds to the {@code join_code_expiry_seconds} property key.
+     */
+    private final int joinCodeExpirySeconds;
 
     public ServerConfig() {
         Properties props = new Properties();
@@ -32,11 +37,12 @@ public class ServerConfig {
             LOG.warning("Failed to read server.properties: " + e.getMessage() + " — using defaults");
         }
 
-        this.port                    = parseInt(props, "port",                     54321);
-        this.maxGames                = parseInt(props, "max_games",                40);
+        this.port                    = parseInt(props, "port",                       54321);
+        this.maxGames                = parseInt(props, "max_games",                  40);
         this.disconnectTimeoutSeconds= parseInt(props, "disconnect_timeout_seconds", 300);
-        this.dbPath                  = props.getProperty("db_path",               "chess.db");
-        this.sessionExpiryDays       = parseInt(props, "session_expiry_days",      30);
+        this.dbPath                  = props.getProperty("db_path",                 "chess.db");
+        this.sessionExpiryDays       = parseInt(props, "session_expiry_days",        30);
+        this.joinCodeExpirySeconds   = parseInt(props, "join_code_expiry_seconds",   600);
     }
 
     /**
@@ -48,11 +54,12 @@ public class ServerConfig {
      * @param props the properties to read; unrecognised keys are ignored
      */
     public ServerConfig(Properties props) {
-        this.port                     = parseInt(props, "port",                     54321);
-        this.maxGames                 = parseInt(props, "max_games",                40);
+        this.port                     = parseInt(props, "port",                       54321);
+        this.maxGames                 = parseInt(props, "max_games",                  40);
         this.disconnectTimeoutSeconds = parseInt(props, "disconnect_timeout_seconds", 300);
-        this.dbPath                   = props.getProperty("db_path",               "chess.db");
-        this.sessionExpiryDays        = parseInt(props, "session_expiry_days",      30);
+        this.dbPath                   = props.getProperty("db_path",                 "chess.db");
+        this.sessionExpiryDays        = parseInt(props, "session_expiry_days",        30);
+        this.joinCodeExpirySeconds    = parseInt(props, "join_code_expiry_seconds",   600);
     }
 
     private static int parseInt(Properties props, String key, int defaultValue) {
@@ -71,4 +78,15 @@ public class ServerConfig {
     public int getDisconnectTimeoutSeconds() { return disconnectTimeoutSeconds; }
     public String getDbPath()                { return dbPath; }
     public int getSessionExpiryDays()        { return sessionExpiryDays; }
+
+    /**
+     * Returns the number of seconds before an unused join code expires.
+     *
+     * <p>Corresponds to the {@code join_code_expiry_seconds} key in
+     * {@code server.properties}. Defaults to {@code 600} (10 minutes) when the key
+     * is absent or invalid.</p>
+     *
+     * @return seconds until an unused join code expires; always positive
+     */
+    public int getJoinCodeExpirySeconds()    { return joinCodeExpirySeconds; }
 }

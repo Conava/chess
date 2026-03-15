@@ -12,6 +12,7 @@ import io.github.conava.chess.core.data.io.MessageType;
 import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.pieces.Pieces;
 import io.github.conava.chess.core.data.player.Player;
+import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.exceptions.IllegalMoveException;
 import io.github.conava.chess.core.logic.game.Game;
 import io.github.conava.chess.core.logic.game.GameState;
@@ -460,6 +461,29 @@ public class Chess extends Application {
             return onlineGame;
         }
         activeServerTask = task;
+
+        // Re-authenticate on the new TCP connection using the stored auth token.
+        // Use a CountDownLatch to wait for the server's AUTH_TOKEN acknowledgement rather
+        // than a fixed sleep, eliminating the race condition on slow or remote connections.
+        if (authToken != null && !authToken.isEmpty()) {
+            CountDownLatch authLatch = new CountDownLatch(1);
+            task.setAuthTokenHandler(() -> {
+                task.setAuthTokenHandler(null); // one-shot: clear after firing
+                authLatch.countDown();
+            });
+            Message authMsg = new Message(MessageType.AUTH_TOKEN, "token=" + authToken);
+            task.sendMessage(MessageParser.serialize(authMsg));
+            try {
+                // Wait up to 5 seconds for the server to acknowledge the token.
+                // If the server does not respond in time, proceed anyway so that the
+                // game can still attempt to connect (the server may accept the join-code
+                // message even if auth confirmation is delayed).
+                authLatch.await(5, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
         onlineGame.connectToServerGame();
         return onlineGame;
     }
@@ -516,6 +540,25 @@ public class Chess extends Application {
      */
     public String getJoinCode() {
         return game != null ? game.getJoinCode() : null;
+    }
+
+    /**
+     * Returns the local player's color for the current online game session.
+     *
+     * <p>Delegates to {@link Game#getLocalPlayerColor()}. Returns {@code null} when no game
+     * is active or when the current game is an offline game (both players share the same
+     * screen and there is no concept of a "local" side).</p>
+     *
+     * <p>For online games, this value is set during the connection handshake:
+     * {@link io.github.conava.chess.core.data.player.PlayerColor#WHITE} when the local
+     * player created the game, {@link io.github.conava.chess.core.data.player.PlayerColor#BLACK}
+     * when they joined via a join code.</p>
+     *
+     * @return the local player's {@link PlayerColor}, or {@code null} when no game is active
+     *         or the game is offline.
+     */
+    public PlayerColor getLocalPlayerColor() {
+        return game == null ? null : game.getLocalPlayerColor();
     }
 
     /**

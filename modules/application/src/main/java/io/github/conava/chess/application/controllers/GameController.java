@@ -10,6 +10,7 @@ import io.github.conava.chess.core.data.board.Board;
 import io.github.conava.chess.core.data.pieces.Piece;
 import io.github.conava.chess.core.data.pieces.Pieces;
 import io.github.conava.chess.core.data.player.Player;
+import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.logic.game.GameState;
 import io.github.conava.chess.core.logic.observer.GameObserver;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
@@ -86,6 +87,13 @@ public class GameController implements GameObserver {
     private Board localBoard;
     private NumberBinding squareSize;
 
+    /**
+     * Whether the board is rendered from black's perspective (black pieces at the bottom).
+     * Set once in {@link #initialize()} based on {@code chess.getLocalPlayerColor()}.
+     */
+    private boolean boardFlipped;
+    private boolean waitingDialogShowing;
+
     private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "chess-move-executor");
         t.setDaemon(true);
@@ -101,12 +109,16 @@ public class GameController implements GameObserver {
 
     @FXML
     public void initialize() {
+        PlayerColor localColor = chess.getLocalPlayerColor();
+        boardFlipped = (localColor == PlayerColor.BLACK);
         buildBoard();
         buildLabels();
         bindPanelWidths();
         registerWithGame();
         configureOnlineFeatures();
-        updateAll();
+        // Defer update() — it may open a nested event loop (waiting dialog),
+        // which JavaFX forbids during FXML loading / layout processing.
+        Platform.runLater(this::update);
     }
 
     /**
@@ -127,7 +139,7 @@ public class GameController implements GameObserver {
         if (task == null) return;
 
         task.setChatHandler(msg -> {
-            String text = parseChatDisplay(msg.content());
+            String text = formatChatMessage(msg.content());
             Platform.runLater(() -> chatList.getItems().add(text));
         });
 
@@ -150,25 +162,63 @@ public class GameController implements GameObserver {
     }
 
     /**
-     * Formats a raw chat message content string for display in the chat list.
+     * Parses a server chat message content string and formats it for display.
      *
-     * <p>The server encodes chat messages as {@code "content=<text>"}. This method
-     * extracts the value after the first {@code '='} sign. If no {@code '='} is found the
-     * raw content is returned unchanged.</p>
+     * <p>The server encodes chat messages as {@code "sender=<name> content=<text>"} where
+     * {@code content} is always the last parameter and may contain spaces. This method
+     * extracts the sender name (up to the first space after {@code sender=}) and the full
+     * content text (everything after {@code content=}), then returns {@code "name: text"}.
      *
-     * @param rawContent the message content string from the server.
-     * @return the human-readable chat text.
+     * <p>Fallback behaviour:
+     * <ul>
+     *   <li>If no {@code sender=} key is found, the output omits the sender prefix.</li>
+     *   <li>If no {@code content=} key is found, the raw string is returned as-is.</li>
+     * </ul>
+     *
+     * @param rawContent the message content string from the server; must not be {@code null}.
+     * @return the human-readable chat text in the form {@code "Sender: message"}, or just
+     *         the content / raw text when the sender is unavailable.
      */
-    private String parseChatDisplay(String rawContent) {
-        int eqIdx = rawContent.indexOf('=');
-        if (eqIdx >= 0 && eqIdx < rawContent.length() - 1) {
-            return rawContent.substring(eqIdx + 1);
+    static String formatChatMessage(String rawContent) {
+        if (rawContent == null) return "";
+        String sender = null;
+        String content = rawContent;
+
+        // Extract sender name — it ends at the first space after "sender="
+        int senderIdx = rawContent.indexOf("sender=");
+        if (senderIdx >= 0) {
+            int valueStart = senderIdx + "sender=".length();
+            int valueEnd = rawContent.indexOf(' ', valueStart);
+            sender = valueEnd >= 0
+                    ? rawContent.substring(valueStart, valueEnd)
+                    : rawContent.substring(valueStart);
         }
-        return rawContent;
+
+        // Extract content — everything after "content=" to end-of-string (may contain spaces)
+        int contentIdx = rawContent.indexOf("content=");
+        if (contentIdx >= 0) {
+            content = rawContent.substring(contentIdx + "content=".length());
+        }
+
+        if (sender != null && !sender.isEmpty()) {
+            return sender + ": " + content;
+        }
+        return content;
     }
 
     // ── Board construction ────────────────────────────────────────────────────
 
+    /**
+     * Constructs the 8×8 board of {@link StackPane} squares and adds them to the
+     * {@link GridPane} inside {@code boardContainer}.
+     *
+     * <p>The logical mapping {@code boardSquares[row][col]} always corresponds to the board
+     * square at rank {@code row+1} and file {@code col} (0 = a-file). Only the <em>visual</em>
+     * placement in the GridPane varies: when {@link #boardFlipped} is {@code true} (black's
+     * perspective), row 0 is placed at GridPane row 0 (top) and columns are reversed so the
+     * h-file appears on the left. Click handlers capture logical coordinates and are unaffected
+     * by the flip.</p>
+     */
     private void buildBoard() {
         GridPane grid = new GridPane();
         grid.getStyleClass().add("chess-board");
@@ -187,7 +237,12 @@ public class GameController implements GameObserver {
                 square.setOnMouseClicked(e -> handleSquareClick(r, c));
 
                 boardSquares[row][col] = square;
-                grid.add(square, col, 7 - row);
+
+                // Visual placement: when flipped (black's perspective), row 0 appears at the
+                // top of the GridPane and columns are reversed so h-file is on the left.
+                int gridRow = boardFlipped ? row : 7 - row;
+                int gridCol = boardFlipped ? 7 - col : col;
+                grid.add(square, gridCol, gridRow);
             }
         }
 
@@ -199,17 +254,28 @@ public class GameController implements GameObserver {
         boardContainer.getChildren().add(grid);
     }
 
+    /**
+     * Adds coordinate labels (rank numbers and file letters) to the appropriate board squares.
+     *
+     * <p>Rank numbers appear in the top-left corner of every square in the <em>left-most
+     * visual column</em>. File letters appear in the bottom-right corner of every square in
+     * the <em>bottom-most visual row</em>. When {@link #boardFlipped} is {@code true}
+     * (black's perspective), the left-most visual column corresponds to logical col 7
+     * (h-file) and the bottom-most visual row corresponds to logical row 7.</p>
+     */
     private void buildLabels() {
-        // Rank numbers go in the top-left corner of every left-column square.
-        // File letters go in the bottom-right corner of every bottom-row square.
-        // Both use the opposite square colour so they're always readable.
+        // When flipped: rank labels go on col 7 (which visually becomes the left column),
+        //               file labels go on row 7 (which visually becomes the bottom row).
+        int rankLabelCol = boardFlipped ? 7 : 0;
+        int fileLabelRow = boardFlipped ? 7 : 0;
+
         for (int row = 7; row >= 0; row--) {
             for (int col = 0; col < 8; col++) {
                 StackPane sq = boardSquares[row][col];
                 boolean lightSquare = (row + col) % 2 == 0;
                 String colourClass = lightSquare ? "board-coord-label-on-light" : "board-coord-label-on-dark";
 
-                if (col == 0) {
+                if (col == rankLabelCol) {
                     Label rank = new Label(String.valueOf(row + 1));
                     rank.getStyleClass().addAll("board-coord-label", colourClass);
                     rank.styleProperty().bind(squareSize.multiply(0.22).asString("-fx-font-size: %.1fpx; -fx-font-weight: bold;" + " -fx-padding: 2;"));
@@ -218,7 +284,7 @@ public class GameController implements GameObserver {
                     sq.getChildren().add(rank);
                 }
 
-                if (row == 0) {
+                if (row == fileLabelRow) {
                     Label file = new Label(String.valueOf((char) ('a' + col)));
                     file.getStyleClass().addAll("board-coord-label", colourClass);
                     file.styleProperty().bind(squareSize.multiply(0.22).asString("-fx-font-size: %.1fpx; -fx-font-weight: bold;" + " -fx-padding: 2;"));
@@ -251,18 +317,38 @@ public class GameController implements GameObserver {
 
     // ── Game wiring ───────────────────────────────────────────────────────────
 
+    /**
+     * Wires this controller to the active game as an observer and populates player name labels.
+     *
+     * <p>When the board is flipped (black's perspective), the label positions are swapped so
+     * that the local player's name always appears at the bottom and the opponent's at the top,
+     * regardless of which label element ({@code whiteName} / {@code blackName}) is physically
+     * at the bottom of the FXML layout.</p>
+     */
     private void registerWithGame() {
         chess.addObserver(this);
         Player white = chess.getPlayerWhite();
         Player black = chess.getPlayerBlack();
-        if (white != null) whiteName.setText(white.name());
-        if (black != null) blackName.setText(black.name());
+        if (boardFlipped) {
+            // Local player is black — show black's name at the bottom label (whiteName position)
+            // and white's name at the top label (blackName position).
+            if (black != null) whiteName.setText(black.name());
+            if (white != null) blackName.setText(white.name());
+        } else {
+            if (white != null) whiteName.setText(white.name());
+            if (black != null) blackName.setText(black.name());
+        }
         localBoard = chess.getBoard();
     }
 
     @Override
     public void onGameStateChanged() {
-        Platform.runLater(this::update);
+        Platform.runLater(() -> {
+            if (waitingDialogShowing && chess.getState() != GameState.WAITING_FOR_PLAYER) {
+                sceneManager.dismissOverlay();
+            }
+            update();
+        });
     }
 
     private void update() {
@@ -273,16 +359,50 @@ public class GameController implements GameObserver {
             case RUNNING -> updateAll();
             case WAITING_FOR_PLAYER -> showWaitingDialog();
             case SERVER_ERROR -> showErrorAndReturnToMenu(i18n.get("error.server"));
-            default -> showGameEndDialog(state);
+            case PAUSED -> handlePausedState();
+            case SAVED -> handleSavedState();
+            default -> {
+                if (isGameEndState(state)) {
+                    showGameEndDialog(state);
+                }
+                // Non-terminal states that don't match any explicit case: do nothing.
+                // This prevents future non-terminal GameState values from accidentally
+                // triggering the game-end dialog.
+            }
         }
+    }
+
+    /**
+     * Returns {@code true} if the given {@link GameState} represents a terminal game outcome
+     * that should trigger the game-end overlay dialog.
+     *
+     * <p>Terminal states follow a naming convention:
+     * <ul>
+     *   <li>Win states start with {@code "WHITE_WON"} or {@code "BLACK_WON"}</li>
+     *   <li>Draw states start with {@code "DRAW"}</li>
+     * </ul>
+     * Non-terminal states (RUNNING, PAUSED, SAVED, WAITING_FOR_PLAYER, etc.) return {@code false}.
+     *
+     * <p>Package-private for testability without requiring the JavaFX toolkit.
+     *
+     * @param state the game state to check
+     * @return {@code true} for win and draw terminal states, {@code false} otherwise
+     */
+    static boolean isGameEndState(GameState state) {
+        String name = state.name();
+        return name.startsWith("WHITE_WON")
+                || name.startsWith("BLACK_WON")
+                || name.startsWith("DRAW");
     }
 
     // ── Waiting dialog ────────────────────────────────────────────────────────
 
     private void showWaitingDialog() {
         String code = chess.getJoinCode();
-        WaitingController ctrl = new WaitingController(code, sceneManager::dismissOverlay);
+        WaitingController ctrl = new WaitingController(code, sceneManager::dismissOverlay, i18n);
+        waitingDialogShowing = true;
         sceneManager.showOverlay("/fxml/waiting.fxml", ctrl);
+        waitingDialogShowing = false;
         if (ctrl.isCancelled()) {
             chess.endGame();
             sceneManager.showMainMenu();
@@ -298,12 +418,23 @@ public class GameController implements GameObserver {
         updateGameLabel();
     }
 
+    /**
+     * Updates the game label display based on the current game label from the model.
+     *
+     * <p>When a label is present (e.g., the ruleset name), it is shown. When no label
+     * is available — which happens when the game transitions back to RUNNING after a
+     * PAUSED state — the label is hidden so the "waiting for reconnection" text set
+     * by {@link #handlePausedState()} does not persist after the opponent reconnects.</p>
+     */
     private void updateGameLabel() {
         String label = chess.getGameLabel();
         if (label != null && !label.isEmpty()) {
             gameLabelDisplay.setText(label);
             gameLabelDisplay.setVisible(true);
             gameLabelDisplay.setManaged(true);
+        } else {
+            gameLabelDisplay.setVisible(false);
+            gameLabelDisplay.setManaged(false);
         }
     }
 
@@ -343,13 +474,27 @@ public class GameController implements GameObserver {
         }
     }
 
+    /**
+     * Updates the "active" / "waiting" indicator labels next to each player's name.
+     *
+     * <p>When the board is flipped (black's perspective), the {@code whiteName} label is at
+     * the bottom and represents the local player (black). The indicator must follow the same
+     * swap applied in {@link #registerWithGame()}: the {@code whiteActive} label corresponds
+     * to black's status and vice-versa.</p>
+     */
     private void updateActivePlayerIndicator() {
         Player current = chess.getCurrentPlayer();
         String activeText = i18n.get("game.active");
         String waitingText = i18n.get("game.waiting");
         boolean isWhiteActive = current == chess.getPlayerWhite();
-        whiteActive.setText(isWhiteActive ? activeText : waitingText);
-        blackActive.setText(isWhiteActive ? waitingText : activeText);
+        if (boardFlipped) {
+            // whiteActive label is next to the bottom name label, which shows black's name.
+            whiteActive.setText(isWhiteActive ? waitingText : activeText);
+            blackActive.setText(isWhiteActive ? activeText : waitingText);
+        } else {
+            whiteActive.setText(isWhiteActive ? activeText : waitingText);
+            blackActive.setText(isWhiteActive ? waitingText : activeText);
+        }
     }
 
     // ── Board interaction ─────────────────────────────────────────────────────
@@ -426,8 +571,12 @@ public class GameController implements GameObserver {
         int moveCount = chess.getMoveList().size();
         String whitePlayerName = chess.getPlayerWhite() != null ? chess.getPlayerWhite().name() : "";
         String blackPlayerName = chess.getPlayerBlack() != null ? chess.getPlayerBlack().name() : "";
+        // Pass the local player's color so GameEndController can show the correct outcome
+        // ("You Win!" vs "You Lose") for online games.
+        PlayerColor localPlayerColor = chess.getLocalPlayerColor();
 
-        GameEndController ctrl = new GameEndController(i18n, state, whitePlayerName, blackPlayerName, moveCount, isOnline, sceneManager::dismissOverlay);
+        GameEndController ctrl = new GameEndController(i18n, state, whitePlayerName, blackPlayerName,
+                moveCount, isOnline, localPlayerColor, sceneManager::dismissOverlay);
         sceneManager.showOverlay("/fxml/game-end.fxml", ctrl);
 
         if (ctrl.getChoice() == GameEndController.Choice.RETURN) {
@@ -447,6 +596,33 @@ public class GameController implements GameObserver {
             chess.endGame();
             sceneManager.showMainMenu();
         }
+    }
+
+    /**
+     * Handles the PAUSED state, which occurs when the opponent disconnects.
+     *
+     * <p>Keeps the board visible (so the local player can review the position) and
+     * shows a non-blocking status label informing the player that the opponent has
+     * disconnected and the game is waiting for reconnection. A blocking dialog would
+     * prevent the user from inspecting the board.</p>
+     *
+     * <p>When the opponent reconnects, the server will send a GAME_STATUS RUNNING message,
+     * which triggers {@code case RUNNING -> updateAll()}, which calls {@link #updateGameLabel()}
+     * to clear the paused label (since the game label from the model will reflect the new state).</p>
+     */
+    private void handlePausedState() {
+        updateAll();  // Keep the board current and visible
+        gameLabelDisplay.setText(i18n.get("game.paused.label"));
+        gameLabelDisplay.setVisible(true);
+        gameLabelDisplay.setManaged(true);
+    }
+
+    /**
+     * Handles the SAVED state: the game has been persisted and both players agreed to save.
+     * Navigates back to the main menu.
+     */
+    private void handleSavedState() {
+        sceneManager.showMainMenu();
     }
 
     /**

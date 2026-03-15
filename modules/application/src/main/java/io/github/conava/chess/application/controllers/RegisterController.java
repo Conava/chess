@@ -6,6 +6,7 @@ import io.github.conava.chess.application.menu.ResponsiveMenuLayout;
 import io.github.conava.chess.application.navigation.PanelHost;
 import io.github.conava.chess.application.navigation.PanelId;
 import io.github.conava.chess.application.navigation.SceneManager;
+import io.github.conava.chess.application.settings.SettingsService;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.DoubleProperty;
@@ -50,6 +51,7 @@ public class RegisterController {
     private final Chess chess;
     private final I18n i18n;
     private final PanelHost panelHost;
+    private final SettingsService settingsService;
 
     @FXML
     private StackPane rootPane;
@@ -120,16 +122,19 @@ public class RegisterController {
     /**
      * Constructs a {@code RegisterController} with its required collaborators.
      *
-     * @param sceneManager the navigation manager (retained for potential game-screen navigation).
-     * @param chess        the application facade used for authentication.
-     * @param i18n         the internationalisation service for message lookup.
-     * @param panelHost    the panel host used for cancel, register success, and login-link navigation.
+     * @param sceneManager   the navigation manager (retained for potential game-screen navigation).
+     * @param chess          the application facade used for authentication.
+     * @param i18n           the internationalisation service for message lookup.
+     * @param panelHost      the panel host used for cancel, register success, and login-link navigation.
+     * @param settingsService the settings service used to pre-fill server IP and port from saved preferences.
      */
-    public RegisterController(SceneManager sceneManager, Chess chess, I18n i18n, PanelHost panelHost) {
+    public RegisterController(SceneManager sceneManager, Chess chess, I18n i18n, PanelHost panelHost,
+                              SettingsService settingsService) {
         this.sceneManager = sceneManager;
         this.chess = chess;
         this.i18n = i18n;
         this.panelHost = panelHost;
+        this.settingsService = settingsService;
     }
 
     /**
@@ -140,8 +145,14 @@ public class RegisterController {
      */
     @FXML
     public void initialize() {
-        if (ipField != null) ipField.setText("localhost");
-        if (portField != null) portField.setText("54321");
+        if (ipField != null) {
+            String savedHost = settingsService.loadServerHost();
+            ipField.setText(savedHost != null && !savedHost.isEmpty() ? savedHost : "localhost");
+        }
+        if (portField != null) {
+            int savedPort = settingsService.loadServerPort();
+            portField.setText(String.valueOf(savedPort > 0 ? savedPort : 54321));
+        }
         if (errorLabel != null) {
             errorLabel.setVisible(false);
             errorLabel.setManaged(false);

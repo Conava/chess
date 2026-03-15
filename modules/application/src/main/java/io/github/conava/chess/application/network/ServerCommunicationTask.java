@@ -44,6 +44,7 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
     private volatile Runnable saveAcceptedHandler;
     private volatile Consumer<Message> gameHistoryHandler;
     private volatile Consumer<Message> saveGameHandler;
+    private volatile Runnable authTokenHandler;
 
     private Socket socket;
     private PrintWriter out;
@@ -122,6 +123,21 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
      */
     public void setSaveGameHandler(Consumer<Message> saveGameHandler) {
         this.saveGameHandler = saveGameHandler;
+    }
+
+    /**
+     * Sets a one-shot handler called when an {@code AUTH_TOKEN} response is received from the server.
+     *
+     * <p>Used to synchronise the re-authentication handshake on a new TCP connection: the caller
+     * registers a {@link Runnable} (typically a {@link java.util.concurrent.CountDownLatch#countDown}
+     * invocation) before sending the auth message, and the handler is invoked as soon as the server
+     * confirms authentication. Set to {@code null} to clear the handler after it fires.</p>
+     *
+     * @param authTokenHandler a {@link Runnable} invoked when an {@code AUTH_TOKEN} message arrives,
+     *                         or {@code null} to clear a previously registered handler.
+     */
+    public void setAuthTokenHandler(Runnable authTokenHandler) {
+        this.authTokenHandler = authTokenHandler;
     }
 
     /**
@@ -214,6 +230,10 @@ public class ServerCommunicationTask implements Runnable, ServerConnection {
             }
             case SAVE_GAME -> {
                 if (saveGameHandler != null) saveGameHandler.accept(decoded);
+                else messageHandler.accept(decoded);
+            }
+            case AUTH_TOKEN -> {
+                if (authTokenHandler != null) authTokenHandler.run();
                 else messageHandler.accept(decoded);
             }
             default -> messageHandler.accept(decoded);

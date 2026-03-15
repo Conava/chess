@@ -5,19 +5,31 @@ import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.navigation.PanelHost;
 import io.github.conava.chess.application.navigation.PanelId;
 import io.github.conava.chess.application.navigation.SceneManager;
+import io.github.conava.chess.application.settings.SettingsService;
+import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.control.TextField;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import java.lang.reflect.Method;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.prefs.Preferences;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for {@link LoginController} verifying PanelHost-based navigation.
+ * Unit and FX-thread tests for {@link LoginController}.
  *
- * <p>These tests do not require the JavaFX toolkit because they invoke the
- * controller's action methods directly via reflection, without loading FXML or
- * involving UI components. The {@link PanelHost} dependency is mocked with
- * Mockito so that navigation calls can be asserted.</p>
+ * <p>The unit tests verify PanelHost-based navigation without loading FXML or
+ * requiring the JavaFX toolkit. The FX-thread tests verify IP/port pre-fill
+ * behaviour from {@link SettingsService} settings.</p>
  */
 class LoginControllerTest {
 
@@ -28,7 +40,7 @@ class LoginControllerTest {
      */
     private LoginController createController(SceneManager sm, Chess chess, I18n i18n,
                                              PanelHost panelHost) {
-        return new LoginController(sm, chess, i18n, panelHost);
+        return new LoginController(sm, chess, i18n, panelHost, mock(SettingsService.class));
     }
 
     /**
@@ -71,5 +83,144 @@ class LoginControllerTest {
 
         verify(panelHost).switchPanel(PanelId.REGISTER);
         verifyNoInteractions(sm);
+    }
+
+    // ── FX toolkit helper ───────────────────────────────────────────────────
+
+    /**
+     * Starts the JavaFX toolkit if not already running. Returns true on success.
+     */
+    private static boolean tryStartToolkit() {
+        try {
+            CountDownLatch latch = new CountDownLatch(1);
+            AtomicBoolean started = new AtomicBoolean(false);
+            try {
+                Platform.startup(() -> {
+                    started.set(true);
+                    latch.countDown();
+                });
+                latch.await(5, TimeUnit.SECONDS);
+                return started.get();
+            } catch (IllegalStateException e) {
+                // Toolkit already running
+                return true;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // ── FX-thread tests: IP/port pre-fill ────────────────────────────────────
+
+    /**
+     * Verifies that when saved server host and port exist in settings, the
+     * {@code ipField} and {@code portField} are pre-filled with those values on
+     * panel initialization.
+     */
+    @Test
+    @DisabledIfSystemProperty(named = "java.awt.headless", matches = "true")
+    void loginController_prefillsIpPortFromSettings() throws Exception {
+        assumeTrue(tryStartToolkit(), "JavaFX toolkit unavailable -- skipping FX test");
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        Platform.runLater(() -> {
+            try {
+                Preferences prefs = Preferences.userRoot().node("chess-test-" + System.nanoTime());
+                SettingsService settings = new SettingsService(prefs);
+                settings.saveServerHost("10.0.0.5");
+                settings.saveServerPort(7777);
+
+                I18n i18n = new I18n(I18n.Language.EN);
+                Chess chess = mock(Chess.class);
+                SceneManager sm = mock(SceneManager.class);
+                PanelHost panelHost = mock(PanelHost.class);
+
+                LoginController controller =
+                        new LoginController(sm, chess, i18n, panelHost, settings);
+
+                FXMLLoader loader = new FXMLLoader(
+                        getClass().getResource("/fxml/login.fxml"), i18n.getBundle());
+                loader.setControllerFactory(type -> controller);
+                Parent root = loader.load();
+                assertNotNull(root, "FXML should load successfully");
+
+                TextField ipField = (TextField) root.lookup("#ipField");
+                TextField portField = (TextField) root.lookup("#portField");
+                assertNotNull(ipField, "ipField should exist");
+                assertNotNull(portField, "portField should exist");
+
+                assertEquals("10.0.0.5", ipField.getText(),
+                        "ipField should be pre-filled from saved server host");
+                assertEquals("7777", portField.getText(),
+                        "portField should be pre-filled from saved server port");
+
+            } catch (Throwable t) {
+                error.set(t);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "FX task did not complete in time");
+        if (error.get() != null) {
+            throw new AssertionError("FX-thread assertion failed", error.get());
+        }
+    }
+
+    /**
+     * Verifies that when no server host/port are saved in settings, the
+     * {@code ipField} defaults to "localhost" and {@code portField} defaults to "54321".
+     */
+    @Test
+    @DisabledIfSystemProperty(named = "java.awt.headless", matches = "true")
+    void loginController_defaultsWhenNoSavedSettings() throws Exception {
+        assumeTrue(tryStartToolkit(), "JavaFX toolkit unavailable -- skipping FX test");
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        Platform.runLater(() -> {
+            try {
+                // Fresh settings with no saved host (empty) and default port 54321
+                Preferences prefs = Preferences.userRoot().node("chess-test-" + System.nanoTime());
+                SettingsService settings = new SettingsService(prefs);
+
+                I18n i18n = new I18n(I18n.Language.EN);
+                Chess chess = mock(Chess.class);
+                SceneManager sm = mock(SceneManager.class);
+                PanelHost panelHost = mock(PanelHost.class);
+
+                LoginController controller =
+                        new LoginController(sm, chess, i18n, panelHost, settings);
+
+                FXMLLoader loader = new FXMLLoader(
+                        getClass().getResource("/fxml/login.fxml"), i18n.getBundle());
+                loader.setControllerFactory(type -> controller);
+                Parent root = loader.load();
+                assertNotNull(root, "FXML should load successfully");
+
+                TextField ipField = (TextField) root.lookup("#ipField");
+                TextField portField = (TextField) root.lookup("#portField");
+                assertNotNull(ipField, "ipField should exist");
+                assertNotNull(portField, "portField should exist");
+
+                assertEquals("localhost", ipField.getText(),
+                        "ipField should default to 'localhost' when no saved host");
+                assertEquals("54321", portField.getText(),
+                        "portField should default to '54321' when no custom port saved");
+
+            } catch (Throwable t) {
+                error.set(t);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "FX task did not complete in time");
+        if (error.get() != null) {
+            throw new AssertionError("FX-thread assertion failed", error.get());
+        }
     }
 }

@@ -59,6 +59,7 @@ public class OnlineGame extends Game {
     private List<Move> backupMoves;
     private GameState backupGameState;
     private int backupHalfMoveClock;
+    private int backupTurnCount;
     private Map<String, Integer> backupPositionHistory;
 
     /**
@@ -222,10 +223,9 @@ public class OnlineGame extends Game {
             Player player = Objects.equals(message.getParameterValue(PLAYER_COLOR_PARAM), "WHITE") ? player0 : player1;
             Move move = ruleset.deserializeMove(wireString, board, player);
             executeMoveFromRemote(move);
-        } catch (IllegalMoveException e) {
-            LOGGER.log(Level.SEVERE, "Illegal move received: " + message.content(), e);
         } catch (RuntimeException e) {
-            LOGGER.log(Level.SEVERE, "Failed to parse move from server: " + message.content(), e);
+            // Catches IllegalStateException (game not running), ArrayIndexOutOfBoundsException (bad coords), etc.
+            LOGGER.log(Level.SEVERE, "Failed to execute remote move from server: " + message.content(), e);
         }
     }
 
@@ -235,9 +235,14 @@ public class OnlineGame extends Game {
      * @param message The message containing the game status.
      */
     private void handleGameStatus(Message message) {
-        LOGGER.log(Level.INFO, "Game status update: " + message.getParameterValue(GAME_STATE_PARAM));
-        this.gameState = GameState.valueOf(message.getParameterValue(GAME_STATE_PARAM));
-        notifyObservers();
+        String stateValue = message.getParameterValue(GAME_STATE_PARAM);
+        LOGGER.log(Level.INFO, "Game status update: " + stateValue);
+        try {
+            this.gameState = GameState.valueOf(stateValue);
+            notifyObservers();
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Unknown gameState value in GAME_STATUS message: " + stateValue, e);
+        }
     }
 
     /**
@@ -291,10 +296,15 @@ public class OnlineGame extends Game {
      * @param message the incoming chat message (must carry {@code sender} and {@code content} params)
      */
     private void handleChat(Message message) {
-        String sender  = message.getParameterValue(SENDER_PARAM);
-        String content = message.getParameterValue(CONTENT_PARAM);
-        if (sender == null)  sender  = "?";
-        if (content == null) content = "";
+        String sender = message.getParameterValue(SENDER_PARAM);
+        if (sender == null) sender = "?";
+
+        // Extract the full content, including any spaces, by locating "content=" manually.
+        // message.getParameterValue() splits on spaces and would only return the first word.
+        String raw = message.content();
+        int idx = raw.indexOf("content=");
+        String content = idx >= 0 ? raw.substring(idx + "content=".length()) : raw;
+
         notifyChatObservers(sender, content);
     }
 
@@ -304,6 +314,17 @@ public class OnlineGame extends Game {
      * <p>The message carries {@code moves=<csv>} — a comma-separated list of move protocol
      * strings. Replays each move in order to restore the board to its saved state. Moves that
      * fail to parse or execute are skipped with a warning.</p>
+     *
+     * <p>Replay is idempotent: the board is reset to its starting position and all counters
+     * ({@code turnCount}, {@code moves}, {@code positionHistory}, {@code halfMoveClock}) are
+     * zeroed before replaying, so that calling this method multiple times (e.g. on network retry)
+     * always produces the same result and never double-counts moves.</p>
+     *
+     * <p>The game state is forced to {@link GameState#RUNNING} for the duration of the replay loop
+     * because {@link #executeMoveWithoutLocalValidation} requires the game to be RUNNING. The
+     * original state (e.g. {@code PAUSED}, {@code WAITING_FOR_PLAYER}) is restored after all moves
+     * have been replayed, and then optionally overridden by the terminal state carried in the
+     * message's {@code gameState} parameter.</p>
      *
      * @param message the history message from the server
      */
@@ -318,11 +339,35 @@ public class OnlineGame extends Game {
             initializeBoard(createRuleset(opts));
         }
 
+        // Finding 4: If GAME_HISTORY arrived before JOIN_CODE/SUCCESS and the board-null branch
+        // just initialised the board, gameState may still be NO_GAME. Promote it to
+        // WAITING_FOR_PLAYER so that the state captured by stateBeforeReplay is meaningful and
+        // the post-replay state restore leaves the game in a usable (non-NO_GAME) state.
+        if (gameState == GameState.NO_GAME) {
+            gameState = GameState.WAITING_FOR_PLAYER;
+        }
+
         String movesCsv = message.getParameterValue(MOVES_PARAM);
         if (movesCsv == null || movesCsv.isBlank()) {
             notifyObservers();
             return;
         }
+
+        // Reset all replay-state counters AND the board itself so that calling
+        // handleGameHistory multiple times (e.g. on network retry) is idempotent and does
+        // not replay moves onto an already-mutated board. The board is recreated from the
+        // ruleset's starting position; all per-move bookkeeping counters are zeroed.
+        this.board = new Board(ruleset.getStartBoard(player0, player1));
+        GameState stateBeforeReplay = this.gameState;
+        turnCount = 0;
+        moves.clear();
+        halfMoveClock = 0;
+        positionHistory.clear();
+        // Re-seed the initial position so threefold-repetition detection starts correctly.
+        positionHistory.put(computePositionKey(), 1);
+
+        // Force RUNNING for the replay loop; executeMoveWithoutLocalValidation() requires RUNNING state.
+        gameState = GameState.RUNNING;
 
         for (String wireString : movesCsv.split(",")) {
             if (wireString.isBlank()) continue;
@@ -339,13 +384,20 @@ public class OnlineGame extends Game {
                 } else {
                     canonical = new Move(boardStart, boardEnd);
                 }
-                super.executeMove(canonical);
-            } catch (IllegalMoveException | RuntimeException e) {
+                executeMoveWithoutLocalValidation(canonical);
+            } catch (RuntimeException e) {
                 LOGGER.log(Level.WARNING, "Skipping invalid history move ''{0}'': {1}", new Object[]{wireString, e.getMessage()});
             }
         }
 
-        // Apply the persisted terminal state if provided
+        // Restore the pre-replay state now that the loop has finished.
+        // evaluateGameEnd() inside executeMoveWithoutLocalValidation may have set a terminal
+        // state (e.g. BLACK_WON_BY_CHECKMATE) — if so, honour it rather than overwriting.
+        if (gameState == GameState.RUNNING) {
+            gameState = stateBeforeReplay;
+        }
+
+        // Apply the persisted terminal state if provided by the server message.
         String stateStr = message.getParameterValue(GAME_STATE_PARAM);
         if (stateStr != null) {
             try { gameState = GameState.valueOf(stateStr); } catch (IllegalArgumentException ignored) {}
@@ -440,11 +492,19 @@ public class OnlineGame extends Game {
     }
 
     /**
-     * Ends the game and notifies the server.
+     * Ends the game by resignation and notifies the server.
+     *
+     * <p>The resigning player <em>loses</em>: if the local player is WHITE, then BLACK wins
+     * (and vice versa). The resulting {@link GameState} is sent to the server as a
+     * {@code GAME_STATUS} message so the opponent's client is updated correctly.
+     *
+     * <p>Note: the previous implementation had this logic inverted (setting WHITE_WON when
+     * white resigned), causing the server's validation at {@code handleGameStatus} lines 400-403
+     * to reject the message silently. This fix aligns the client with the server's expectation.
      */
     @Override
     public void endGame() {
-        gameState = localPlayerColor == PlayerColor.WHITE ? GameState.WHITE_WON_BY_RESIGNATION : GameState.BLACK_WON_BY_RESIGNATION;
+        gameState = localPlayerColor == PlayerColor.WHITE ? GameState.BLACK_WON_BY_RESIGNATION : GameState.WHITE_WON_BY_RESIGNATION;
         if (connection != null) {
             Message endGameMessage = new Message(MessageType.GAME_STATUS, GAME_STATE_PARAM + "=" + gameState);
             sendMessageToServer(endGameMessage);
@@ -498,25 +558,30 @@ public class OnlineGame extends Game {
     }
 
     /**
-     * Executes a move received from the server.
-     * <p>
-     * {@link Move#fromString} produces fresh {@link Square} instances that are not the same
-     * objects as the squares held in the board's grid. Passing those disconnected squares
-     * directly to {@link Game#executeMove} would mutate the wrong objects and leave the
-     * board state unchanged. This method therefore translates the move's start and end
-     * squares to the board's canonical {@link Square} instances via {@link #toBoardSquare},
-     * then reconstructs the correct {@link Move} subtype ({@link CastleMove},
-     * {@link PromotionMove}, or plain {@link Move}) before delegating to
-     * {@link Game#executeMove}.
+     * Executes a move received from the server, bypassing local validation.
+     *
+     * <p>The server is the authoritative source for move legality in an online game;
+     * re-validating on the client via {@link Game#isMoveValid} is harmful because
+     * {@link OnlineGame#getLegalSquares} overrides the base implementation to return an
+     * empty list for opponent pieces (to suppress UI highlights). That override would
+     * cause every opponent move to fail validation with an {@link IllegalMoveException}.
+     *
+     * <p>{@link Move#fromString} produces fresh {@link Square} instances that are not the
+     * same objects as the squares held in the board's grid. Passing those disconnected
+     * squares directly to {@code board.executeMove} would mutate the wrong objects and
+     * leave the board state unchanged. This method therefore translates the move's start
+     * and end squares to the board's canonical {@link Square} instances via
+     * {@link #toBoardSquare}, then reconstructs the correct {@link Move} subtype
+     * ({@link CastleMove}, {@link PromotionMove}, or plain {@link Move}) before delegating
+     * to {@link #executeMoveWithoutLocalValidation}.
      *
      * <p>For {@link CastleMove} instances, the {@code rookOriginFile} and {@code kingDestFile}
      * fields are preserved from the deserialized move — these carry Chess 960 rook/king
      * destination information that must not be discarded.
      *
      * @param move The move received from the server (with fresh, non-canonical squares).
-     * @throws IllegalMoveException If the move is illegal according to the current board state.
      */
-    private void executeMoveFromRemote(Move move) throws IllegalMoveException {
+    private void executeMoveFromRemote(Move move) {
         Square boardStart = toBoardSquare(move.getStart());
         Square boardEnd = toBoardSquare(move.getEnd());
         Move canonical;
@@ -527,7 +592,7 @@ public class OnlineGame extends Game {
         } else {
             canonical = new Move(boardStart, boardEnd);
         }
-        super.executeMove(canonical);
+        executeMoveWithoutLocalValidation(canonical);
     }
 
     /**
@@ -579,12 +644,16 @@ public class OnlineGame extends Game {
      * cannot corrupt the backup.
      * If the board has not yet been initialized (deferred-init window), the board backup
      * is set to {@code null}.
+     *
+     * <p>The board field is copied directly via {@code board.getCopy()} rather than through
+     * {@link #getBoard()} to avoid a double deep-copy (getBoard already returns a copy).
      */
     public void backupGameState() {
-        this.backupBoard = (board != null) ? this.getBoard().getCopy() : null;
+        this.backupBoard = (board != null) ? board.getCopy() : null;
         this.backupMoves = new ArrayList<>(this.moves);
         this.backupGameState = this.getState();
         this.backupHalfMoveClock = this.halfMoveClock;
+        this.backupTurnCount = this.turnCount;
         this.backupPositionHistory = new HashMap<>(this.positionHistory);
     }
 
@@ -599,6 +668,7 @@ public class OnlineGame extends Game {
         this.moves = new ArrayList<>(this.backupMoves);
         this.setGameState(this.backupGameState);
         this.halfMoveClock = this.backupHalfMoveClock;
+        this.turnCount = this.backupTurnCount;
         this.positionHistory = new HashMap<>(this.backupPositionHistory);
     }
 
@@ -609,5 +679,19 @@ public class OnlineGame extends Game {
      */
     public String getJoinCode() {
         return joinCode;
+    }
+
+    /**
+     * Returns the color assigned to the local player in this online game session.
+     *
+     * <p>The color is determined during {@link #connectToServerGame()}: the player who
+     * creates the game is assigned {@link PlayerColor#WHITE}, and the player who joins
+     * via a join code is assigned {@link PlayerColor#BLACK}.</p>
+     *
+     * @return the local player's {@link PlayerColor}.
+     */
+    @Override
+    public PlayerColor getLocalPlayerColor() {
+        return localPlayerColor;
     }
 }

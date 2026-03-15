@@ -4,7 +4,6 @@ import io.github.conava.chess.application.Chess;
 import io.github.conava.chess.application.i18n.I18n;
 import io.github.conava.chess.application.navigation.PanelHost;
 import io.github.conava.chess.application.navigation.SceneManager;
-import io.github.conava.chess.application.settings.SettingsService;
 import io.github.conava.chess.core.logic.ruleset.RulesetOptions;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -21,7 +20,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.prefs.Preferences;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -112,9 +110,6 @@ class OfflineSetupControllerCinematicTest {
 
         Platform.runLater(() -> {
             try {
-                Preferences prefs = Preferences.userRoot().node("chess-test-" + System.nanoTime());
-                SettingsService settings = new SettingsService(prefs);
-
                 I18n i18n = new I18n(I18n.Language.EN);
                 Chess chess = mock(Chess.class);
                 SceneManager sm = mock(SceneManager.class);
@@ -123,7 +118,7 @@ class OfflineSetupControllerCinematicTest {
                 // Count down the latch when showGame fires (after exit animation completes)
                 doAnswer(inv -> { latch.countDown(); return null; }).when(sm).showGame(any(RulesetOptions.class));
 
-                OfflineSetupController controller = new OfflineSetupController(sm, i18n, settings, panelHost);
+                OfflineSetupController controller = new OfflineSetupController(sm, i18n, panelHost);
 
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/fxml/offline-setup.fxml"), i18n.getBundle());
@@ -171,16 +166,13 @@ class OfflineSetupControllerCinematicTest {
 
         Platform.runLater(() -> {
             try {
-                Preferences prefs = Preferences.userRoot().node("chess-test-" + System.nanoTime());
-                SettingsService settings = new SettingsService(prefs);
-
                 I18n i18n = new I18n(I18n.Language.EN);
                 SceneManager sm = mock(SceneManager.class);
                 PanelHost panelHost = mock(PanelHost.class);
                 // Count down the latch when closePanel fires (after exit animation completes)
                 doAnswer(inv -> { latch.countDown(); return null; }).when(panelHost).closePanel();
 
-                OfflineSetupController controller = new OfflineSetupController(sm, i18n, settings, panelHost);
+                OfflineSetupController controller = new OfflineSetupController(sm, i18n, panelHost);
 
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/fxml/offline-setup.fxml"), i18n.getBundle());
@@ -208,7 +200,7 @@ class OfflineSetupControllerCinematicTest {
 
     @Test
     @DisabledIfSystemProperty(named = "java.awt.headless", matches = "true")
-    void playerNameDefaults_preserved() throws Exception {
+    void playerNameFields_startEmpty() throws Exception {
         assumeTrue(tryStartToolkit(), "JavaFX toolkit unavailable -- skipping FX test");
 
         CountDownLatch latch = new CountDownLatch(1);
@@ -216,29 +208,24 @@ class OfflineSetupControllerCinematicTest {
 
         Platform.runLater(() -> {
             try {
-                Preferences prefs = Preferences.userRoot().node("chess-test-" + System.nanoTime());
-                SettingsService settings = new SettingsService(prefs);
-                settings.savePlayerWhite("Saved White");
-                settings.savePlayerBlack("Saved Black");
-
                 I18n i18n = new I18n(I18n.Language.EN);
                 SceneManager sm = mock(SceneManager.class);
                 PanelHost panelHost = mock(PanelHost.class);
 
-                OfflineSetupController controller = new OfflineSetupController(sm, i18n, settings, panelHost);
+                OfflineSetupController controller = new OfflineSetupController(sm, i18n, panelHost);
 
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/fxml/offline-setup.fxml"), i18n.getBundle());
                 loader.setControllerFactory(type -> controller);
                 Parent root = loader.load();
 
-                // Verify fields are pre-filled from settings
+                // Verify fields are empty -- player names are no longer pre-filled from settings
                 TextField whiteField = (TextField) root.lookup("#whiteField");
                 TextField blackField = (TextField) root.lookup("#blackField");
-                assertEquals("Saved White", whiteField.getText(),
-                        "White field should be pre-filled from settings");
-                assertEquals("Saved Black", blackField.getText(),
-                        "Black field should be pre-filled from settings");
+                assertEquals("", whiteField.getText(),
+                        "White field should be empty (no pre-fill from settings)");
+                assertEquals("", blackField.getText(),
+                        "Black field should be empty (no pre-fill from settings)");
 
             } catch (Throwable t) {
                 error.set(t);
@@ -263,14 +250,11 @@ class OfflineSetupControllerCinematicTest {
 
         Platform.runLater(() -> {
             try {
-                Preferences prefs = Preferences.userRoot().node("chess-test-" + System.nanoTime());
-                SettingsService settings = new SettingsService(prefs);
-
                 I18n i18n = new I18n(I18n.Language.EN);
                 SceneManager sm = mock(SceneManager.class);
                 PanelHost panelHost = mock(PanelHost.class);
 
-                OfflineSetupController controller = new OfflineSetupController(sm, i18n, settings, panelHost);
+                OfflineSetupController controller = new OfflineSetupController(sm, i18n, panelHost);
 
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/fxml/offline-setup.fxml"), i18n.getBundle());

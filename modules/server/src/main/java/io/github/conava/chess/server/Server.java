@@ -83,11 +83,15 @@ public class Server {
      * <p>After construction the server is not yet listening; call {@link #start()} to
      * open the server socket and begin accepting client connections.</p>
      *
+     * <p>The {@link GameManager} is created with both the max-games limit and the join-code
+     * expiry seconds from the configuration so that the cleanup scheduler uses the
+     * correct timeout.</p>
+     *
      * @param config the server configuration; must not be {@code null}
      */
     public Server(ServerConfig config) {
         this.config = config;
-        this.gameManager = new GameManager(config.getMaxGames());
+        this.gameManager = new GameManager(config.getMaxGames(), config.getJoinCodeExpirySeconds());
         this.connectionsList = new CopyOnWriteArraySet<>();
         this.running = true;
     }
@@ -241,8 +245,8 @@ public class Server {
     }
 
     /**
-     * Stops the server: notifies all connected clients, closes the server socket, and
-     * shuts down the executor service.
+     * Stops the server: notifies all connected clients, closes the server socket,
+     * shuts down the executor service, and stops the join-code cleanup scheduler.
      *
      * @param executorService the executor managing client-handler threads
      * @param serverSocket    the server socket to close
@@ -260,6 +264,7 @@ public class Server {
             LOGGER.log(Level.SEVERE, "Error closing server socket", e);
         }
         executorService.shutdown();
+        gameManager.shutdown();
         LOGGER.info("Server stopped");
     }
 

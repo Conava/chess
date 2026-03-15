@@ -65,12 +65,25 @@
                     </HBox>
                 </VBox>
 
-                <!-- Player names -->
-                <Label text="%settings.players" styleClass="section-heading"/>
+                <!-- Online -->
+                <Label text="%settings.online" styleClass="section-heading"/>
                 <VBox styleClass="card" spacing="12">
                     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-                    <TextField fx:id="whiteNameField" promptText="%settings.player.white"/>
-                    <TextField fx:id="blackNameField" promptText="%settings.player.black"/>
+
+                    <Label text="%settings.online.server"
+                           style="-fx-font-size: 12px; -fx-font-weight: bold;"/>
+                    <HBox spacing="10">
+                        <TextField fx:id="serverIpField" promptText="%settings.online.ip" HBox.hgrow="ALWAYS"/>
+                        <TextField fx:id="serverPortField" promptText="%settings.online.port" prefWidth="90"/>
+                    </HBox>
+
+                    <Label text="%settings.online.account"
+                           style="-fx-font-size: 12px; -fx-font-weight: bold;">
+                        <VBox.margin><Insets top="8"/></VBox.margin>
+                    </Label>
+                    <Label fx:id="loginStatusLabel"/>
+                    <Button fx:id="logoutBtn" text="%settings.online.logout" onAction="#onLogout"
+                            styleClass="btn-ghost"/>
                 </VBox>
 
                 <!-- Actions -->

@@ -57,7 +57,7 @@
             <!-- Join code row — visible only in join mode -->
             <Label fx:id="joinCodeLabel" text="%dialog.online.joincode"
                    visible="false" managed="false"/>
-            <TextField fx:id="joinCodeField" promptText="%dialog.online.joincode"
+            <TextField fx:id="joinCodeField" promptText="XXXX-XXXX-XXXX"
                        visible="false" managed="false"/>
         </VBox>
 

@@ -31,3 +31,6 @@ build/
 /modules/server/dependency-reduced-pom.xml
 .claude/worktrees/
 .devline/
+
+### SQLite ###
+chess.db*

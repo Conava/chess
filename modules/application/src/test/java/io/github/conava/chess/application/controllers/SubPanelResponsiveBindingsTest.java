@@ -300,14 +300,12 @@ class SubPanelResponsiveBindingsTest {
 
         Platform.runLater(() -> {
             try {
-                Preferences prefs = Preferences.userRoot().node("chess-test-" + System.nanoTime());
-                SettingsService settings = new SettingsService(prefs);
                 I18n i18n = new I18n(I18n.Language.EN);
                 SceneManager sm = mock(SceneManager.class);
                 PanelHost panelHost = mock(PanelHost.class);
 
                 OfflineSetupController controller =
-                        new OfflineSetupController(sm, i18n, settings, panelHost);
+                        new OfflineSetupController(sm, i18n, panelHost);
 
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/fxml/offline-setup.fxml"), i18n.getBundle());
@@ -419,8 +417,9 @@ class SubPanelResponsiveBindingsTest {
                 SceneManager sm = mock(SceneManager.class);
                 PanelHost panelHost = mock(PanelHost.class);
 
+                Chess chess = mock(Chess.class);
                 SettingsController controller =
-                        new SettingsController(sm, themeManager, i18n, settings, panelHost);
+                        new SettingsController(sm, themeManager, i18n, settings, panelHost, chess);
 
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/fxml/settings.fxml"), i18n.getBundle());
@@ -467,9 +466,10 @@ class SubPanelResponsiveBindingsTest {
                 Chess chess = mock(Chess.class);
                 SceneManager sm = mock(SceneManager.class);
                 PanelHost panelHost = mock(PanelHost.class);
+                SettingsService settings = mock(SettingsService.class);
 
                 LoginController controller =
-                        new LoginController(sm, chess, i18n, panelHost);
+                        new LoginController(sm, chess, i18n, panelHost, settings);
 
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/fxml/login.fxml"), i18n.getBundle());
@@ -515,9 +515,10 @@ class SubPanelResponsiveBindingsTest {
                 Chess chess = mock(Chess.class);
                 SceneManager sm = mock(SceneManager.class);
                 PanelHost panelHost = mock(PanelHost.class);
+                SettingsService settings = mock(SettingsService.class);
 
                 RegisterController controller =
-                        new RegisterController(sm, chess, i18n, panelHost);
+                        new RegisterController(sm, chess, i18n, panelHost, settings);
 
                 FXMLLoader loader = new FXMLLoader(
                         getClass().getResource("/fxml/register.fxml"), i18n.getBundle());

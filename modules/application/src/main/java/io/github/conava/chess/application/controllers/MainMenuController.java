@@ -789,15 +789,15 @@ public class MainMenuController implements PanelHost {
     private Object createPanelController(PanelId panelId) {
         return switch (panelId) {
             case OFFLINE_SETUP ->
-                    new OfflineSetupController(sceneManager, i18n, settingsService, this);
+                    new OfflineSetupController(sceneManager, i18n, this);
             case ONLINE_SETUP ->
                     new OnlineSetupController(sceneManager, chess, i18n, settingsService, this);
             case SETTINGS ->
-                    new SettingsController(sceneManager, themeManager, i18n, settingsService, this);
+                    new SettingsController(sceneManager, themeManager, i18n, settingsService, this, chess);
             case LOGIN ->
-                    new LoginController(sceneManager, chess, i18n, this);
+                    new LoginController(sceneManager, chess, i18n, this, settingsService);
             case REGISTER ->
-                    new RegisterController(sceneManager, chess, i18n, this);
+                    new RegisterController(sceneManager, chess, i18n, this, settingsService);
             case WAITING_FOR_MATCH ->
                     // Loaded externally after a server connection is established;
                     // OnlineSetupController calls switchPanel(WAITING_FOR_MATCH) which

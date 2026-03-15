@@ -1,6 +1,7 @@
 package io.github.conava.chess.application.controllers;
 
 import io.github.conava.chess.application.i18n.I18n;
+import io.github.conava.chess.core.data.player.PlayerColor;
 import io.github.conava.chess.core.logic.game.GameState;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -46,17 +47,43 @@ public class GameEndController {
     private final String blackName;
     private final int moveCount;
     private final boolean isOnline;
+
+    /**
+     * The local player's color for an online game, or {@code null} for offline games.
+     * Used to determine whether to display "You Win!" or "You Lose" for online games
+     * where the win/loss perspective depends on which side the local player is playing.
+     */
+    private final PlayerColor localPlayerColor;
+
     private final Runnable closeAction;
 
     private Choice choice = Choice.NONE;
 
-    public GameEndController(I18n i18n, GameState state, String whiteName, String blackName, int moveCount, boolean isOnline, Runnable closeAction) {
+    /**
+     * Creates a new game-end controller.
+     *
+     * @param i18n            internationalisation bundle.
+     * @param state           the terminal game state to display.
+     * @param whiteName       white player's display name.
+     * @param blackName       black player's display name.
+     * @param moveCount       total number of moves played.
+     * @param isOnline        {@code true} for online games (disables rematch, uses
+     *                        "You Win/Lose" phrasing).
+     * @param localPlayerColor the local player's color for online games, or {@code null}
+     *                         for offline games. Determines whether to show "You Win!" or
+     *                         "You Lose" in online mode.
+     * @param closeAction     runnable invoked when the overlay should be dismissed.
+     */
+    public GameEndController(I18n i18n, GameState state, String whiteName, String blackName,
+                             int moveCount, boolean isOnline, PlayerColor localPlayerColor,
+                             Runnable closeAction) {
         this.i18n = i18n;
         this.state = state;
         this.whiteName = whiteName;
         this.blackName = blackName;
         this.moveCount = moveCount;
         this.isOnline = isOnline;
+        this.localPlayerColor = localPlayerColor;
         this.closeAction = closeAction;
     }
 
@@ -78,7 +105,13 @@ public class GameEndController {
         // --- Title ---
         if (isWin) {
             if (isOnline) {
-                outcomeTitle.setText(i18n.get("game.end.title.win"));
+                // Determine whether the LOCAL player is the winner.
+                // localPlayerColor is null only in the unlikely case the facade returns null —
+                // treat an unknown side as a loss to avoid a false "You Win!" message.
+                boolean localPlayerWon = isLocalPlayerWinner(state, localPlayerColor);
+                outcomeTitle.setText(localPlayerWon
+                        ? i18n.get("game.end.title.win")
+                        : i18n.get("game.end.title.loss"));
             } else {
                 String winnerName = resolveWinnerName(state, whiteName, blackName);
                 outcomeTitle.setText(MessageFormat.format(i18n.get("game.end.title.win.local"), winnerName));
@@ -134,6 +167,33 @@ public class GameEndController {
      */
     static String resolveWinnerName(GameState state, String whiteName, String blackName) {
         return state.name().startsWith("WHITE_WON") ? whiteName : blackName;
+    }
+
+    /**
+     * Returns {@code true} if the local player is the winner given the terminal game state
+     * and the local player's color.
+     *
+     * <p>Used by online game mode to determine whether to show "You Win!" or "You Lose":
+     * <ul>
+     *   <li>If {@code localColor} is {@code null}, returns {@code false} (safe default —
+     *       prefer "You Lose" over a false "You Win!" if the side is unknown).</li>
+     *   <li>If {@code localColor} is {@code WHITE} and the state starts with
+     *       {@code "WHITE_WON"}, returns {@code true}.</li>
+     *   <li>If {@code localColor} is {@code BLACK} and the state starts with
+     *       {@code "BLACK_WON"}, returns {@code true}.</li>
+     * </ul>
+     *
+     * <p>Package-private for unit testing.
+     *
+     * @param state      the terminal game state; must be a win state ({@code WHITE_WON_*} or
+     *                   {@code BLACK_WON_*}).
+     * @param localColor the local player's color, or {@code null} if unknown.
+     * @return {@code true} if the local player won, {@code false} otherwise.
+     */
+    static boolean isLocalPlayerWinner(GameState state, PlayerColor localColor) {
+        if (localColor == null) return false;
+        return (localColor == PlayerColor.WHITE && state.name().startsWith("WHITE_WON"))
+                || (localColor == PlayerColor.BLACK && state.name().startsWith("BLACK_WON"));
     }
 
     private String resolveStateLabel() {

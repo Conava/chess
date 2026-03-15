@@ -14,8 +14,6 @@ public class SettingsService {
 
     private static final String KEY_THEME = "theme";
     private static final String KEY_LANGUAGE = "language";
-    private static final String KEY_PLAYER_WHITE = "playerWhite";
-    private static final String KEY_PLAYER_BLACK = "playerBlack";
     private static final String KEY_REDUCED_MOTION = "reducedMotion";
     private static final String KEY_AUTH_TOKEN = "authToken";
     private static final String KEY_USER_ID = "userId";
@@ -54,22 +52,6 @@ public class SettingsService {
 
     public void saveLanguage(I18n.Language lang) {
         prefs.put(KEY_LANGUAGE, lang.name());
-    }
-
-    public String loadPlayerWhite() {
-        return prefs.get(KEY_PLAYER_WHITE, "");
-    }
-
-    public void savePlayerWhite(String name) {
-        prefs.put(KEY_PLAYER_WHITE, name);
-    }
-
-    public String loadPlayerBlack() {
-        return prefs.get(KEY_PLAYER_BLACK, "");
-    }
-
-    public void savePlayerBlack(String name) {
-        prefs.put(KEY_PLAYER_BLACK, name);
     }
 
     // ── Reduced motion preference ──────────────────────────────────────────────

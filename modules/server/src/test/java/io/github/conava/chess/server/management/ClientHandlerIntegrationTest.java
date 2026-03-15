@@ -16,7 +16,12 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *   <li>Malformed (unparseable) messages produce an ERROR response; the handler loop continues</li>
  *   <li>CREATE_GAME with an invalid ruleset name produces an ERROR response</li>
  *   <li>JOIN_GAME with a non-existent game ID produces an ERROR response</li>
- *   <li>JOIN_GAME uses key=value format (gameId=N playerName=X) — raw integer is not accepted</li>
+ *   <li>JOIN_GAME uses key=value format (joinCode=XXXX-XXXX-XXXX playerName=X) — case insensitive matching</li>
  *   <li>CREATE_GAME with playerName parameter results in a JOIN_CODE response (game created)</li>
  *   <li>CREATE_GAME without playerName falls back to the default "Player 1"</li>
  *   <li>After both players connect, both receive GAME_STATUS gameState=RUNNING</li>
@@ -339,8 +344,8 @@ class ClientHandlerIntegrationTest {
             conn.send("LOGIN:username=user3 password=password123");
             readUntilType(conn, MessageType.AUTH_TOKEN.name());
 
-            // No games registered; gameId=999 does not exist.
-            conn.send("JOIN_GAME:gameId=999 playerName=Bob");
+            // No games registered; this join code does not exist.
+            conn.send("JOIN_GAME:joinCode=AAAA-BBBB-CCCC playerName=Bob");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
             assertNotNull(response, "JOIN_GAME with a non-existent game ID must produce an ERROR response");
@@ -348,16 +353,16 @@ class ClientHandlerIntegrationTest {
     }
 
     @Test
-    void joinGame_nonNumericGameId_sendsError() throws Exception {
+    void joinGame_missingJoinCode_sendsError() throws Exception {
         authService.register("user4", "password123");
         try (Connection conn = openConnection()) {
             conn.send("LOGIN:username=user4 password=password123");
             readUntilType(conn, MessageType.AUTH_TOKEN.name());
 
-            conn.send("JOIN_GAME:gameId=NOT_A_NUMBER playerName=Bob");
+            conn.send("JOIN_GAME:playerName=Bob");
 
             String response = readUntilType(conn, MessageType.ERROR.name());
-            assertNotNull(response, "JOIN_GAME with a non-numeric gameId must produce an ERROR response");
+            assertNotNull(response, "JOIN_GAME without a joinCode must produce an ERROR response");
         }
     }
 
@@ -383,16 +388,14 @@ class ClientHandlerIntegrationTest {
             // Creator sends CREATE_GAME.
             conn1.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
 
-            // Expect JOIN_CODE response containing the game ID.
+            // Expect JOIN_CODE response containing the join code.
             String joinCodeLine = readUntilType(conn1, MessageType.JOIN_CODE.name());
             assertNotNull(joinCodeLine, "CREATE_GAME must produce a JOIN_CODE response");
 
-            // Extract the game ID from "JOIN_CODE:joinCode=<id>".
-            String joinCodeContent = joinCodeLine.split(":", 2)[1];
-            String gameIdStr = joinCodeContent.split("=")[1].trim();
+            String joinCodeStr = extractJoinCode(joinCodeLine);
 
-            // Joiner uses key=value format.
-            conn2.send("JOIN_GAME:gameId=" + gameIdStr + " playerName=Bob");
+            // Joiner uses key=value format with joinCode parameter.
+            conn2.send("JOIN_GAME:joinCode=" + joinCodeStr + " playerName=Bob");
 
             // Both players must receive GAME_STATUS gameState=RUNNING.
             String status1 = readUntilType(conn1, MessageType.GAME_STATUS.name());
@@ -466,8 +469,8 @@ class ClientHandlerIntegrationTest {
             String joinCodeLine = readUntilType(conn1, MessageType.JOIN_CODE.name());
             assertNotNull(joinCodeLine, "Need JOIN_CODE to proceed with test");
 
-            String gameIdStr = joinCodeLine.split(":", 2)[1].split("=")[1].trim();
-            conn2.send("JOIN_GAME:gameId=" + gameIdStr + " playerName=Bob");
+            String joinCodeStr = extractJoinCode(joinCodeLine);
+            conn2.send("JOIN_GAME:joinCode=" + joinCodeStr + " playerName=Bob");
 
             // Wait for GAME_STATUS RUNNING on both sides.
             readUntilType(conn1, MessageType.GAME_STATUS.name());
@@ -523,9 +526,9 @@ class ClientHandlerIntegrationTest {
             conn1.send("CREATE_GAME:ruleset=STANDARD playerName=Alice");
             String joinCodeLine = readUntilType(conn1, MessageType.JOIN_CODE.name());
             assertNotNull(joinCodeLine, "Need JOIN_CODE to proceed");
-            String gameIdStr = joinCodeLine.split(":", 2)[1].split("=")[1].trim();
+            String joinCodeStr = extractJoinCode(joinCodeLine);
 
-            conn2.send("JOIN_GAME:gameId=" + gameIdStr + " playerName=Bob");
+            conn2.send("JOIN_GAME:joinCode=" + joinCodeStr + " playerName=Bob");
             readUntilType(conn1, MessageType.GAME_STATUS.name());
             readUntilType(conn2, MessageType.GAME_STATUS.name());
 
@@ -594,6 +597,105 @@ class ClientHandlerIntegrationTest {
             assertNotNull(response, "LOGIN with null authService must produce an ERROR, not crash");
             assertTrue(response.contains("Authentication service not available"),
                     "Error message must indicate auth service is unavailable");
+        }
+    }
+
+    // ========================================================================
+    // createGame logs join code (server logging test)
+    // ========================================================================
+
+    /**
+     * A capturing {@link java.util.logging.Handler} that stores all emitted
+     * {@link LogRecord}s for post-hoc inspection.
+     */
+    /**
+     * Extracts the join code value from a raw JOIN_CODE response line.
+     * E.g. "JOIN_CODE:joinCode=ABCD-EF12-GH34 position=42" → "ABCD-EF12-GH34"
+     */
+    private static String extractJoinCode(String joinCodeLine) {
+        String content = joinCodeLine.split(":", 2)[1]; // "joinCode=XXXX-XXXX-XXXX ..."
+        String afterEq = content.split("=", 2)[1];      // "XXXX-XXXX-XXXX ..."
+        int spaceIdx = afterEq.indexOf(' ');
+        return spaceIdx >= 0 ? afterEq.substring(0, spaceIdx) : afterEq.trim();
+    }
+
+    static class CapturingHandler extends Handler {
+        private final List<LogRecord> records = new ArrayList<>();
+
+        @Override
+        public void publish(LogRecord record) {
+            records.add(record);
+        }
+
+        @Override
+        public void flush() { /* no-op */ }
+
+        @Override
+        public void close() { /* no-op */ }
+
+        /** Returns a snapshot of all captured log messages. */
+        List<String> messages() {
+            return records.stream()
+                    .map(r -> r.getMessage() != null ? r.getMessage() : "")
+                    .toList();
+        }
+    }
+
+    /**
+     * Verifies that when {@code createGame()} is invoked (via the full network path),
+     * the server sends a {@code JOIN_CODE} response with a numeric game ID and that the
+     * join code value appears in the {@link ClientHandler} logger output.
+     *
+     * <p>{@link ClientHandler#createGame} emits a log record that contains the join code
+     * via {@code LOGGER.info("Game created with joinCode=<id> ...")}. This test installs
+     * a {@link CapturingHandler} on that logger and verifies that at least one captured
+     * log message contains the join code string returned in the {@code JOIN_CODE}
+     * response.</p>
+     */
+    @Test
+    void createGame_logsJoinCode_andReturnsAlphanumericCode() throws Exception {
+        // Install a capturing handler on the ClientHandler logger before the connection
+        Logger clientHandlerLogger = Logger.getLogger(ClientHandler.class.getName());
+        CapturingHandler capturingHandler = new CapturingHandler();
+        clientHandlerLogger.addHandler(capturingHandler);
+
+        try {
+            authService.register("user_log_test", "password123");
+
+            try (Connection conn = openConnection()) {
+                conn.send("LOGIN:username=user_log_test password=password123");
+                readUntilType(conn, MessageType.AUTH_TOKEN.name());
+
+                conn.send("CREATE_GAME:ruleset=STANDARD playerName=LogTester");
+
+                String response = readUntilType(conn, MessageType.JOIN_CODE.name());
+                assertNotNull(response, "CREATE_GAME must produce a JOIN_CODE response");
+
+                // Verify the JOIN_CODE content contains an alphanumeric join code (XXXX-XXXX-XXXX)
+                String joinCode = extractJoinCode(response);
+                assertFalse(joinCode.isBlank(), "Join code must not be blank");
+                assertTrue(joinCode.matches("[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}"),
+                        "Join code must match XXXX-XXXX-XXXX format, got: " + joinCode);
+                String gameIdStr = joinCode; // use join code for log verification
+
+                // The LOGGER.info call in createGame() runs before sendMessage(JOIN_CODE),
+                // so by the time readUntilType returns, the log record is already captured.
+                // No Thread.sleep needed.
+
+                // Verify the ClientHandler logger emitted at least one record during the flow
+                assertFalse(capturingHandler.messages().isEmpty(),
+                        "ClientHandler logger must emit at least one log record during CREATE_GAME flow");
+
+                // Verify at least one log message contains the join code value
+                String joinCodeValue = gameIdStr;
+                boolean joinCodeInLog = capturingHandler.messages().stream()
+                        .anyMatch(msg -> msg.contains(joinCodeValue));
+                assertTrue(joinCodeInLog,
+                        "At least one log message must contain the join code value '" + joinCodeValue
+                                + "' but logged messages were: " + capturingHandler.messages());
+            }
+        } finally {
+            clientHandlerLogger.removeHandler(capturingHandler);
         }
     }
 }
